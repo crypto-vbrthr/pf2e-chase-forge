@@ -16,7 +16,7 @@ ChasePack        1
 PersistenceState 1
 ```
 
-dev.6 introduces canonical protected world persistence. Older Blueprint payloads are normalized to Blueprint schema v2 when imported or loaded through the persistence layer; future unsupported schema versions are rejected.
+dev.6 introduced canonical protected world persistence. dev.7 adds a Basic Builder layer without changing any core schema versions. Older Blueprint payloads are normalized to Blueprint schema v2 when imported or loaded through the persistence layer; future unsupported schema versions are rejected.
 
 ## ChaseCard
 

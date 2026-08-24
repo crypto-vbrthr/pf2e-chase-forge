@@ -1,0 +1,582 @@
+.pf2e-chase-forge.chase-forge-builder {
+  --chase-border: color-mix(in srgb, var(--color-border-light-2, #9a8f7a) 55%, transparent);
+  --chase-panel: color-mix(in srgb, var(--color-cool-5, #20242b) 82%, transparent);
+  --chase-panel-soft: color-mix(in srgb, var(--color-cool-4, #2b313b) 72%, transparent);
+  --chase-accent: var(--color-warm-2, #d5b36a);
+  --chase-danger: var(--color-level-error, #b84b4b);
+  --chase-success: var(--color-level-success, #4f9f69);
+  min-width: 820px;
+  max-height: calc(100vh - 32px);
+  display: flex !important;
+  flex-direction: column;
+  overflow: hidden !important;
+}
+
+/*
+ * ApplicationV2 gives .window-content a real, bounded viewport height.
+ * The runtime diagnostics from dev.7.4.1 confirmed that this element was
+ * 782px high while its scrollHeight was 2037px. Make this bounded Foundry
+ * element the authoritative scroller instead of trying to force nested
+ * template nodes to inherit a height that Foundry core styles can override.
+ */
+.pf2e-chase-forge.chase-forge-builder .window-content {
+  padding: 0;
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  overflow-y: scroll !important;
+  overflow-x: hidden !important;
+  scrollbar-gutter: stable;
+  scrollbar-width: auto;
+}
+
+/*
+ * Foundry can apply part/root display rules with greater specificity than the
+ * module's unscoped classes. Scope and force the Builder layout so the sidebar
+ * and editor remain side by side, while .window-content owns vertical scroll.
+ */
+.pf2e-chase-forge.chase-forge-builder .window-content > [data-application-part],
+.pf2e-chase-forge.chase-forge-builder .window-content > .chase-builder-shell {
+  width: 100% !important;
+  height: auto !important;
+  min-height: 100% !important;
+  overflow: visible !important;
+}
+
+.pf2e-chase-forge.chase-forge-builder .chase-builder-shell {
+  display: grid !important;
+  grid-template-columns: 280px minmax(0, 1fr) !important;
+  width: 100% !important;
+  height: auto !important;
+  min-height: 100% !important;
+  overflow: visible !important;
+  align-items: start;
+}
+
+.pf2e-chase-forge.chase-forge-builder .chase-builder-sidebar {
+  min-width: 0;
+  height: auto !important;
+  min-height: 100%;
+  overflow: visible !important;
+  border-right: 1px solid var(--chase-border);
+  background: var(--chase-panel);
+  padding: 14px;
+}
+
+.chase-builder-sidebar-header,
+.chase-builder-section-heading,
+.chase-builder-toolbar,
+.chase-builder-card-head,
+.chase-builder-subheading,
+.chase-builder-group-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.chase-builder-sidebar-header {
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.chase-builder-sidebar h2,
+.chase-builder-section h3 {
+  margin: 0;
+}
+
+.chase-builder-sidebar p,
+.chase-builder-section-heading p {
+  margin: 4px 0 0;
+  opacity: 0.72;
+  font-size: 0.88em;
+}
+
+.chase-builder-blueprint-list {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.chase-blueprint-row {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  text-align: left;
+  gap: 3px;
+  padding: 9px 10px;
+  min-height: 58px;
+  border: 1px solid var(--chase-border);
+  border-radius: 7px;
+  background: var(--chase-panel-soft);
+}
+
+.chase-blueprint-row.active {
+  border-color: var(--chase-accent);
+  box-shadow: inset 3px 0 0 var(--chase-accent);
+}
+
+.chase-blueprint-row-title {
+  font-weight: 700;
+}
+
+.chase-blueprint-row-meta,
+.chase-blueprint-row-warning,
+.chase-builder-origin {
+  font-size: 0.79em;
+  opacity: 0.76;
+}
+
+.chase-blueprint-row-warning {
+  color: var(--chase-accent);
+}
+
+.pf2e-chase-forge.chase-forge-builder .chase-builder-main {
+  display: flex !important;
+  flex-direction: column !important;
+  width: 100%;
+  height: auto !important;
+  min-width: 0;
+  min-height: 0;
+  overflow: visible !important;
+}
+
+.chase-builder-toolbar {
+  flex: 0 0 auto;
+  justify-content: space-between;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--chase-border);
+  background: var(--chase-panel);
+  gap: 16px;
+}
+
+.chase-builder-title-block {
+  display: grid;
+  min-width: 170px;
+}
+
+.chase-builder-title-block strong {
+  font-size: 1.08em;
+}
+
+.chase-builder-title-block > span:last-child,
+.chase-builder-kicker {
+  font-size: 0.78em;
+  opacity: 0.72;
+}
+
+.chase-builder-kicker {
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.chase-builder-toolbar-actions,
+.chase-builder-card-adders {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.chase-builder-toolbar-actions button,
+.chase-builder-card-adders button,
+.chase-builder-section-heading button,
+.chase-builder-group > button,
+.chase-builder-subheading button {
+  width: auto;
+  white-space: nowrap;
+}
+
+.chase-builder-primary {
+  border-color: var(--chase-accent) !important;
+}
+
+.chase-builder-start {
+  border-color: var(--chase-success) !important;
+}
+
+.pf2e-chase-forge.chase-forge-builder .chase-builder-editor-scroll {
+  flex: 0 0 auto !important;
+  height: auto !important;
+  min-height: 0;
+  overflow: visible !important;
+  padding: 14px;
+}
+
+.chase-builder-section {
+  border: 1px solid var(--chase-border);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--chase-panel-soft) 78%, transparent);
+  padding: 14px;
+  margin-bottom: 14px;
+}
+
+.chase-builder-section-heading {
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 12px;
+}
+
+.chase-builder-section h3 i {
+  margin-right: 6px;
+  color: var(--chase-accent);
+}
+
+.chase-builder-grid {
+  display: grid;
+  gap: 10px 12px;
+}
+
+.chase-builder-grid.two {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.chase-builder-grid .wide {
+  grid-column: 1 / -1;
+}
+
+.chase-builder-grid label,
+.chase-builder-group-head label,
+.chase-builder-card-head label,
+.chase-builder-approach label,
+.chase-builder-inline-field label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.chase-builder-grid label > span,
+.chase-builder-group-head label > span,
+.chase-builder-card-head label > span,
+.chase-builder-approach label > span,
+.chase-builder-inline-field label > span {
+  font-size: 0.78em;
+  font-weight: 650;
+  opacity: 0.84;
+}
+
+.chase-builder-grid input,
+.chase-builder-grid textarea,
+.chase-builder-grid select,
+.chase-builder-group input,
+.chase-builder-group select,
+.chase-builder-card input,
+.chase-builder-card textarea,
+.chase-builder-card select,
+.chase-builder-card-adders select {
+  width: 100%;
+}
+
+.chase-builder-inline-field {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+
+.chase-builder-groups {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 10px;
+}
+
+.chase-builder-group {
+  border: 1px solid var(--chase-border);
+  border-radius: 7px;
+  padding: 10px;
+  background: var(--chase-panel-soft);
+}
+
+.chase-builder-group-head {
+  display: grid;
+  grid-template-columns: minmax(120px, 1fr) minmax(120px, 0.8fr) auto;
+  margin-bottom: 9px;
+}
+
+.chase-builder-checkbox {
+  flex-direction: row !important;
+  align-items: center;
+  align-self: end;
+  gap: 7px !important;
+  min-height: 32px;
+}
+
+.chase-builder-checkbox input {
+  width: auto !important;
+}
+
+.chase-builder-checkbox.bottom {
+  align-self: end;
+}
+
+.chase-builder-participant-drop {
+  min-height: 74px;
+  display: flex;
+  flex-wrap: wrap;
+  align-content: flex-start;
+  gap: 6px;
+  padding: 8px;
+  border: 1px dashed var(--chase-border);
+  border-radius: 6px;
+  margin-bottom: 8px;
+}
+
+.chase-builder-participant {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+  padding: 4px 5px 4px 4px;
+  border: 1px solid var(--chase-border);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--chase-panel) 82%, transparent);
+}
+
+.chase-builder-participant img {
+  width: 24px;
+  height: 24px;
+  object-fit: cover;
+  border: 0;
+  border-radius: 50%;
+}
+
+.chase-builder-participant span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chase-builder-participant button.icon {
+  width: 24px;
+  height: 24px;
+  min-height: 24px;
+}
+
+.chase-builder-drop-hint,
+.chase-builder-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  width: 100%;
+  min-height: 54px;
+  opacity: 0.68;
+  text-align: center;
+}
+
+.chase-builder-route-spine {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 6px;
+}
+
+.chase-route-terminal {
+  align-self: center;
+  min-width: 160px;
+  padding: 7px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--chase-border);
+  text-align: center;
+  font-weight: 700;
+  background: var(--chase-panel);
+}
+
+.chase-route-terminal.start {
+  border-color: var(--chase-accent);
+}
+
+.chase-route-terminal.end {
+  border-color: var(--chase-success);
+}
+
+.chase-route-connector {
+  align-self: center;
+  opacity: 0.58;
+  line-height: 1;
+}
+
+.chase-builder-card {
+  position: relative;
+  border: 1px solid var(--chase-border);
+  border-radius: 8px;
+  padding: 11px;
+  background: var(--chase-panel-soft);
+}
+
+.chase-builder-card-head {
+  align-items: end;
+}
+
+.chase-builder-card-number {
+  display: grid;
+  place-items: center;
+  flex: 0 0 30px;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 1px solid var(--chase-accent);
+  font-weight: 800;
+}
+
+.chase-builder-card-head .grow {
+  flex: 1 1 260px;
+}
+
+.chase-builder-card-head .small-number {
+  flex: 0 0 90px;
+}
+
+.chase-builder-card-actions {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  padding-bottom: 1px;
+}
+
+.chase-builder-card button.icon,
+.chase-builder-sidebar button.icon {
+  width: 32px;
+  min-width: 32px;
+  height: 32px;
+  min-height: 32px;
+  padding: 0;
+}
+
+.chase-builder-card button.danger:hover,
+.chase-builder-participant button.danger:hover {
+  border-color: var(--chase-danger);
+}
+
+.chase-builder-origin {
+  margin: 5px 0 8px 40px;
+}
+
+.chase-builder-grid.card-fields {
+  margin-top: 9px;
+}
+
+.chase-builder-approaches {
+  margin-top: 11px;
+  padding-top: 10px;
+  border-top: 1px solid var(--chase-border);
+}
+
+.chase-builder-subheading {
+  justify-content: space-between;
+  margin-bottom: 7px;
+}
+
+.chase-builder-approach {
+  display: grid;
+  grid-template-columns: minmax(120px, 1.1fr) minmax(120px, 1fr) minmax(95px, .8fr) 82px 82px minmax(90px, .7fr) minmax(95px, .8fr) auto 34px;
+  gap: 6px;
+  align-items: end;
+  padding: 7px;
+  border: 1px solid color-mix(in srgb, var(--chase-border) 78%, transparent);
+  border-radius: 6px;
+  margin-bottom: 6px;
+  background: color-mix(in srgb, var(--chase-panel) 55%, transparent);
+}
+
+.chase-builder-approach .approach-delete {
+  align-self: end;
+}
+
+.chase-builder-banner {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  margin: 10px 14px 0;
+  padding: 9px 11px;
+  border: 1px solid var(--chase-border);
+  border-radius: 7px;
+}
+
+.chase-builder-banner.warning {
+  border-color: var(--chase-accent);
+}
+
+.chase-builder-banner.error {
+  border-color: var(--chase-danger);
+}
+
+.chase-builder-banner p,
+.chase-builder-banner ul {
+  margin: 3px 0 0;
+}
+
+.chase-builder-warnings {
+  margin: 10px 14px 0;
+  padding: 7px 10px;
+  border: 1px solid var(--chase-border);
+  border-radius: 6px;
+}
+
+.chase-builder-warnings ul {
+  margin-bottom: 0;
+}
+
+.chase-builder-empty.route-empty {
+  flex-direction: column;
+  min-height: 100px;
+  border: 1px dashed var(--chase-border);
+  border-radius: 7px;
+}
+
+.chase-builder-empty.inline {
+  min-height: 38px;
+}
+
+@media (max-width: 1050px) {
+  .chase-builder-shell { grid-template-columns: 220px minmax(0, 1fr); }
+  .chase-builder-toolbar { align-items: flex-start; flex-direction: column; }
+  .chase-builder-toolbar-actions { justify-content: flex-start; }
+  .chase-builder-approach { grid-template-columns: repeat(4, minmax(100px, 1fr)); }
+}
+
+@media (max-width: 860px) {
+  .chase-builder-shell { grid-template-columns: 1fr; }
+  .chase-builder-sidebar { display: none; }
+  .chase-builder-grid.two { grid-template-columns: 1fr; }
+  .chase-builder-grid .wide { grid-column: auto; }
+  .chase-builder-approach { grid-template-columns: repeat(2, minmax(110px, 1fr)); }
+}
+
+.pf2e-chase-forge.chase-forge-builder .chase-builder-editor-scroll::-webkit-scrollbar,
+.pf2e-chase-forge.chase-forge-builder .chase-builder-sidebar::-webkit-scrollbar {
+  width: 12px;
+}
+
+.pf2e-chase-forge.chase-forge-builder .chase-builder-editor-scroll::-webkit-scrollbar-track,
+.pf2e-chase-forge.chase-forge-builder .chase-builder-sidebar::-webkit-scrollbar-track {
+  background: var(--chase-panel);
+}
+
+.pf2e-chase-forge.chase-forge-builder .chase-builder-editor-scroll::-webkit-scrollbar-thumb,
+.pf2e-chase-forge.chase-forge-builder .chase-builder-sidebar::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--chase-accent) 58%, var(--chase-panel));
+  border: 2px solid var(--chase-panel);
+  border-radius: 999px;
+}
+
+.pf2e-chase-forge.chase-forge-builder .chase-builder-editor-scroll::-webkit-scrollbar-thumb:hover,
+.pf2e-chase-forge.chase-forge-builder .chase-builder-sidebar::-webkit-scrollbar-thumb:hover {
+  background: color-mix(in srgb, var(--chase-accent) 78%, var(--chase-panel));
+}
+
+/* dev.7.4.2: the Foundry window-content element is the verified scroll viewport. */
+.pf2e-chase-forge.chase-forge-builder .window-content::-webkit-scrollbar {
+  width: 12px;
+}
+
+.pf2e-chase-forge.chase-forge-builder .window-content::-webkit-scrollbar-track {
+  background: color-mix(in srgb, var(--chase-panel) 60%, transparent);
+}
+
+.pf2e-chase-forge.chase-forge-builder .window-content::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--chase-accent) 55%, var(--chase-panel));
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}

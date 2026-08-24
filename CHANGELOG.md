@@ -1,4 +1,77 @@
+## 0.1.0-dev.7.4.3 – Builder Runtime Scroll Enforcement
+
+- Uses the measured Foundry `window-content` element as the authoritative vertical scroll viewport.
+- Applies the layout-critical overflow/grid properties directly to the live ApplicationV2 DOM with inline `!important`, bypassing stale or overridden stylesheet rules.
+- Re-applies the structural layout immediately, on the next animation frame, and after 100/500 ms so post-render Foundry layout cannot silently revert it.
+- Manual `debugBuilderLayout()` now applies the runtime layout before collecting metrics.
+- Adds `data-chase-runtime-layout` to the app root so it is visible in DOM diagnostics that the runtime fix executed.
+
+## 0.1.0-dev.7.4.1 - Builder Diagnostics Clone Hotfix
+
+- Fixed `debugBuilderLayout()` throwing `DataCloneError` on Foundry ApplicationV2 position objects.
+- Diagnostics now snapshot only scalar application-position fields instead of passing Foundry-managed objects through `structuredClone()`.
+- Added fail-safe diagnostic logging so layout inspection returns an error record instead of throwing if a future Foundry value is not serializable.
+- No chase rules, persistence schemas, or builder layout rules are changed.
+
+## 0.1.0-dev.7.4.2 – Builder Window-Content Scroll Fix
+
+- Uses Foundry ApplicationV2 `.window-content` as the authoritative vertical scroll container, based on runtime diagnostics showing `clientHeight: 782` and `scrollHeight: 2037`.
+- Removes the fragile nested-height scrolling strategy for the editor pane.
+- Forces the Builder shell back to its intended two-column grid when Foundry core part styles override module display rules.
+- Keeps diagnostic helpers available for verification.
+
+## 0.1.0-dev.7.4 - Builder Layout Diagnostics
+
+- Adds detailed runtime layout diagnostics for the Basic Chase Builder scroll issue.
+- Logs computed dimensions and overflow/flex properties for the builder window, window content, application part, shell, main column, editor scroller, and sidebar after render.
+- Adds delayed post-layout snapshots to catch Foundry ApplicationV2 sizing changes.
+- Exposes `game.modules.get("pf2e-chase-forge").api.ui.debugBuilderLayout()` for manual diagnostics.
+- Diagnostics include the editor parent chain and viewport/application position data.
+- No chase rules or persisted data schemas are changed.
+
 # Changelog
+
+## 0.1.0-dev.7.3 - Builder Scroll Layout Fix
+
+- Fixed the actual ApplicationV2 sizing issue by making the window root a constrained flex column and giving `.window-content` a zero flex-basis.
+- Restored `.chase-builder-editor-scroll` as the authoritative main scroll container with an explicit constrained flex height and vertical scrollbar.
+- Kept the Builder toolbar outside the scrolling editor pane and the Blueprint sidebar independently scrollable.
+- Added support for both ApplicationV2 part-wrapper and direct-root template layouts.
+- Removed the deprecated Scene Control `onClick` handler and retained the Foundry v13+ `onChange` handler.
+- Replaced the dev.7.2 window-level scrollbar regression assertions with constrained-layout assertions.
+
+## 0.1.0-dev.7.2 - Builder Window Scroll Hotfix
+
+- Moved the authoritative Builder scrollbar to the Foundry ApplicationV2 `.window-content` element.
+- Removed the nested flex-height dependency which could leave `.chase-builder-editor-scroll` unconstrained and therefore never overflow.
+- Added a stable, explicitly styled vertical scrollbar for Chromium/Foundry.
+- Kept horizontal overflow suppressed while allowing the full Builder document to grow naturally.
+- Added regression coverage for the window-level scrolling contract.
+
+## 0.1.0-dev.7.1 - Builder Scroll Hotfix
+
+- Fixed the Basic Chase Builder layout so the main editor area uses the remaining window height instead of expanding beyond the visible window.
+- Added vertical scrolling to the editor pane and kept horizontal overflow suppressed.
+- Kept the Blueprint sidebar independently scrollable.
+- Added stable scrollbar guttering to prevent layout shifts while editing long chases.
+- Added regression coverage for the Builder scroll layout contract.
+
+## 0.1.0-dev.7 - Basic Chase Builder
+
+- Added the first GM-facing Chase Forge ApplicationV2 UI.
+- Added a GM-only Scene Control button and public `forge.ui.openBuilder()` entry point.
+- Added Basic Builder Contract v1 and raised the public API version to `7`.
+- Added pure Builder-model helpers for creating and validating linear prepared Chase Blueprints.
+- Added Blueprint browsing, creation, reopening, saving, duplication, deletion, and Session start actions.
+- Added editable chase type, length, party level, difficulty, start distance, round duration, environment, movement, tone, time-of-day, weather, Action, Humor, Blueprint tags, and Blueprint image metadata.
+- Added chase-type-aware default participant groups plus Actor/Token drag-and-drop and selected-token import.
+- Added manual Chase Card creation and cloning of registered add-on cards into unique local Blueprint snapshots.
+- Added linear card reordering/removal without mutating source registry cards.
+- Added card-level description, GM notes, type, Chase Point requirement, tags, scalability, and image metadata editing.
+- Added multiple editable approaches per card with PF2e statistic, DC mode, fixed value, level offset, difficulty adjustment, proficiency, and hidden-DC controls.
+- Added fail-safe detection of advanced/non-linear Blueprints; dev.7 can load and start them but does not rewrite their graph.
+- Added DE/EN localization, Builder template, and responsive Builder styling.
+- Expanded the automated suite to 237 passing tests before final packaging.
 
 ## 0.1.0-dev.6 - Blueprint & Session Persistence
 

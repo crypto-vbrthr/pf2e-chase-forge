@@ -120,7 +120,7 @@ A failed registration leaves all registries unchanged. This includes:
 
 ## Compatibility
 
-Available capability names through dev.6:
+Available capability names through dev.7:
 
 ```text
 registries.cards
@@ -145,6 +145,7 @@ persistence.blueprints
 persistence.sessions
 persistence.jsonTransfer
 persistence.contentSnapshots
+builder.basic
 ```
 
 Version expressions support exact values and `>`, `>=`, `<`, `<=`, `^`, and `~`.

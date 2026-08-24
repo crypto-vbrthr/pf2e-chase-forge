@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { MODULE_ID, MODULE_VERSION } from "../scripts/core/constants.js";
 
-test("Foundry init registers protected persistence settings and exposes the dev.6 API before ready", async () => {
+test("Foundry init registers protected persistence settings and exposes the dev.7 API and Basic Builder before ready", async () => {
   const onceHandlers = new Map();
   const calls = [];
   const settingDefinitions = new Map();
@@ -66,6 +66,10 @@ test("Foundry init registers protected persistence settings and exposes the dev.
     assert.equal(moduleRecord.api.getCapabilities().rulesEngine, true);
     assert.equal(moduleRecord.api.pf2e.dc.level(10), 27);
     assert.equal(moduleRecord.api.getCapabilities().persistence, true);
+    assert.equal(moduleRecord.api.getCapabilities().basicBuilder, true);
+    assert.equal(moduleRecord.api.getCapabilities().builderUi, true);
+    assert.equal(typeof moduleRecord.api.ui.openBuilder, "function");
+    assert.equal(typeof moduleRecord.api.ui.debugBuilderLayout, "function");
 
     await onceHandlers.get("ready")();
     assert.equal(journal.size, 1);

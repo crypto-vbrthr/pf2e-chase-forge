@@ -1,4 +1,4 @@
-# PF2E Chase Forge Public API - dev.6
+# PF2E Chase Forge Public API - dev.7
 
 ## Access
 
@@ -6,26 +6,60 @@
 const forge = game.modules.get("pf2e-chase-forge")?.api;
 ```
 
-Current public API version: `6`  
-Extension Contract version: `1`
+Current public API version: `7`  
+Extension Contract version: `1`  
+Basic Builder Contract version: `1`
 
-## Capabilities
-
-New dev.6 capabilities:
+## New dev.7 capabilities
 
 ```text
-persistence
-protectedPersistence
-blueprintJsonTransfer
-contentSnapshots
-sessionLifecycle
+basicBuilder
+builderUi
 ```
 
-`protectedPersistence` is true in Foundry when the API is backed by the ownership-protected Journal vault. Pure test/memory stores advertise persistence without claiming that protection boundary.
+`basicBuilder` is always true for dev.7. `builderUi` is true in normal Foundry initialization when the GM ApplicationV2 service is wired into the public API.
 
 GM Runner, Player View, and Campaign Forge integration remain false.
 
+## Basic Builder
+
+```js
+forge.builder.contractVersion;
+forge.builder.createDraft(options);
+forge.builder.createManualCard(options);
+forge.builder.createApproach(options);
+forge.builder.isEditable(blueprint);
+forge.builder.listCards(blueprint);
+forge.builder.rebuildLinearGraph(blueprint);
+forge.builder.addCard(blueprint, card, options);
+forge.builder.addManualCard(blueprint, options);
+forge.builder.updateCard(blueprint, index, updaterOrCard);
+forge.builder.removeCard(blueprint, index);
+forge.builder.moveCard(blueprint, fromIndex, toIndex);
+forge.builder.addApproach(blueprint, cardIndex, approach);
+forge.builder.removeApproach(blueprint, cardIndex, approachIndex);
+forge.builder.addParticipant(blueprint, groupId, participant);
+forge.builder.removeParticipant(blueprint, groupId, participantId);
+forge.builder.participantFromDocument(document, options);
+forge.builder.resetGroupsForType(blueprint, chaseType, options);
+forge.builder.validate(blueprint, options);
+forge.builder.summary(blueprint);
+```
+
+## Builder UI
+
+```js
+await forge.ui.openBuilder();
+await forge.ui.openBuilder({ blueprintId });
+forge.ui.getOpenBuilder();
+await forge.ui.closeBuilder();
+```
+
+The UI is GM-only. The Builder writes through the protected Blueprint persistence API.
+
 ## Schemas
+
+No core schema versions changed in dev.7:
 
 ```text
 forge.schemas.blueprint === 2
@@ -82,14 +116,7 @@ await forge.persistence.results.get(idOrReference);
 forge.persistence.results.reference(id);
 ```
 
-### Stable references
-
-```js
-forge.persistence.references.create("blueprint", id);
-forge.persistence.references.parse("ChaseBlueprint.some-id");
-```
-
-Reference formats:
+## Stable references
 
 ```text
 ChaseBlueprint.<id>
@@ -97,9 +124,7 @@ ChaseSession.<id>
 ChaseResult.<id>
 ```
 
-## ChaseSessionManager facade
-
-The higher-level facade mirrors common session lifecycle operations:
+## Session Manager
 
 ```js
 forge.sessionManager.createSession(...);
@@ -114,28 +139,22 @@ forge.sessionManager.listSessions(...);
 forge.sessionManager.getActiveSessions();
 ```
 
-## Consequence Engine
-
-The dev.5 consequence surfaces remain unchanged:
+## Consequences and Effect Forge
 
 ```js
-forge.consequences.createOccurrence(consequence, context);
-forge.consequences.fromRulesResult(rulesResult);
-forge.consequences.plan(session, occurrences, options);
-await forge.consequences.execute(session, occurrences, options);
-await forge.consequences.executeRulesResult(rulesResult, options);
-forge.consequences.records(session, filter);
-```
+forge.consequences.createOccurrence(...);
+forge.consequences.fromRulesResult(...);
+forge.consequences.plan(...);
+forge.consequences.execute(...);
+forge.consequences.executeRulesResult(...);
+forge.consequences.records(...);
 
-## Effect Forge bridge
-
-```js
 forge.integrations.effectForge.inspect();
 forge.integrations.effectForge.isAvailable();
-await forge.integrations.effectForge.resolveDefinition(reference);
-await forge.integrations.effectForge.analyze(reference, options);
-await forge.integrations.effectForge.apply(reference, targets, options);
-await forge.integrations.effectForge.openEditor(reference);
+forge.integrations.effectForge.resolveDefinition(...);
+forge.integrations.effectForge.analyze(...);
+forge.integrations.effectForge.apply(...);
+forge.integrations.effectForge.openEditor(...);
 ```
 
 ## Existing surfaces

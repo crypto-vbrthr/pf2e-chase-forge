@@ -41,6 +41,28 @@ import { createChasePersistenceService } from "../persistence/persistence-servic
 import { createMemoryChaseStore } from "../persistence/memory-store.js";
 import { createChaseSessionManager } from "../persistence/session-manager.js";
 import { validatePersistenceState } from "../persistence/state.js";
+import {
+  BASIC_BUILDER_CONTRACT_VERSION,
+  addApproachToBasicCard,
+  addCardToBasicBlueprint,
+  addManualCardToBasicBlueprint,
+  addParticipantToBasicBlueprint,
+  basicBuilderSummary,
+  createBasicApproach,
+  createBasicBuilderDraft,
+  createManualChaseCard,
+  isBasicLinearBlueprint,
+  listBasicCards,
+  moveCardInBasicBlueprint,
+  participantFromDocument,
+  rebuildBasicLinearGraph,
+  removeApproachFromBasicCard,
+  removeCardFromBasicBlueprint,
+  removeParticipantFromBasicBlueprint,
+  replaceBasicGroupsForChaseType,
+  updateBasicCard,
+  validateBasicBuilderBlueprint
+} from "../builder/basic-builder-model.js";
 
 function contentApi(registries) {
   return {
@@ -70,7 +92,7 @@ function contentApi(registries) {
   };
 }
 
-export function createPublicApi({ registries = createRegistryService(), persistenceStore = createMemoryChaseStore() } = {}) {
+export function createPublicApi({ registries = createRegistryService(), persistenceStore = createMemoryChaseStore(), ui = null } = {}) {
   const content = contentApi(registries);
   const extensions = createExtensionPublicApi(registries);
   const route = createRouteGraphEngine();
@@ -103,7 +125,8 @@ export function createPublicApi({ registries = createRegistryService(), persiste
       effectForgeBridge: 1,
       protectedPersistence: 1,
       blueprintTransfer: 1,
-      chaseReference: 1
+      chaseReference: 1,
+      basicBuilder: BASIC_BUILDER_CONTRACT_VERSION
     }),
     getCapabilities: () => Object.freeze({
       coreDataModel: true,
@@ -134,6 +157,8 @@ export function createPublicApi({ registries = createRegistryService(), persiste
       blueprintJsonTransfer: true,
       contentSnapshots: true,
       sessionLifecycle: true,
+      basicBuilder: true,
+      builderUi: Boolean(ui?.openBuilder),
       gmRunner: false,
       playerView: false,
       consequenceEngine: true,
@@ -226,6 +251,34 @@ export function createPublicApi({ registries = createRegistryService(), persiste
         createBridge: createEffectForgeBridge
       })
     }),
+    builder: Object.freeze({
+      contractVersion: BASIC_BUILDER_CONTRACT_VERSION,
+      createDraft: createBasicBuilderDraft,
+      createManualCard: createManualChaseCard,
+      createApproach: createBasicApproach,
+      isEditable: isBasicLinearBlueprint,
+      listCards: listBasicCards,
+      rebuildLinearGraph: rebuildBasicLinearGraph,
+      addCard: addCardToBasicBlueprint,
+      addManualCard: addManualCardToBasicBlueprint,
+      updateCard: updateBasicCard,
+      removeCard: removeCardFromBasicBlueprint,
+      moveCard: moveCardInBasicBlueprint,
+      addApproach: addApproachToBasicCard,
+      removeApproach: removeApproachFromBasicCard,
+      addParticipant: addParticipantToBasicBlueprint,
+      removeParticipant: removeParticipantFromBasicBlueprint,
+      participantFromDocument,
+      resetGroupsForType: replaceBasicGroupsForChaseType,
+      validate: validateBasicBuilderBlueprint,
+      summary: basicBuilderSummary
+    }),
+    ui: Object.freeze({
+      openBuilder: options => ui?.openBuilder?.(options) ?? null,
+      closeBuilder: () => ui?.closeBuilder?.() ?? false,
+      getOpenBuilder: () => ui?.getOpenBuilder?.() ?? null,
+      debugBuilderLayout: options => ui?.debugLayout?.(options) ?? null
+    }),
     persistence,
     sessionManager,
     cards: content.cards,
@@ -239,10 +292,10 @@ export function createPublicApi({ registries = createRegistryService(), persiste
   });
 }
 
-export function initializePublicApi({ registries = createRegistryService(), persistenceStore = createMemoryChaseStore() } = {}) {
+export function initializePublicApi({ registries = createRegistryService(), persistenceStore = createMemoryChaseStore(), ui = null } = {}) {
   const module = game.modules.get(MODULE_ID);
   if (!module) throw new Error(`Module ${MODULE_ID} is unavailable.`);
-  const api = createPublicApi({ registries, persistenceStore });
+  const api = createPublicApi({ registries, persistenceStore, ui });
   module.api = api;
   return api;
 }

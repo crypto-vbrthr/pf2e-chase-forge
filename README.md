@@ -1,117 +1,114 @@
 # PF2E Chase Forge
 
-**Version:** 0.1.0-dev.6  
+**Version:** 0.1.0-dev.7.4.3  
 **Foundry VTT:** 14  
 **System:** Pathfinder 2e
 
-PF2E Chase Forge is a modular chase framework for Foundry VTT. `0.1.0-dev.6` adds protected Blueprint and Session persistence on top of the graph, registry, PF2e rules, consequence, and Effect Forge foundations from dev.1-dev.5.
+PF2E Chase Forge is a modular Pathfinder 2e chase framework for Foundry VTT. `0.1.0-dev.7.4.3` includes the first real GM-facing interface: the **Basic Chase Builder** for creating, editing, saving, duplicating, and starting prepared linear chases.
 
-The module still has no Chase Builder or Runner UI. This build makes prepared and running chases durable Foundry world data so the next UI blocks can operate on stable, restart-safe state.
+The underlying dev.1-dev.6 architecture remains intact: DAG route graphs, add-on registries, PF2e chase rules, consequence orchestration, optional Critical Forge / Effect Forge integration, and protected restart-safe Blueprint/Session persistence.
 
-## dev.6 scope
+## dev.7.3 scroll-layout hotfix
 
-Implemented:
+The Builder window now uses the ApplicationV2 window height as the authoritative layout boundary. The toolbar remains fixed inside the Builder while the main editor pane and Blueprint sidebar scroll independently. This avoids the intrinsic-height growth that prevented any scrollbar from appearing in dev.7.1/dev.7.2. The deprecated Scene Control `onClick` handler has also been removed; Foundry v13+ uses `onChange`.
 
-- ownership-protected canonical persistence in an internal `JournalEntry` flag;
-- no secret Chase data stored in world settings;
-- hidden world settings store only the storage schema marker and protected vault id;
-- fail-closed handling if a previously established protected vault goes missing;
-- Persistence schema v1 with revisioned Blueprint, Session, and Result collections;
-- serialized persistence mutations;
-- `BlueprintRepository` operations for create, read, update, duplicate, list, and delete;
-- stable `ChaseBlueprint.*`, `ChaseSession.*`, and `ChaseResult.*` references;
-- Blueprint schema v2 with explicit live-reference vs. frozen-content snapshot policy;
-- Chase Card snapshots for add-on-safe prepared chases;
-- Rules Engine fallback to frozen card content when an add-on is unavailable;
-- reference diagnostics for Actor/Token UUIDs, Chase Cards, snapshot fallback, and image providers;
-- JSON Blueprint export/import with explicit transfer versioning and id policies;
-- normalization of older Blueprint schemas during import;
-- rejection of future unsupported Blueprint schemas;
-- persistent Session lifecycle: create, start, pause, resume, save, finish, abort, delete;
-- independent sessions from the same Blueprint;
-- atomic persistence of completed Session plus `ChaseResult`;
-- protected persistence exposed through the public API and `ChaseSessionManager` facade.
+## dev.7 scope
 
-## Persistence example
+The Basic Chase Builder can:
+
+- create new prepared Chase Blueprints;
+- edit name, description, GM notes, chase type, length, party level, difficulty, start distance, and round duration;
+- store environment, movement, tone, time-of-day, weather, Action, Humor, and general Blueprint tags;
+- configure Blueprint image mode, path, and alternative text;
+- maintain separate participant groups with chase roles;
+- add Actors/Tokens through drag-and-drop;
+- add currently selected Scene tokens to a participant group;
+- create manual Chase Cards;
+- clone registered add-on Chase Cards into local editable snapshots;
+- reorder and remove cards in a linear route;
+- edit card description, GM notes, type, Chase Point requirement, tags, and image data;
+- define multiple approaches/checks for a card;
+- edit skill/statistic, DC mode, fixed value, level offset, difficulty adjustment, proficiency, and hidden-DC state;
+- save, reopen, duplicate, and delete prepared chases;
+- create and start a persistent Chase Session from the Blueprint;
+- load advanced/branched Blueprints without modifying their graph and start them from the Builder.
+
+The Builder stores its edited card occurrences as Blueprint content snapshots. This keeps manual overrides local to the prepared chase and avoids mutating cards registered by add-on modules.
+
+## Opening the Builder
+
+For a GM, Chase Forge adds a **running-person Scene Control button**. The Builder is also available through the public API:
 
 ```js
 const forge = game.modules.get("pf2e-chase-forge")?.api;
-
-const blueprint = await forge.persistence.blueprints.create({
-  name: "Night Chase",
-  groups: [],
-  graph: { /* validated DAG */ }
-});
-
-const draft = await forge.persistence.sessions.createFromBlueprint(blueprint.id);
-await forge.persistence.sessions.start(draft.id);
+await forge.ui.openBuilder();
 ```
 
-A second session created from the same Blueprint starts fresh and does not mutate the source Blueprint.
-
-## Protected storage
-
-Canonical GM state lives in an ownership-protected internal `JournalEntry`. Player clients cannot use the persistence API to read this state. The later Player Chase View will be driven by a separate `ChasePublicState` projection, not by exposing raw `ChaseSession` data.
-
-See `docs/PERSISTENCE.md` for the storage contract.
-
-## Consequence flow
-
-A card may attach consequences to a PF2e degree of success. The Rules Engine still resolves Chase Points immediately and emits stable deferred consequence occurrences for everything else.
+Open a specific prepared chase:
 
 ```js
-const resolved = forge.rules.resolveCheck(session, {
-  runtimeGroupId: "runtime-heroes",
-  participantId: "hero-1",
-  approachId: "athletics",
-  total: 14,
-  natural: 2
-});
-
-const consequenceResult = await forge.consequences.executeRulesResult(resolved, {
-  confirmedOccurrenceIds: resolved.consequenceOccurrences.map(item => item.occurrenceId)
-});
-
-session = consequenceResult.session;
+await forge.ui.openBuilder({ blueprintId: "blueprint-id" });
 ```
 
-GM confirmation is required by default. The future Runner UI will use the same API rather than bypassing it.
+## Basic Builder API
 
-## Effect Forge example
-
-An embedded consequence can carry a Critical Forge Effect Definition snapshot:
+The pure Builder model is also exposed for integrations and tests:
 
 ```js
-const consequence = forge.factories.consequence({
-  id: "sprained-ankle",
-  kind: "effectForge",
-  label: "Sprained Ankle",
-  severity: "significant",
-  source: "embedded",
-  targetMode: "participant",
-  definition: {
-    schemaVersion: 2,
-    id: "pf2e-chase-forge.sprained-ankle",
-    name: "Sprained Ankle",
-    duration: { value: 10, unit: "minutes", expiry: null },
-    components: [
-      {
-        type: "movement",
-        movementType: "land",
-        value: -5,
-        modifierType: "status"
-      }
-    ],
-    application: {},
-    metadata: {
-      originModule: "pf2e-chase-forge",
-      originFeature: "chase-consequence"
-    }
-  }
-});
+const draft = forge.builder.createDraft({ name: "Night Chase" });
+const result = forge.builder.addManualCard(draft, { name: "Wide Gap" });
+const validated = forge.builder.validate(result.blueprint);
 ```
 
-Critical Forge is optional. Without it, a non-required Effect Forge consequence becomes a structured manual fallback and the Chase Session continues normally.
+Key helpers:
+
+```text
+forge.builder.createDraft(...)
+forge.builder.createManualCard(...)
+forge.builder.createApproach(...)
+forge.builder.isEditable(...)
+forge.builder.listCards(...)
+forge.builder.addCard(...)
+forge.builder.addManualCard(...)
+forge.builder.updateCard(...)
+forge.builder.removeCard(...)
+forge.builder.moveCard(...)
+forge.builder.addApproach(...)
+forge.builder.removeApproach(...)
+forge.builder.addParticipant(...)
+forge.builder.removeParticipant(...)
+forge.builder.resetGroupsForType(...)
+forge.builder.validate(...)
+forge.builder.summary(...)
+```
+
+## Linear Builder boundary
+
+`dev.7` deliberately edits only linear route graphs:
+
+```text
+Start -> Card -> Card -> Card -> End
+```
+
+The core Route Graph Engine already supports branches, shortcuts, merges, conditions, and multiple endings. A Blueprint using those features is recognized as an advanced route. The Basic Builder will not rewrite it. Full visual branching/editing is reserved for the later advanced Route Builder milestone.
+
+## Protected persistence
+
+Canonical GM Blueprint, Session, and Result data remains stored in the ownership-protected internal Chase Forge Journal vault introduced in dev.6. Player clients do not receive this raw state.
+
+Stable references remain:
+
+```text
+ChaseBlueprint.<id>
+ChaseSession.<id>
+ChaseResult.<id>
+```
+
+## Consequence and Effect Forge layers
+
+Chase Point resolution belongs to the PF2e Chase Rules Engine. Deferred route, narrative, and Actor consequences are handled by the Consequence Engine.
+
+Critical Forge / Effect Forge remains optional. When present, Chase Forge can apply real PF2e Actor effects through Critical Forge's public Effect API. Without it, optional effect consequences degrade to structured manual fallback rather than breaking the chase.
 
 ## Public API
 
@@ -119,39 +116,34 @@ Critical Forge is optional. Without it, a non-required Effect Forge consequence 
 const forge = game.modules.get("pf2e-chase-forge")?.api;
 ```
 
-Public persistence surfaces:
+Current API version: `7`.
+
+Important surfaces:
 
 ```text
-forge.persistence.initialize()
-forge.persistence.status()
-forge.persistence.blueprints.*
-forge.persistence.sessions.*
-forge.persistence.results.*
-forge.persistence.references.*
-forge.sessionManager.*
-
-forge.consequences.createOccurrence(...)
-forge.consequences.fromRulesResult(...)
-forge.consequences.plan(...)
-forge.consequences.execute(...)
-forge.consequences.executeRulesResult(...)
-forge.consequences.records(...)
-
-forge.integrations.effectForge.inspect()
-forge.integrations.effectForge.isAvailable()
-forge.integrations.effectForge.resolveDefinition(...)
-forge.integrations.effectForge.analyze(...)
-forge.integrations.effectForge.apply(...)
-forge.integrations.effectForge.openEditor(...)
+forge.builder
+forge.ui
+forge.persistence
+forge.sessionManager
+forge.route
+forge.rules
+forge.pf2e
+forge.consequences
+forge.integrations.effectForge
+forge.cards
+forge.templates
+forge.packs
+forge.images
+forge.extensions
+forge.registries
 ```
-
-Existing route, rules, PF2e, registry, pack, and image-provider APIs remain available.
 
 See:
 
 - `docs/ARCHITECTURE.md`
 - `docs/DATA_MODEL.md`
 - `docs/API.md`
+- `docs/BASIC_BUILDER.md`
 - `docs/ROUTE_ENGINE.md`
 - `docs/RULES_ENGINE.md`
 - `docs/CONSEQUENCE_ENGINE.md`
@@ -162,10 +154,13 @@ See:
 
 ## Deliberately not implemented yet
 
-- GM Chase Runner;
-- Player Chase View and synchronization;
-- generator/content library;
-- Journal and Campaign Forge integration.
+- GM Chase Runner and Chat workflow;
+- Player Chase View and session synchronization;
+- visual branch/merge Route Builder;
+- generator and large Core Card library;
+- full Image Provider UI;
+- Journal embedding;
+- Campaign Forge integration.
 
 ## Testing
 
@@ -173,4 +168,17 @@ See:
 npm test
 ```
 
-The dev.6 suite covers the complete dev.1-dev.5 baseline plus protected Foundry storage, restart recovery, Blueprint CRUD, JSON transfer, content snapshots, reference diagnostics, independent Session instances, and lifecycle persistence.
+The dev.7 suite covers the full dev.1-dev.6 baseline plus Basic Builder graph construction, local card snapshots, card overrides, approach editing, participant handling, group-role resets, public Builder API, Scene Control wiring, UI service lifecycle, localization/template packaging, and existing persistence/rules hardening.
+
+## Builder layout diagnostics (dev.7.4.1)
+
+This diagnostic build logs the builder's calculated layout after every render at the next animation frame, +100 ms, and +500 ms. The log groups are prefixed with `pf2e-chase-forge | Builder layout diagnostics`.
+
+For a manual snapshot while the builder is open, run:
+
+```js
+const chase = game.modules.get("pf2e-chase-forge").api;
+chase.ui.debugBuilderLayout();
+```
+
+The report contains client/scroll/offset heights and computed flex/overflow values for the ApplicationV2 root, `.window-content`, part wrapper, builder shell, main column, toolbar, editor scroll area, sidebar, and the editor's parent chain.

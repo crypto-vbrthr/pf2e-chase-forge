@@ -2,7 +2,7 @@
 
 ## Baseline
 
-Version `0.1.0-dev.6` adds protected Blueprint and Session persistence while retaining the route, PF2e rules, consequence, Effect Forge, and extension layers as separate services.
+Version `0.1.0-dev.7.4.2` adds the first GM-facing Basic Chase Builder while keeping UI, persistence, route traversal, PF2e rules, consequences, and integrations as separate layers.
 
 ```text
 External Chase Add-ons
@@ -32,12 +32,39 @@ Extension Contract / Registries
    Route outcomes     Effect Forge Bridge
                      optional Critical Forge
                  |
-          Future Session Manager
+         Persistence Service
+                 |
+         Protected Journal Vault
                  |
         +--------+---------+
         |                  |
-    GM Runner        Player View
+        v                  v
+ Basic Chase Builder   Future GM Runner
+        |                  |
+        v                  v
+ Prepared Blueprint    Future Player View
 ```
+
+## Basic Builder boundary
+
+The Basic Builder edits only linear route graphs. It never bypasses the data model or persistence services.
+
+```text
+ApplicationV2 UI
+      |
+      v
+Basic Builder Model
+      |
+      v
+ChaseBlueprint v2
+      |
+      v
+BlueprintRepository
+```
+
+Registered add-on cards are cloned into Blueprint-local snapshots before editing. The Builder therefore never mutates a registry-owned card.
+
+Advanced route graphs are detected and treated as read/start-only in dev.7. The later advanced Route Builder will own branch/merge editing.
 
 ## Engine boundaries
 
@@ -45,28 +72,17 @@ The Route Graph Engine answers where runtime groups may move.
 
 The PF2e Rules Engine resolves DCs, degrees of success, Chase Points, rounds, steady pace, and chase-ending rules.
 
-The Consequence Engine applies the non-point consequences emitted by the Rules Engine and owns confirmation, idempotency, route-consequence execution, and external-effect fallback behavior.
+The Consequence Engine applies deferred route, narrative, and Actor consequences.
 
 The Effect Forge bridge never compiles PF2e Rule Elements itself. Critical Forge owns Effect Definition migration, validation, compilation, and Actor effect application.
 
-## Authority boundary
+## Authority and secrecy
 
-All route/rules/consequence mutations remain snapshot-in/snapshot-out. A later `ChaseSessionManager` will make the GM-side session authoritative and persist the snapshots.
+Canonical GM state is stored in the protected persistence vault. Player clients must never receive raw `ChaseSession` or Blueprint GM notes.
 
-Stable consequence occurrence ids are specifically intended to protect the future socket layer from duplicate requests.
-
-Players will never receive raw `ChaseSession` data. `ChasePublicState` remains the security boundary for hidden routes, hidden DCs, GM notes, undiscovered content, and opponent-only state.
-
-## Optional integrations
-
-Critical Forge is optional and discovered at runtime through its public API. Missing optional effects degrade to manual fallbacks. Chase Forge contains no direct imports from Critical Forge.
-
-Campaign Forge and Journal integration remain later milestones.
-
+The later Player Chase View will be driven by `ChasePublicState` projections and player intents. dev.7 does not add any player-facing transport.
 
 ## Protected persistence
-
-`0.1.0-dev.6` introduces the persistence boundary:
 
 ```text
 BlueprintRepository ─┐
@@ -74,6 +90,16 @@ SessionManager ──────┼─> Persistence Service ─> Protected Jour
 ResultRepository ────┘
 ```
 
-Canonical GM data is never stored in a client-readable world-setting payload. Non-GM clients cannot read the canonical persistence service. A later synchronization block will project only `ChasePublicState` to players.
+Stable references are storage-location independent:
 
-Blueprint and Session references are storage-location independent (`ChaseBlueprint.*`, `ChaseSession.*`, `ChaseResult.*`) so Journal and Campaign Forge integrations do not depend on the internal vault document.
+```text
+ChaseBlueprint.*
+ChaseSession.*
+ChaseResult.*
+```
+
+## Optional integrations
+
+Critical Forge remains optional and is discovered through its public Effect API. Missing optional effects degrade to manual fallback.
+
+Campaign Forge and Journal embedding remain later milestones.

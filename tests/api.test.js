@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { createPublicApi } from "../scripts/api/public-api.js";
 import { sampleBlueprint } from "./helpers.js";
 
-test("dev.6 public API advertises persistence, route, rules, and consequence capabilities", () => {
+test("dev.7 public API advertises builder, persistence, route, rules, and consequence capabilities", () => {
   const api = createPublicApi();
   const caps = api.getCapabilities();
   assert.equal(caps.coreDataModel, true);
@@ -32,6 +32,8 @@ test("dev.6 public API advertises persistence, route, rules, and consequence cap
   assert.equal(caps.blueprintJsonTransfer, true);
   assert.equal(caps.contentSnapshots, true);
   assert.equal(caps.sessionLifecycle, true);
+  assert.equal(caps.basicBuilder, true);
+  assert.equal(caps.builderUi, false);
   assert.equal(caps.gmRunner, false);
   assert.equal(caps.playerView, false);
   assert.equal(caps.consequenceEngine, true);
@@ -78,6 +80,8 @@ test("public API containers are frozen", () => {
   assert.equal(Object.isFrozen(api.consequences), true);
   assert.equal(Object.isFrozen(api.integrations), true);
   assert.equal(Object.isFrozen(api.integrations.effectForge), true);
+  assert.equal(Object.isFrozen(api.builder), true);
+  assert.equal(Object.isFrozen(api.ui), true);
   assert.equal(Object.isFrozen(api.persistence), true);
   assert.equal(Object.isFrozen(api.persistence.blueprints), true);
   assert.equal(Object.isFrozen(api.persistence.sessions), true);
