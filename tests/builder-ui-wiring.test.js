@@ -54,6 +54,7 @@ test("Builder template and localization resources are packaged", async () => {
   assert.match(template, /data-action="saveBlueprint"/);
   assert.match(template, /data-participant-drop/);
   assert.match(template, /data-builder-card/);
+  assert.match(template, /data-action="applyWeatherForge"/);
   assert.doesNotMatch(template, /\(concat\s/);
   assert.match(css, /\.chase-builder-shell/);
   assert.match(css, /\.pf2e-chase-forge\.chase-forge-builder\s*\{[^}]*display:\s*flex !important;[^}]*overflow:\s*hidden !important;/s);
@@ -64,6 +65,8 @@ test("Builder template and localization resources are packaged", async () => {
   assert.match(css, /\.chase-builder-editor-scroll::\-webkit-scrollbar,[^}]*\.chase-builder-sidebar::\-webkit-scrollbar\s*\{[^}]*width:\s*12px;/s);
   assert.equal(de["PF2E_CHASE_FORGE.Builder.Title"].length > 0, true);
   assert.equal(en["PF2E_CHASE_FORGE.Builder.Title"].length > 0, true);
+  assert.equal(de["PF2E_CHASE_FORGE.Builder.WeatherForgeApply"].length > 0, true);
+  assert.equal(en["PF2E_CHASE_FORGE.Builder.WeatherForgeApply"].length > 0, true);
 });
 
 test("Builder UI service lazily creates a GM ApplicationV2 window and reuses it", async () => {
@@ -113,4 +116,62 @@ test("builder applies runtime layout enforcement for Foundry ApplicationV2", asy
   assert.match(source, /setImportantStyle\(windowContent, "overflow-y", "scroll"\)/);
   assert.match(source, /setImportantStyle\(shell, "display", "grid"\)/);
   assert.match(source, /render\+500ms/);
+});
+
+
+test("Builder integrates optional Weather Forge prefill without overwriting loaded Blueprints implicitly", async () => {
+  const source = await readFile(new URL("../scripts/app/chase-builder-app.js", import.meta.url), "utf8");
+  assert.match(source, /_applyWeatherForgePrefill/);
+  assert.match(source, /onlyUnset:\s*true/);
+  assert.match(source, /applyWeatherForge:\s*this\._actionApplyWeatherForge/);
+  assert.match(source, /existingWeather && weather === existingWeatherLabel \? cloneData\(existingWeather\)/);
+});
+
+test("new Builder window prefills current Weather Forge values when integration is available", async () => {
+  const previousFoundry = globalThis.foundry;
+  const previousGame = globalThis.game;
+  const previousUi = globalThis.ui;
+  class ApplicationV2 {
+    constructor(options = {}) { this.options = options; this.renderCalls = 0; }
+    async render() { this.renderCalls += 1; return this; }
+    async close() { return this; }
+    async _prepareContext() { return {}; }
+    async _onRender() {}
+  }
+  const HandlebarsApplicationMixin = Base => class extends Base {};
+  globalThis.foundry = { applications: { api: { ApplicationV2, HandlebarsApplicationMixin, DialogV2: { confirm: async () => true } } } };
+  globalThis.game = { user: { isGM: true }, i18n: { localize: key => key, format: key => key } };
+  globalThis.ui = { notifications: { info() {}, warn() {}, error() {} } };
+  try {
+    const { createChaseBuilderUiService } = await import("../scripts/app/chase-builder-app.js");
+    const fakeApi = {
+      persistence: { blueprints: {} },
+      integrations: {
+        weatherForge: {
+          moduleId: "pf2e-weather-forge",
+          contractVersion: 1,
+          isAvailable: () => true,
+          readCurrent: async () => ({
+            available: true,
+            timeOfDay: "evening",
+            weather: {
+              label: "Regen, 11 °C, Brise",
+              source: { moduleId: "pf2e-weather-forge", capturedAt: "2026-08-24T19:00:00.000Z" }
+            }
+          })
+        }
+      },
+      factories: { blueprint: value => value }
+    };
+    const service = createChaseBuilderUiService({ getApi: () => fakeApi });
+    const app = await service.openBuilder();
+    assert.equal(app.draft.settings.timeOfDay, "evening");
+    assert.equal(app.draft.settings.weather.label, "Regen, 11 °C, Brise");
+    assert.equal(app.draft.settings.weather.source.moduleId, "pf2e-weather-forge");
+    await service.closeBuilder();
+  } finally {
+    if (previousFoundry === undefined) delete globalThis.foundry; else globalThis.foundry = previousFoundry;
+    if (previousGame === undefined) delete globalThis.game; else globalThis.game = previousGame;
+    if (previousUi === undefined) delete globalThis.ui; else globalThis.ui = previousUi;
+  }
 });

@@ -39,6 +39,8 @@ test("dev.7 public API advertises builder, persistence, route, rules, and conseq
   assert.equal(caps.consequenceEngine, true);
   assert.equal(caps.effectForgeBridge, true);
   assert.equal(caps.effectForgeAvailable, false);
+  assert.equal(caps.weatherForgeBridge, true);
+  assert.equal(caps.weatherForgeAvailable, false);
   assert.equal(caps.campaignForgeBridge, false);
 });
 
@@ -80,6 +82,7 @@ test("public API containers are frozen", () => {
   assert.equal(Object.isFrozen(api.consequences), true);
   assert.equal(Object.isFrozen(api.integrations), true);
   assert.equal(Object.isFrozen(api.integrations.effectForge), true);
+  assert.equal(Object.isFrozen(api.integrations.weatherForge), true);
   assert.equal(Object.isFrozen(api.builder), true);
   assert.equal(Object.isFrozen(api.ui), true);
   assert.equal(Object.isFrozen(api.persistence), true);
@@ -138,6 +141,30 @@ test("Effect Forge availability capability is detected dynamically from Critical
     const api = createPublicApi();
     assert.equal(api.getCapabilities().effectForgeAvailable, true);
     assert.equal(api.integrations.effectForge.inspect().compatible, true);
+  } finally {
+    if (previousGame === undefined) delete globalThis.game;
+    else globalThis.game = previousGame;
+  }
+});
+
+
+test("Weather Forge availability capability is detected dynamically from its public API", () => {
+  const previousGame = globalThis.game;
+  globalThis.game = {
+    modules: new Map([["pf2e-weather-forge", {
+      active: true,
+      api: {
+        version: 1,
+        capabilities: { currentWeatherContext: true },
+        getWeather() { return { timeSegment: "evening", precipitation: "none", temperature: 15, windStrength: 1 }; },
+        async getCurrentWeatherContext() { return { version: 1, weather: this.getWeather() }; }
+      }
+    }]])
+  };
+  try {
+    const api = createPublicApi();
+    assert.equal(api.getCapabilities().weatherForgeAvailable, true);
+    assert.equal(api.integrations.weatherForge.inspect().compatible, true);
   } finally {
     if (previousGame === undefined) delete globalThis.game;
     else globalThis.game = previousGame;

@@ -37,6 +37,7 @@ import { evaluateRouteCondition, evaluateRouteConditions } from "../engine/route
 import { createRegistryService } from "../registries/registry-service.js";
 import { createConsequenceEngine, createConsequenceOccurrence } from "../consequences/consequence-engine.js";
 import { createEffectForgeBridge, inspectEffectForgeApi } from "../integrations/effect-forge-bridge.js";
+import { createWeatherForgeBridge, inspectWeatherForgeApi, WEATHER_FORGE_BRIDGE_CONTRACT_VERSION } from "../integrations/weather-forge-bridge.js";
 import { createChasePersistenceService } from "../persistence/persistence-service.js";
 import { createMemoryChaseStore } from "../persistence/memory-store.js";
 import { createChaseSessionManager } from "../persistence/session-manager.js";
@@ -99,6 +100,7 @@ export function createPublicApi({ registries = createRegistryService(), persiste
   const rules = createChaseRulesEngine({ registries, routeEngine: route });
   const pf2eAdapter = createPf2eChaseAdapter();
   const effectForgeBridge = createEffectForgeBridge();
+  const weatherForgeBridge = createWeatherForgeBridge();
   const consequences = createConsequenceEngine({ routeEngine: route, effectForgeBridge });
   const persistence = createChasePersistenceService({ store: persistenceStore, routeEngine: route, rulesEngine: rules, registries });
   const sessionManager = createChaseSessionManager(persistence);
@@ -123,6 +125,7 @@ export function createPublicApi({ registries = createRegistryService(), persiste
       pf2eAdapter: 1,
       consequenceEngine: 1,
       effectForgeBridge: 1,
+      weatherForgeBridge: WEATHER_FORGE_BRIDGE_CONTRACT_VERSION,
       protectedPersistence: 1,
       blueprintTransfer: 1,
       chaseReference: 1,
@@ -164,6 +167,8 @@ export function createPublicApi({ registries = createRegistryService(), persiste
       consequenceEngine: true,
       effectForgeBridge: true,
       effectForgeAvailable: effectForgeBridge.inspect().compatible,
+      weatherForgeBridge: true,
+      weatherForgeAvailable: weatherForgeBridge.inspect().compatible,
       campaignForgeBridge: false
     }),
     factories: Object.freeze({
@@ -249,6 +254,15 @@ export function createPublicApi({ registries = createRegistryService(), persiste
         openEditor: effectForgeBridge.openEditor,
         inspectApi: inspectEffectForgeApi,
         createBridge: createEffectForgeBridge
+      }),
+      weatherForge: Object.freeze({
+        moduleId: weatherForgeBridge.moduleId,
+        contractVersion: weatherForgeBridge.contractVersion,
+        inspect: weatherForgeBridge.inspect,
+        isAvailable: weatherForgeBridge.isAvailable,
+        readCurrent: weatherForgeBridge.readCurrent,
+        inspectApi: inspectWeatherForgeApi,
+        createBridge: createWeatherForgeBridge
       })
     }),
     builder: Object.freeze({

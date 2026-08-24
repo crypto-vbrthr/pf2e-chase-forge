@@ -1,9 +1,7 @@
 {
   "PF2E_CHASE_FORGE.Name": "PF2E Chase Forge",
   "PF2E_CHASE_FORGE.Ready": "PF2E Chase Forge: Geschützte Blueprint- und Session-Persistenz bereit.",
-
   "PF2E_CHASE_FORGE.Common.NotSet": "Nicht festgelegt",
-
   "PF2E_CHASE_FORGE.Builder.Title": "PF2E Chase Forge – Verfolgungsjagd vorbereiten",
   "PF2E_CHASE_FORGE.Builder.SceneTool": "Chase Forge öffnen",
   "PF2E_CHASE_FORGE.Builder.Kicker": "Basic Chase Builder",
@@ -37,7 +35,6 @@
   "PF2E_CHASE_FORGE.Builder.DropFailed": "Der Beteiligte konnte nicht hinzugefügt werden.",
   "PF2E_CHASE_FORGE.Builder.NoSelectedTokens": "Es sind keine Tokens ausgewählt.",
   "PF2E_CHASE_FORGE.Builder.CardUnavailable": "Diese Chase-Karte ist nicht mehr verfügbar.",
-
   "PF2E_CHASE_FORGE.Builder.Basics": "Grunddaten",
   "PF2E_CHASE_FORGE.Builder.BasicsHint": "Regeltyp, Schwierigkeitsrahmen und grundlegende Dauer der Verfolgungsjagd.",
   "PF2E_CHASE_FORGE.Builder.Name": "Name",
@@ -49,7 +46,6 @@
   "PF2E_CHASE_FORGE.Builder.Difficulty": "Schwierigkeit",
   "PF2E_CHASE_FORGE.Builder.StartDistance": "Startabstand in Hindernissen",
   "PF2E_CHASE_FORGE.Builder.RoundDuration": "Dauer einer Chase-Runde",
-
   "PF2E_CHASE_FORGE.Builder.SceneParameters": "Szene & Stimmung",
   "PF2E_CHASE_FORGE.Builder.SceneParametersHint": "Diese Angaben dienen später Generator, Kartenfiltern und Bildprovidern.",
   "PF2E_CHASE_FORGE.Builder.EnvironmentTags": "Umgebung",
@@ -64,7 +60,6 @@
   "PF2E_CHASE_FORGE.Builder.ImageMode": "Bildmodus",
   "PF2E_CHASE_FORGE.Builder.ImagePath": "Bildpfad",
   "PF2E_CHASE_FORGE.Builder.ImageAlt": "Alternativtext",
-
   "PF2E_CHASE_FORGE.Builder.Participants": "Beteiligte",
   "PF2E_CHASE_FORGE.Builder.ParticipantsHint": "Actors oder Tokens in die Gruppen ziehen oder ausgewählte Tokens übernehmen.",
   "PF2E_CHASE_FORGE.Builder.ResetGroups": "Gruppen an Chase-Typ anpassen",
@@ -73,7 +68,6 @@
   "PF2E_CHASE_FORGE.Builder.Public": "Für Spieler sichtbar",
   "PF2E_CHASE_FORGE.Builder.DropActorsHere": "Actors oder Tokens hier ablegen",
   "PF2E_CHASE_FORGE.Builder.AddSelectedTokens": "Ausgewählte Tokens hinzufügen",
-
   "PF2E_CHASE_FORGE.Builder.Route": "Linearer Verlauf",
   "PF2E_CHASE_FORGE.Builder.RouteHint": "dev.7 bearbeitet einen linearen Kartenstrang. Branches und Zusammenführungen folgen im erweiterten Route Builder.",
   "PF2E_CHASE_FORGE.Builder.AddManualCard": "Manuelles Hindernis",
@@ -101,64 +95,65 @@
   "PF2E_CHASE_FORGE.Builder.DifficultyAdjustment": "SG-Anpassung",
   "PF2E_CHASE_FORGE.Builder.Proficiency": "Kompetenzgrad",
   "PF2E_CHASE_FORGE.Builder.HiddenDc": "SG geheim",
-
   "PF2E_CHASE_FORGE.ChaseType.pursuit": "Jagen",
   "PF2E_CHASE_FORGE.ChaseType.escape": "Fortlaufen",
   "PF2E_CHASE_FORGE.ChaseType.againstClock": "Gegen die Uhr",
   "PF2E_CHASE_FORGE.ChaseType.race": "Wettrennen",
-
   "PF2E_CHASE_FORGE.Length.short": "Kurz",
   "PF2E_CHASE_FORGE.Length.medium": "Mittel",
   "PF2E_CHASE_FORGE.Length.long": "Lang",
   "PF2E_CHASE_FORGE.Length.custom": "Benutzerdefiniert",
-
   "PF2E_CHASE_FORGE.Difficulty.easy": "Leicht",
   "PF2E_CHASE_FORGE.Difficulty.moderate": "Moderat",
   "PF2E_CHASE_FORGE.Difficulty.hard": "Schwer",
   "PF2E_CHASE_FORGE.Difficulty.extreme": "Extrem",
   "PF2E_CHASE_FORGE.Difficulty.custom": "Benutzerdefiniert",
-
   "PF2E_CHASE_FORGE.ImageMode.none": "Ohne Bild",
   "PF2E_CHASE_FORGE.ImageMode.manual": "Manuelles Bild",
   "PF2E_CHASE_FORGE.ImageMode.predefined": "Vordefiniertes Bild",
   "PF2E_CHASE_FORGE.ImageMode.provider": "Bildprovider",
   "PF2E_CHASE_FORGE.ImageMode.automatic": "Automatisch",
-
   "PF2E_CHASE_FORGE.GroupRole.quarry": "Flüchtige",
   "PF2E_CHASE_FORGE.GroupRole.pursuer": "Verfolger",
   "PF2E_CHASE_FORGE.GroupRole.competitor": "Wettkämpfer",
   "PF2E_CHASE_FORGE.GroupRole.participant": "Beteiligte",
-
   "PF2E_CHASE_FORGE.CardType.obstacle": "Hindernis",
   "PF2E_CHASE_FORGE.CardType.complication": "Komplikation",
   "PF2E_CHASE_FORGE.CardType.opportunity": "Gelegenheit",
   "PF2E_CHASE_FORGE.CardType.finale": "Finale",
-
   "PF2E_CHASE_FORGE.DcMode.level": "Stufen-SG",
   "PF2E_CHASE_FORGE.DcMode.fixed": "Fester SG",
   "PF2E_CHASE_FORGE.DcMode.simple": "Einfacher SG",
   "PF2E_CHASE_FORGE.DcMode.gm": "SL legt SG fest",
   "PF2E_CHASE_FORGE.DcMode.none": "Keine Probe",
-
   "PF2E_CHASE_FORGE.Proficiency.untrained": "Ungeübt",
   "PF2E_CHASE_FORGE.Proficiency.trained": "Geübt",
   "PF2E_CHASE_FORGE.Proficiency.expert": "Experte",
   "PF2E_CHASE_FORGE.Proficiency.master": "Meister",
   "PF2E_CHASE_FORGE.Proficiency.legendary": "Legende",
-
   "PF2E_CHASE_FORGE.ToneLevel.none": "Kein",
   "PF2E_CHASE_FORGE.ToneLevel.low": "Niedrig",
   "PF2E_CHASE_FORGE.ToneLevel.medium": "Mittel",
   "PF2E_CHASE_FORGE.ToneLevel.high": "Hoch",
-
   "PF2E_CHASE_FORGE.Time.dawn": "Morgendämmerung",
   "PF2E_CHASE_FORGE.Time.day": "Tag",
   "PF2E_CHASE_FORGE.Time.dusk": "Abenddämmerung",
   "PF2E_CHASE_FORGE.Time.night": "Nacht",
-
   "PF2E_CHASE_FORGE.RoundUnit.rounds": "Runden",
   "PF2E_CHASE_FORGE.RoundUnit.seconds": "Sekunden",
   "PF2E_CHASE_FORGE.RoundUnit.minutes": "Minuten",
   "PF2E_CHASE_FORGE.RoundUnit.hours": "Stunden",
-  "PF2E_CHASE_FORGE.RoundUnit.days": "Tage"
+  "PF2E_CHASE_FORGE.RoundUnit.days": "Tage",
+  "PF2E_CHASE_FORGE.Time.morning": "Morgen",
+  "PF2E_CHASE_FORGE.Time.noon": "Mittag",
+  "PF2E_CHASE_FORGE.Time.afternoon": "Nachmittag",
+  "PF2E_CHASE_FORGE.Time.evening": "Abend",
+  "PF2E_CHASE_FORGE.Builder.WeatherForgeTitle": "Weather Forge",
+  "PF2E_CHASE_FORGE.Builder.WeatherForgeHint": "Bei neuen Verfolgungsjagden werden aktuelle Tageszeit und Wetter automatisch aus Weather Forge vorbelegt. Mit diesem Button kannst du die aktuellen Werte erneut übernehmen.",
+  "PF2E_CHASE_FORGE.Builder.WeatherForgeApply": "Aktuelle Werte übernehmen",
+  "PF2E_CHASE_FORGE.Builder.WeatherForgeApplied": "Tageszeit und Wetter wurden aus Weather Forge übernommen.",
+  "PF2E_CHASE_FORGE.Builder.WeatherForgeNoChange": "Die aktuellen Weather-Forge-Werte waren bereits gesetzt.",
+  "PF2E_CHASE_FORGE.Builder.WeatherForgeUnavailable": "Weather Forge ist nicht verfügbar.",
+  "PF2E_CHASE_FORGE.Builder.WeatherForgeFailed": "Weather Forge konnte nicht ausgelesen werden.",
+  "PF2E_CHASE_FORGE.Builder.WeatherForgeSource": "Weather Forge"
 }

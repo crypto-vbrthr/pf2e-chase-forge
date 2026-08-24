@@ -1,3 +1,15 @@
+## 0.1.0-dev.7.5 – Weather Forge Builder Prefill
+
+- Adds an optional Weather Forge integration through its public API only; no hard dependency is introduced.
+- New chases automatically prefill the current Weather Forge daypart and weather when Weather Forge is active and compatible.
+- Adds a manual "Use current values" action in the Builder so the GM can refresh time of day and weather at any point before saving.
+- Stores Weather Forge weather as structured Blueprint metadata (precipitation, temperature, humidity, cloud density, wind, climate, extremes and provenance) while keeping the field manually editable.
+- Preserves Weather Forge metadata as long as the displayed weather text is not manually changed.
+- Expands Chase Forge time-of-day choices with Weather Forge's canonical morning/noon/afternoon/evening/night dayparts while retaining legacy dawn/day/dusk values for existing Blueprints.
+- Exposes `integrations.weatherForge` and additive Weather Forge capability flags without changing the Chase Forge public API version.
+- Keeps existing saved Blueprints untouched; automatic prefill applies only to newly created chases.
+- Retains the dev.7.4.3 ApplicationV2 runtime scroll enforcement.
+
 ## 0.1.0-dev.7.4.3 – Builder Runtime Scroll Enforcement
 
 - Uses the measured Foundry `window-content` element as the authoritative vertical scroll viewport.

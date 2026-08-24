@@ -1,9 +1,7 @@
 {
   "PF2E_CHASE_FORGE.Name": "PF2E Chase Forge",
   "PF2E_CHASE_FORGE.Ready": "PF2E Chase Forge: protected Blueprint and Session persistence ready.",
-
   "PF2E_CHASE_FORGE.Common.NotSet": "Not set",
-
   "PF2E_CHASE_FORGE.Builder.Title": "PF2E Chase Forge – Prepare Chase",
   "PF2E_CHASE_FORGE.Builder.SceneTool": "Open Chase Forge",
   "PF2E_CHASE_FORGE.Builder.Kicker": "Basic Chase Builder",
@@ -37,7 +35,6 @@
   "PF2E_CHASE_FORGE.Builder.DropFailed": "The participant could not be added.",
   "PF2E_CHASE_FORGE.Builder.NoSelectedTokens": "No tokens are selected.",
   "PF2E_CHASE_FORGE.Builder.CardUnavailable": "This Chase Card is no longer available.",
-
   "PF2E_CHASE_FORGE.Builder.Basics": "Basics",
   "PF2E_CHASE_FORGE.Builder.BasicsHint": "Rules mode, difficulty frame, and basic chase duration.",
   "PF2E_CHASE_FORGE.Builder.Name": "Name",
@@ -49,7 +46,6 @@
   "PF2E_CHASE_FORGE.Builder.Difficulty": "Difficulty",
   "PF2E_CHASE_FORGE.Builder.StartDistance": "Starting distance in obstacles",
   "PF2E_CHASE_FORGE.Builder.RoundDuration": "Chase round duration",
-
   "PF2E_CHASE_FORGE.Builder.SceneParameters": "Scene & Tone",
   "PF2E_CHASE_FORGE.Builder.SceneParametersHint": "These values will later drive generation, card filters, and image providers.",
   "PF2E_CHASE_FORGE.Builder.EnvironmentTags": "Environment",
@@ -64,7 +60,6 @@
   "PF2E_CHASE_FORGE.Builder.ImageMode": "Image mode",
   "PF2E_CHASE_FORGE.Builder.ImagePath": "Image path",
   "PF2E_CHASE_FORGE.Builder.ImageAlt": "Alternative text",
-
   "PF2E_CHASE_FORGE.Builder.Participants": "Participants",
   "PF2E_CHASE_FORGE.Builder.ParticipantsHint": "Drop Actors or Tokens into groups, or add currently selected tokens.",
   "PF2E_CHASE_FORGE.Builder.ResetGroups": "Reset groups for chase type",
@@ -73,7 +68,6 @@
   "PF2E_CHASE_FORGE.Builder.Public": "Visible to players",
   "PF2E_CHASE_FORGE.Builder.DropActorsHere": "Drop Actors or Tokens here",
   "PF2E_CHASE_FORGE.Builder.AddSelectedTokens": "Add selected tokens",
-
   "PF2E_CHASE_FORGE.Builder.Route": "Linear Route",
   "PF2E_CHASE_FORGE.Builder.RouteHint": "dev.7 edits a linear card spine. Branches and merges arrive with the advanced Route Builder.",
   "PF2E_CHASE_FORGE.Builder.AddManualCard": "Manual obstacle",
@@ -101,64 +95,65 @@
   "PF2E_CHASE_FORGE.Builder.DifficultyAdjustment": "DC adjustment",
   "PF2E_CHASE_FORGE.Builder.Proficiency": "Proficiency",
   "PF2E_CHASE_FORGE.Builder.HiddenDc": "Hide DC",
-
   "PF2E_CHASE_FORGE.ChaseType.pursuit": "Pursuit",
   "PF2E_CHASE_FORGE.ChaseType.escape": "Escape",
   "PF2E_CHASE_FORGE.ChaseType.againstClock": "Against the Clock",
   "PF2E_CHASE_FORGE.ChaseType.race": "Race",
-
   "PF2E_CHASE_FORGE.Length.short": "Short",
   "PF2E_CHASE_FORGE.Length.medium": "Medium",
   "PF2E_CHASE_FORGE.Length.long": "Long",
   "PF2E_CHASE_FORGE.Length.custom": "Custom",
-
   "PF2E_CHASE_FORGE.Difficulty.easy": "Easy",
   "PF2E_CHASE_FORGE.Difficulty.moderate": "Moderate",
   "PF2E_CHASE_FORGE.Difficulty.hard": "Hard",
   "PF2E_CHASE_FORGE.Difficulty.extreme": "Extreme",
   "PF2E_CHASE_FORGE.Difficulty.custom": "Custom",
-
   "PF2E_CHASE_FORGE.ImageMode.none": "No image",
   "PF2E_CHASE_FORGE.ImageMode.manual": "Manual image",
   "PF2E_CHASE_FORGE.ImageMode.predefined": "Predefined image",
   "PF2E_CHASE_FORGE.ImageMode.provider": "Image provider",
   "PF2E_CHASE_FORGE.ImageMode.automatic": "Automatic",
-
   "PF2E_CHASE_FORGE.GroupRole.quarry": "Quarry",
   "PF2E_CHASE_FORGE.GroupRole.pursuer": "Pursuer",
   "PF2E_CHASE_FORGE.GroupRole.competitor": "Competitor",
   "PF2E_CHASE_FORGE.GroupRole.participant": "Participant",
-
   "PF2E_CHASE_FORGE.CardType.obstacle": "Obstacle",
   "PF2E_CHASE_FORGE.CardType.complication": "Complication",
   "PF2E_CHASE_FORGE.CardType.opportunity": "Opportunity",
   "PF2E_CHASE_FORGE.CardType.finale": "Finale",
-
   "PF2E_CHASE_FORGE.DcMode.level": "Level DC",
   "PF2E_CHASE_FORGE.DcMode.fixed": "Fixed DC",
   "PF2E_CHASE_FORGE.DcMode.simple": "Simple DC",
   "PF2E_CHASE_FORGE.DcMode.gm": "GM sets DC",
   "PF2E_CHASE_FORGE.DcMode.none": "No check",
-
   "PF2E_CHASE_FORGE.Proficiency.untrained": "Untrained",
   "PF2E_CHASE_FORGE.Proficiency.trained": "Trained",
   "PF2E_CHASE_FORGE.Proficiency.expert": "Expert",
   "PF2E_CHASE_FORGE.Proficiency.master": "Master",
   "PF2E_CHASE_FORGE.Proficiency.legendary": "Legendary",
-
   "PF2E_CHASE_FORGE.ToneLevel.none": "None",
   "PF2E_CHASE_FORGE.ToneLevel.low": "Low",
   "PF2E_CHASE_FORGE.ToneLevel.medium": "Medium",
   "PF2E_CHASE_FORGE.ToneLevel.high": "High",
-
   "PF2E_CHASE_FORGE.Time.dawn": "Dawn",
   "PF2E_CHASE_FORGE.Time.day": "Day",
   "PF2E_CHASE_FORGE.Time.dusk": "Dusk",
   "PF2E_CHASE_FORGE.Time.night": "Night",
-
   "PF2E_CHASE_FORGE.RoundUnit.rounds": "Rounds",
   "PF2E_CHASE_FORGE.RoundUnit.seconds": "Seconds",
   "PF2E_CHASE_FORGE.RoundUnit.minutes": "Minutes",
   "PF2E_CHASE_FORGE.RoundUnit.hours": "Hours",
-  "PF2E_CHASE_FORGE.RoundUnit.days": "Days"
+  "PF2E_CHASE_FORGE.RoundUnit.days": "Days",
+  "PF2E_CHASE_FORGE.Time.morning": "Morning",
+  "PF2E_CHASE_FORGE.Time.noon": "Noon",
+  "PF2E_CHASE_FORGE.Time.afternoon": "Afternoon",
+  "PF2E_CHASE_FORGE.Time.evening": "Evening",
+  "PF2E_CHASE_FORGE.Builder.WeatherForgeTitle": "Weather Forge",
+  "PF2E_CHASE_FORGE.Builder.WeatherForgeHint": "New chases automatically prefill the current time of day and weather from Weather Forge. Use this button to pull the current values again.",
+  "PF2E_CHASE_FORGE.Builder.WeatherForgeApply": "Use current values",
+  "PF2E_CHASE_FORGE.Builder.WeatherForgeApplied": "Time of day and weather were imported from Weather Forge.",
+  "PF2E_CHASE_FORGE.Builder.WeatherForgeNoChange": "The current Weather Forge values were already set.",
+  "PF2E_CHASE_FORGE.Builder.WeatherForgeUnavailable": "Weather Forge is not available.",
+  "PF2E_CHASE_FORGE.Builder.WeatherForgeFailed": "Weather Forge could not be read.",
+  "PF2E_CHASE_FORGE.Builder.WeatherForgeSource": "Weather Forge"
 }

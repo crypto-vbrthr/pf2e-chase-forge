@@ -1,5 +1,5 @@
 export const MODULE_ID = "pf2e-chase-forge";
-export const MODULE_VERSION = "0.1.0-dev.7.4.3";
+export const MODULE_VERSION = "0.1.0-dev.7.5";
 export const API_VERSION = 7;
 export const EXTENSION_CONTRACT_VERSION = 1;
 
@@ -38,7 +38,8 @@ export const EXTENSION_CAPABILITIES = Object.freeze([
   "persistence.sessions",
   "persistence.jsonTransfer",
   "persistence.contentSnapshots",
-  "builder.basic"
+  "builder.basic",
+  "integrations.weatherForge"
 ]);
 
 export const CHASE_TYPES = Object.freeze([
@@ -292,6 +293,7 @@ export const EFFECT_TARGET_MODES = Object.freeze([
   "explicit"
 ]);
 
+export const WEATHER_FORGE_MODULE_ID = "pf2e-weather-forge";
 export const CRITICAL_FORGE_MODULE_ID = "pf2e-critical-forge";
 export const EFFECT_FORGE_MIN_API_SURFACE = Object.freeze([
   "effects.migrate",

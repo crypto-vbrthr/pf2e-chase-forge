@@ -165,9 +165,23 @@
             </select>
           </label>
           <label>
-            <span>{{localize "PF2E_CHASE_FORGE.Builder.Weather"}}</span>
+            <span>
+              {{localize "PF2E_CHASE_FORGE.Builder.Weather"}}
+              {{#if weatherFromWeatherForge}}<small class="chase-builder-source-badge">{{weatherForgeSourceLabel}}</small>{{/if}}
+            </span>
             <input type="text" name="settings.weather" value="{{weatherText}}" placeholder="{{localize 'PF2E_CHASE_FORGE.Builder.WeatherPlaceholder'}}" {{#unless editable}}disabled{{/unless}}>
           </label>
+          {{#if weatherForgeAvailable}}
+          <div class="chase-builder-weather-forge wide">
+            <div>
+              <strong><i class="fa-solid fa-cloud-sun"></i> {{localize "PF2E_CHASE_FORGE.Builder.WeatherForgeTitle"}}</strong>
+              <p>{{localize "PF2E_CHASE_FORGE.Builder.WeatherForgeHint"}}</p>
+            </div>
+            <button type="button" data-action="applyWeatherForge" {{#unless editable}}disabled{{/unless}}>
+              <i class="fa-solid fa-rotate"></i> {{localize "PF2E_CHASE_FORGE.Builder.WeatherForgeApply"}}
+            </button>
+          </div>
+          {{/if}}
           <label>
             <span>{{localize "PF2E_CHASE_FORGE.Builder.ActionLevel"}}</span>
             <select name="metadata.actionLevel" {{#unless editable}}disabled{{/unless}}>

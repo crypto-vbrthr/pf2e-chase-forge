@@ -1,12 +1,41 @@
 # PF2E Chase Forge
 
-**Version:** 0.1.0-dev.7.4.3  
+**Version:** 0.1.0-dev.7.5  
 **Foundry VTT:** 14  
 **System:** Pathfinder 2e
 
-PF2E Chase Forge is a modular Pathfinder 2e chase framework for Foundry VTT. `0.1.0-dev.7.4.3` includes the first real GM-facing interface: the **Basic Chase Builder** for creating, editing, saving, duplicating, and starting prepared linear chases.
+PF2E Chase Forge is a modular Pathfinder 2e chase framework for Foundry VTT. `0.1.0-dev.7.5` extends the **Basic Chase Builder** with optional Weather Forge prefill while retaining the graph, rules, consequence, persistence, registry, and Builder architecture introduced in earlier development builds.
 
 The underlying dev.1-dev.6 architecture remains intact: DAG route graphs, add-on registries, PF2e chase rules, consequence orchestration, optional Critical Forge / Effect Forge integration, and protected restart-safe Blueprint/Session persistence.
+
+
+## dev.7.5 Weather Forge prefill
+
+When **PF2E Weather Forge** is installed and active, a newly created chase automatically adopts the current Weather Forge daypart and weather. Chase Forge talks only to Weather Forge's public API and remains fully functional without it. Existing saved Blueprints are never silently overwritten.
+
+The Builder also shows a **Use current values** button while Weather Forge is available. This lets the GM refresh both fields after world time or weather changes.
+
+Weather is stored as structured Blueprint metadata, including the short display label plus available precipitation, temperature, humidity, cloud density, wind, climate zone, extreme-weather data, provenance, and capture time. If the GM edits the weather text manually, the field becomes a normal manual weather entry.
+
+Weather Forge dayparts map directly to the new canonical Builder choices:
+
+```text
+morning
+noon
+afternoon
+evening
+night
+```
+
+Legacy `dawn`, `day`, and `dusk` choices remain available so older Blueprints continue to round-trip cleanly.
+
+Public integration surface:
+
+```js
+const forge = game.modules.get("pf2e-chase-forge")?.api;
+forge.integrations.weatherForge.inspect();
+await forge.integrations.weatherForge.readCurrent();
+```
 
 ## dev.7.3 scroll-layout hotfix
 

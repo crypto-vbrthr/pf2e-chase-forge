@@ -68,7 +68,7 @@ const DC_MODE_VALUES = ["level", "fixed", "simple", "gm", "none"];
 const PROFICIENCY_VALUES = ["untrained", "trained", "expert", "master", "legendary"];
 const DIFFICULTY_ADJUSTMENTS = [-10, -5, -2, 0, 2, 5, 10];
 const TONE_LEVEL_VALUES = ["none", "low", "medium", "high"];
-const TIME_VALUES = ["", "dawn", "day", "dusk", "night"];
+const TIME_VALUES = ["", "morning", "noon", "afternoon", "evening", "night", "dawn", "day", "dusk"];
 const ROUND_UNIT_VALUES = ["rounds", "seconds", "minutes", "hours", "days"];
 const SKILLS = [
   "acrobatics", "arcana", "athletics", "crafting", "deception", "diplomacy", "intimidation",
@@ -294,7 +294,8 @@ function getAppClass() {
         removeApproach: this._actionRemoveApproach,
         addSelectedTokens: this._actionAddSelectedTokens,
         removeParticipant: this._actionRemoveParticipant,
-        resetGroups: this._actionResetGroups
+        resetGroups: this._actionResetGroups,
+        applyWeatherForge: this._actionApplyWeatherForge
       }
     };
 
@@ -329,6 +330,59 @@ function getAppClass() {
       return this.draft;
     }
 
+    async _applyWeatherForgePrefill({ onlyUnset = true, notifyUser = false } = {}) {
+      const bridge = this.chaseApi.integrations?.weatherForge ?? null;
+      if (!bridge?.isAvailable?.()) {
+        if (notifyUser) notify("warn", i18n("PF2E_CHASE_FORGE.Builder.WeatherForgeUnavailable", "Weather Forge ist nicht verfügbar."));
+        return null;
+      }
+      try {
+        const current = await bridge.readCurrent();
+        if (!current?.available) {
+          if (notifyUser) notify("warn", i18n("PF2E_CHASE_FORGE.Builder.WeatherForgeUnavailable", "Weather Forge ist nicht verfügbar."));
+          return current;
+        }
+        const next = cloneData(this._draft);
+        let changed = false;
+        if (current.timeOfDay && (!onlyUnset || !next.settings.timeOfDay)) {
+          next.settings.timeOfDay = current.timeOfDay;
+          changed = true;
+        }
+        if (current.weather && (!onlyUnset || !next.settings.weather)) {
+          next.settings.weather = cloneData(current.weather);
+          changed = true;
+        }
+        if (changed) {
+          next.metadata ??= {};
+          next.metadata.builder ??= {};
+          next.metadata.builder.weatherForgePrefill = {
+            moduleId: bridge.moduleId,
+            contractVersion: bridge.contractVersion,
+            capturedAt: current.weather?.source?.capturedAt ?? new Date().toISOString()
+          };
+          this._draft = this.chaseApi.factories.blueprint(next);
+        }
+        if (notifyUser) {
+          notify("info", changed
+            ? i18n("PF2E_CHASE_FORGE.Builder.WeatherForgeApplied", "Tageszeit und Wetter wurden aus Weather Forge übernommen.")
+            : i18n("PF2E_CHASE_FORGE.Builder.WeatherForgeNoChange", "Die aktuellen Weather-Forge-Werte waren bereits gesetzt."));
+        }
+        return current;
+      } catch (error) {
+        console.warn(`${MODULE_ID} | Weather Forge prefill failed.`, error);
+        if (notifyUser) notify("warn", i18n("PF2E_CHASE_FORGE.Builder.WeatherForgeFailed", "Weather Forge konnte nicht ausgelesen werden."));
+        return null;
+      }
+    }
+
+    async _resetDraftWithEnvironmentPrefill() {
+      this._draft = createBasicBuilderDraft();
+      this._persisted = false;
+      this._lastValidation = null;
+      await this._applyWeatherForgePrefill({ onlyUnset: true, notifyUser: false });
+      return this._draft;
+    }
+
     async _prepareContext(options) {
       const context = await super._prepareContext(options);
       const blueprints = await this.chaseApi.persistence.blueprints.list();
@@ -342,6 +396,8 @@ function getAppClass() {
       const builderMeta = this._draft.metadata?.builder ?? {};
       const persisted = blueprints.some(item => item.id === this._draft.id);
       this._persisted = persisted;
+      const weatherForgeStatus = this.chaseApi.integrations?.weatherForge?.inspect?.() ?? { available: false, compatible: false };
+      const weatherFromWeatherForge = this._draft.settings.weather?.source?.moduleId === "pf2e-weather-forge";
 
       return {
         ...context,
@@ -392,6 +448,10 @@ function getAppClass() {
         toneText: this._draft.settings.toneTags.join(", "),
         tagsText: this._draft.tags.join(", "),
         weatherText: this._draft.settings.weather?.label ?? this._draft.settings.weather?.text ?? "",
+        weatherForgeAvailable: weatherForgeStatus.compatible === true,
+        weatherForgeVersion: weatherForgeStatus.version ?? null,
+        weatherFromWeatherForge,
+        weatherForgeSourceLabel: weatherFromWeatherForge ? i18n("PF2E_CHASE_FORGE.Builder.WeatherForgeSource", "Weather Forge") : "",
         cardCount: cards.length,
         participantCount: this._draft.groups.reduce((sum, group) => sum + group.participants.length, 0)
       };
@@ -461,7 +521,11 @@ function getAppClass() {
       next.settings.toneTags = csv(value("settings.toneTags"));
       next.settings.timeOfDay = value("settings.timeOfDay") || null;
       const weather = value("settings.weather")?.trim() ?? "";
-      next.settings.weather = weather ? { label: weather } : null;
+      const existingWeather = this._draft.settings.weather ?? null;
+      const existingWeatherLabel = existingWeather?.label ?? existingWeather?.text ?? "";
+      next.settings.weather = weather
+        ? (existingWeather && weather === existingWeatherLabel ? cloneData(existingWeather) : { label: weather })
+        : null;
       next.settings.imageMode = value("settings.imageMode") || "none";
       next.image.mode = next.settings.imageMode;
       next.image.path = value("image.path")?.trim() || null;
@@ -579,9 +643,7 @@ function getAppClass() {
     }
 
     static async _actionNewBlueprint() {
-      this._draft = createBasicBuilderDraft();
-      this._persisted = false;
-      this._lastValidation = null;
+      await this._resetDraftWithEnvironmentPrefill();
       return this.render({ force: true });
     }
 
@@ -606,13 +668,12 @@ function getAppClass() {
 
     static async _actionDeleteBlueprint() {
       if (!this._persisted) {
-        this._draft = createBasicBuilderDraft();
+        await this._resetDraftWithEnvironmentPrefill();
         return this.render({ force: true });
       }
       if (!await this._confirmDelete()) return;
       await this.chaseApi.persistence.blueprints.delete(this._draft.id);
-      this._draft = createBasicBuilderDraft();
-      this._persisted = false;
+      await this._resetDraftWithEnvironmentPrefill();
       notify("info", i18n("PF2E_CHASE_FORGE.Builder.Deleted", "Verfolgungsjagd gelöscht."));
       return this.render({ force: true });
     }
@@ -729,6 +790,12 @@ function getAppClass() {
       this._draft = replaceBasicGroupsForChaseType(this._draft, type, { preserveParticipants: true });
       return this.render({ force: true });
     }
+
+    static async _actionApplyWeatherForge() {
+      this._syncDraftFromForm();
+      await this._applyWeatherForgePrefill({ onlyUnset: false, notifyUser: true });
+      return this.render({ force: true });
+    }
   };
 
   return builderAppClass;
@@ -743,13 +810,16 @@ export function createChaseBuilderUiService({ getApi = () => globalThis.game?.mo
       }
       const chaseApi = getApi();
       if (!chaseApi?.persistence?.blueprints) throw new Error("Chase Forge persistence API is unavailable.");
+      let created = false;
       if (!openBuilderApp) {
         const App = getAppClass();
         openBuilderApp = new App(chaseApi);
+        created = true;
       }
       if (blueprintId) {
         await openBuilderApp.loadBlueprint(blueprintId);
       } else {
+        if (created) await openBuilderApp._applyWeatherForgePrefill({ onlyUnset: true, notifyUser: false });
         await openBuilderApp.render({ force: true });
       }
       return openBuilderApp;
