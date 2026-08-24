@@ -345,3 +345,19 @@ export function normalizeChasePublicState(input = {}) {
     metadata: isPlainObject(state.metadata) ? cloneData(state.metadata) : {}
   };
 }
+
+export function normalizeChasePack(input = {}) {
+  const pack = isPlainObject(input) ? input : {};
+  return {
+    schemaVersion: SCHEMA_VERSIONS.pack,
+    id: asString(pack.id, createId("pack")),
+    label: asString(pack.label, "Unnamed Chase Pack"),
+    description: asString(pack.description),
+    version: pack.version ? asString(pack.version) : null,
+    priority: asFiniteNumber(pack.priority, DEFAULTS.packPriority),
+    enabledByDefault: pack.enabledByDefault !== false,
+    cards: (Array.isArray(pack.cards) ? pack.cards : []).map(normalizeChaseCard),
+    templates: (Array.isArray(pack.templates) ? pack.templates : []).map(normalizeChaseTemplate),
+    metadata: isPlainObject(pack.metadata) ? cloneData(pack.metadata) : {}
+  };
+}

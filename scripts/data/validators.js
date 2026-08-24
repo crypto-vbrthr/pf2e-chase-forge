@@ -318,3 +318,31 @@ export function validateConsequence(consequence) {
   validateConsequenceInternal(consequence, c, "consequence");
   return c.result();
 }
+
+export function validateChasePack(pack) {
+  const c = createCollector();
+  if (!requireObject(pack, c, "pack")) return c.result();
+  requireSchema(pack.schemaVersion, SCHEMA_VERSIONS.pack, c);
+  requireNonEmptyString(pack.id, c, "id");
+  requireNonEmptyString(pack.label, c, "label");
+  if (!Array.isArray(pack.cards)) c.error("PACK_CARDS", "cards", "Pack cards must be an array.");
+  else {
+    validateUniqueIds(pack.cards, c, "cards");
+    pack.cards.forEach((card, index) => {
+      const result = validateChaseCard(card);
+      if (!result.valid) c.error("PACK_CARD_INVALID", `cards[${index}]`, `Card '${card?.id ?? index}' is invalid.`, { errors: result.errors });
+      result.warnings.forEach(warning => c.warn(warning.code, `cards[${index}].${warning.path}`, warning.message, warning.details));
+    });
+  }
+  if (!Array.isArray(pack.templates)) c.error("PACK_TEMPLATES", "templates", "Pack templates must be an array.");
+  else {
+    validateUniqueIds(pack.templates, c, "templates");
+    pack.templates.forEach((template, index) => {
+      const result = validateChaseTemplate(template);
+      if (!result.valid) c.error("PACK_TEMPLATE_INVALID", `templates[${index}]`, `Template '${template?.id ?? index}' is invalid.`, { errors: result.errors });
+      result.warnings.forEach(warning => c.warn(warning.code, `templates[${index}].${warning.path}`, warning.message, warning.details));
+    });
+  }
+  if (!Number.isFinite(pack.priority)) c.error("PACK_PRIORITY", "priority", "Pack priority must be a finite number.");
+  return c.result();
+}

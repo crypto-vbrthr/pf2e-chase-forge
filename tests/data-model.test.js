@@ -4,6 +4,7 @@ import { SCHEMA_VERSIONS } from "../scripts/core/constants.js";
 import {
   createChaseBlueprint,
   createChaseCard,
+  createChasePack,
   createChasePublicState,
   createChaseResult,
   createChaseSession,
@@ -17,6 +18,7 @@ import { branchedGraph, linearGraph, sampleBlueprint, sampleCard, sampleSession 
 test("core factories stamp schema versions", () => {
   assert.equal(createChaseCard({}).schemaVersion, SCHEMA_VERSIONS.card);
   assert.equal(createChaseTemplate({}).schemaVersion, SCHEMA_VERSIONS.template);
+  assert.equal(createChasePack({}).schemaVersion, SCHEMA_VERSIONS.pack);
   assert.equal(createChaseBlueprint({}).schemaVersion, SCHEMA_VERSIONS.blueprint);
   assert.equal(createChaseSession({}).schemaVersion, SCHEMA_VERSIONS.session);
   assert.equal(createChaseResult({}).schemaVersion, SCHEMA_VERSIONS.result);

@@ -1,11 +1,18 @@
-import { MODULE_ID } from "./core/constants.js";
+import { MODULE_ID, MODULE_VERSION } from "./core/constants.js";
 import { initializePublicApi } from "./api/public-api.js";
+import { createRegistryService } from "./registries/registry-service.js";
+import { FoundryPackStateStore, registerSettings } from "./settings.js";
+
+let registryService = null;
 
 Hooks.once("init", () => {
-  initializePublicApi();
-  console.info(`${MODULE_ID} | 0.1.0-dev.1 Architecture & Core Data Model initialized.`);
+  registerSettings();
+  registryService = createRegistryService({ stateStore: new FoundryPackStateStore() });
+  initializePublicApi({ registries: registryService });
+  console.info(`${MODULE_ID} | ${MODULE_VERSION} Registries & Public Add-On API initialized.`);
 });
 
 Hooks.once("ready", () => {
-  Hooks.callAll("pf2eChaseForge.ready", game.modules.get(MODULE_ID)?.api ?? null);
+  const api = game.modules.get(MODULE_ID)?.api ?? null;
+  Hooks.callAll("pf2eChaseForge.ready", api);
 });

@@ -14,3 +14,17 @@ export class ChaseValidationError extends ChaseDataError {
     this.name = "ChaseValidationError";
   }
 }
+
+export class ChaseRegistryError extends ChaseDataError {
+  constructor(message, options = {}) {
+    super(message, { code: "CHASE_REGISTRY_ERROR", ...options });
+    this.name = "ChaseRegistryError";
+  }
+}
+
+export class ChaseExtensionError extends ChaseDataError {
+  constructor(message, options = {}) {
+    super(message, { code: "CHASE_EXTENSION_ERROR", ...options });
+    this.name = "ChaseExtensionError";
+  }
+}

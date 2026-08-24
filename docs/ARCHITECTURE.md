@@ -2,117 +2,138 @@
 
 ## Baseline
 
-Version `0.1.0-dev.1` establishes data contracts and structural invariants. It intentionally does not implement gameplay services or UI.
-
-The architecture is layered so that later systems do not own each other's responsibilities:
+Version `0.1.0-dev.2` adds the extension and registry layer on top of the dev.1 core data model. Gameplay services and UI remain intentionally deferred.
 
 ```text
-External Add-ons                    Future Integrations
-      |                                    |
-      v                                    v
-Registries (dev.2)                 Effect / Journal / Campaign bridges
-      |                                    |
-      +----------------+-------------------+
-                       |
-                 Public Chase API
-                       |
-       +---------------+----------------+
-       |               |                |
-   Generator        Services         Projections
-   (later)          (later)           (later)
-                       |
-          +------------+------------+
-          |            |            |
-      Route Engine  Rules Engine  Session Manager
-       (dev.3)       (dev.4)       (later)
-          |            |            |
-          +------------+------------+
-                       |
-                Core Data Model
-                    (dev.1)
+External Chase Add-ons
+        |
+        v
+Extension Contract v1
+        |
+        v
++-------------------------------+
+| Registries                    |
+| Card / Template / Pack        |
+| Image Provider                |
++---------------+---------------+
+                |
+                v
+         Public Chase API
+                |
+        +-------+------------------------------+
+        |                                      |
+ Core Data Model                        Future Services
+ (dev.1)                                Route / Rules / Session
+        |                                      |
+        +-------------------+------------------+
+                            |
+                    Future GM / Player UI
 ```
 
-## Ownership rules
+## Registry ownership
 
-- `ChaseCard` describes reusable content. It never stores runtime chase progress.
-- `ChaseTemplate` describes generator defaults. It is not a running chase.
-- `ChaseBlueprint` is a prepared, linkable chase definition.
-- `ChaseSession` is mutable runtime state created from a blueprint or generated setup.
-- `ChaseResult` is immutable-style completion data for journals and future Campaign Forge integration.
-- `ChasePublicState` is the future player-view transport contract. It must be built by a projector and must never be assumed safe merely because a `ChaseSession` was normalized.
+Every external resource has one owning Foundry module id. Third-party extensions receive a bound controller through:
 
-## Route model
+```js
+forge.extensions.forModule("my-module")
+```
 
-Routes are modeled as a directed acyclic graph (DAG), never as a flat card list. A linear chase is the simplest graph:
+Local ids such as `city` are normalized to `my-module:city`. Explicit ids must use the bound module namespace. An extension cannot claim another module's namespace.
+
+The `core:` namespace is reserved for Chase Forge itself.
+
+Ownership applies to:
+
+- Chase Packs;
+- Chase Cards;
+- Chase Templates;
+- image providers.
+
+A module may replace or remove only its own resources.
+
+## Transaction boundary
+
+A Chase Pack is the atomic registration unit. A pack may contain:
 
 ```text
-Start -> A -> B -> C -> End
+Pack
+ |- Chase Cards
+ |- Chase Templates
+ `- Image Providers
 ```
 
-Branches and merges are native:
+`registerPack()` and `registerPacks()` are transactional. Validation or collision failures restore every registry to its previous state. Batch registration is atomic across all packs in the batch.
 
-```text
-             -> Roof A -> Roof B -\
-Start -> Choice                    -> Merge -> End
-             -> Alley A -> Alley B /
+Replacing a pack removes the previous resources from that pack and registers the replacement in one transaction. Existing resources in unrelated packs remain protected.
+
+## Pack activation
+
+Registration and activation are separate concepts.
+
+A disabled pack:
+
+- remains registered;
+- remains visible to diagnostic/management reads;
+- is omitted from normal card and template discovery;
+- does not contribute image providers or image candidates.
+
+Activation is persisted in a hidden world setting. This allows a later settings UI to enable or disable individual add-on content packs without unregistering them.
+
+## Image provider boundary
+
+Image providers are presentation extensions. They do not participate in chase rules or route state.
+
+A provider supplies:
+
+```js
+{
+  id,
+  label,
+  version,
+  priority,
+  tags,
+  supports(context),       // optional
+  getImages(context)       // required, sync or async
+}
 ```
 
-Multiple endings are valid. Cycles are invalid in schema v1.
+Providers are queried by descending priority. Candidate weights order images within equal provider priority. A failing provider is isolated and reported without blocking other providers.
 
-This model reserves support for:
+This is intentionally only the provider foundation. Automatic image-selection policy belongs to the later presentation/generator layer.
 
-- explicit player route choices;
-- hidden or discoverable shortcuts;
-- conditional edges;
-- groups taking different routes;
-- party splitting and later merging;
-- route history in session/result data.
+## Extension compatibility
 
-## Authority and player safety
+Extension Contract v1 can check:
 
-The future GM/session owner is authoritative for mutations. Player clients will submit intents, not direct state changes.
+- Chase Forge module version;
+- public API version;
+- extension contract version;
+- individual schema versions;
+- named extension capabilities.
 
-`ChasePublicState` exists as a separate contract so the player view can later receive only deliberately projected data. The full session may contain secret DCs, hidden edges, future cards, GM notes, and unrevealed consequences and must never be sent wholesale to players.
+Extensions should check compatibility before registering content. Bound controllers also enforce configured requirements before every registration operation.
 
-No public-state projector or socket layer is implemented in dev.1.
+## Diagnostics
 
-## Consequences and Effect Forge
+Extension registration diagnostics are session-only and intentionally not persisted to world settings. Entries record:
 
-Chase-specific consequences are represented by `ChaseConsequence`:
+- source module;
+- resource type;
+- operation;
+- success/error status;
+- stable error/diagnostic code;
+- resource ids;
+- structured details.
 
-- chase point changes;
-- route unlock/lock/select operations;
-- narrative results;
-- Effect Forge references;
-- future custom providers.
+This journal will feed the later Chase Forge diagnostics GUI.
 
-Chase Forge will own chase-state consequences. It will not reimplement the Critical Forge Effect Engine.
+## Existing dev.1 boundaries
 
-An `effectForge` consequence may store either:
+The following architectural rules remain unchanged:
 
-- an embedded Effect Definition; or
-- a UUID reference to an Effect Item.
-
-The runtime bridge to Critical Forge is deliberately deferred. dev.1 only defines and validates the reference contract.
-
-## Images
-
-Images are presentation data and never part of rules resolution. The image model reserves these modes:
-
-- none;
-- manual;
-- predefined;
-- provider;
-- automatic.
-
-Future image providers can therefore be added without changing route or rules state.
-
-## Persistence boundary
-
-Persistence is deliberately absent from dev.1. The later repository/session manager may choose Foundry Documents/flags/compendia, but it must preserve these contracts and schema versions.
-
-## Public API policy
-
-External modules must eventually use `game.modules.get("pf2e-chase-forge").api` instead of importing internal implementation files.
-
-In dev.1 only factories, validators, graph inspection helpers, schema versions, and capability flags are exposed. Registries arrive in dev.2.
+- `ChaseBlueprint` routes are DAGs rather than flat card lists;
+- the future GM/session owner is authoritative for gameplay mutations;
+- players receive a projected `ChasePublicState`, never a raw `ChaseSession`;
+- Chase Forge owns chase-state consequences;
+- Critical Forge / Effect Forge will own PF2e Actor effect application;
+- Journal and Campaign Forge integration remain optional bridges rather than hard dependencies.

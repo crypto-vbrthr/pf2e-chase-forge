@@ -1,6 +1,7 @@
 export const MODULE_ID = "pf2e-chase-forge";
-export const MODULE_VERSION = "0.1.0-dev.1";
-export const API_VERSION = 1;
+export const MODULE_VERSION = "0.1.0-dev.2";
+export const API_VERSION = 2;
+export const EXTENSION_CONTRACT_VERSION = 1;
 
 export const SCHEMA_VERSIONS = Object.freeze({
   card: 1,
@@ -9,8 +10,20 @@ export const SCHEMA_VERSIONS = Object.freeze({
   session: 1,
   result: 1,
   publicState: 1,
-  consequence: 1
+  consequence: 1,
+  pack: 1
 });
+
+export const EXTENSION_CAPABILITIES = Object.freeze([
+  "registries.cards",
+  "registries.templates",
+  "registries.packs",
+  "registries.imageProviders",
+  "packs.activation",
+  "extensions.boundOwnership",
+  "extensions.transactionalRegistration",
+  "extensions.registrationDiagnostics"
+]);
 
 export const CHASE_TYPES = Object.freeze([
   "pursuit",
@@ -156,5 +169,8 @@ export const DEFAULTS = Object.freeze({
   imageMode: "none",
   round: 0,
   obstacleProgress: 0,
-  requiredPoints: 1
+  requiredPoints: 1,
+  packEnabled: true,
+  packPriority: 0,
+  imageProviderPriority: 0
 });

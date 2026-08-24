@@ -3,6 +3,7 @@ import {
   normalizeChaseCard,
   normalizeChaseEdge,
   normalizeChaseNode,
+  normalizeChasePack,
   normalizeChasePublicState,
   normalizeChaseResult,
   normalizeChaseSession,
@@ -15,6 +16,7 @@ import {
 
 export const createChaseCard = data => normalizeChaseCard(data);
 export const createChaseTemplate = data => normalizeChaseTemplate(data);
+export const createChasePack = data => normalizeChasePack(data);
 export const createChaseBlueprint = data => normalizeChaseBlueprint(data);
 export const createChaseSession = data => normalizeChaseSession(data);
 export const createChaseResult = data => normalizeChaseResult(data);

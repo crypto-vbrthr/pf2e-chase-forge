@@ -4,6 +4,7 @@ import {
   createChaseCard,
   createChaseEdge,
   createChaseNode,
+  createChasePack,
   createChasePublicState,
   createChaseResult,
   createChaseSession,
@@ -17,6 +18,7 @@ import { buildGraphIndex, findCycle, getReachableNodeIds, topologicalSort } from
 import {
   validateChaseBlueprint,
   validateChaseCard,
+  validateChasePack,
   validateChasePublicState,
   validateChaseResult,
   validateChaseSession,
@@ -25,8 +27,41 @@ import {
   validateParticipantGroup,
   validateRouteGraph
 } from "../data/validators.js";
+import { createExtensionPublicApi } from "../extensions/extension-service.js";
+import { createRegistryService } from "../registries/registry-service.js";
 
-export function createPublicApi() {
+function contentApi(registries) {
+  return {
+    cards: Object.freeze({
+      get: (id, options = {}) => registries.getCard(id, options),
+      list: (options = {}) => registries.listCards(options),
+      has: (id, options = {}) => Boolean(registries.getCard(id, options))
+    }),
+    templates: Object.freeze({
+      get: (id, options = {}) => registries.getTemplate(id, options),
+      list: (options = {}) => registries.listTemplates(options),
+      has: (id, options = {}) => Boolean(registries.getTemplate(id, options))
+    }),
+    packs: Object.freeze({
+      get: id => registries.getPack(id),
+      list: (options = {}) => registries.listPacks(options),
+      setEnabled: (id, enabled) => registries.setPackEnabled(id, enabled),
+      isEnabled: id => registries.packs.isEnabled(id)
+    }),
+    images: Object.freeze({
+      providers: Object.freeze({
+        get: (id, options = {}) => registries.getImageProvider(id, options),
+        list: (options = {}) => registries.listImageProviders(options)
+      }),
+      collectCandidates: (context = {}, options = {}) => registries.collectImageCandidates(context, options)
+    })
+  };
+}
+
+export function createPublicApi({ registries = createRegistryService() } = {}) {
+  const content = contentApi(registries);
+  const extensions = createExtensionPublicApi(registries);
+
   return Object.freeze({
     version: API_VERSION,
     moduleVersion: MODULE_VERSION,
@@ -35,7 +70,10 @@ export function createPublicApi() {
     contracts: Object.freeze({
       graph: 1,
       playerSafeState: 1,
-      consequenceReference: 1
+      consequenceReference: 1,
+      extension: 1,
+      registry: 1,
+      imageProvider: 1
     }),
     getCapabilities: () => Object.freeze({
       coreDataModel: true,
@@ -43,7 +81,11 @@ export function createPublicApi() {
       branchingModel: true,
       consequenceReferences: true,
       playerSafeStateContract: true,
-      registries: false,
+      registries: true,
+      extensionApi: true,
+      transactionalPackRegistration: true,
+      contentPackActivation: true,
+      imageProviders: true,
       rulesEngine: false,
       persistence: false,
       gmRunner: false,
@@ -54,6 +96,7 @@ export function createPublicApi() {
     factories: Object.freeze({
       card: createChaseCard,
       template: createChaseTemplate,
+      pack: createChasePack,
       blueprint: createChaseBlueprint,
       session: createChaseSession,
       result: createChaseResult,
@@ -68,6 +111,7 @@ export function createPublicApi() {
     validation: Object.freeze({
       card: validateChaseCard,
       template: validateChaseTemplate,
+      pack: validateChasePack,
       blueprint: validateChaseBlueprint,
       session: validateChaseSession,
       result: validateChaseResult,
@@ -81,14 +125,22 @@ export function createPublicApi() {
       reachable: getReachableNodeIds,
       findCycle,
       topologicalSort
+    }),
+    cards: content.cards,
+    templates: content.templates,
+    packs: content.packs,
+    images: content.images,
+    extensions,
+    registries: Object.freeze({
+      getStats: () => registries.getStats()
     })
   });
 }
 
-export function initializePublicApi() {
+export function initializePublicApi({ registries = createRegistryService() } = {}) {
   const module = game.modules.get(MODULE_ID);
   if (!module) throw new Error(`Module ${MODULE_ID} is unavailable.`);
-  const api = createPublicApi();
+  const api = createPublicApi({ registries });
   module.api = api;
   return api;
 }

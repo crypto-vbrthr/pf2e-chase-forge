@@ -1,6 +1,6 @@
 # Core Data Model
 
-All core contracts use explicit `schemaVersion` fields. Schema v1 is the development baseline.
+All core contracts use explicit `schemaVersion` fields. Schema v1 is the development baseline. dev.2 adds `ChasePack` schema v1 without changing the existing dev.1 schemas.
 
 ## ChaseCard
 
@@ -159,3 +159,27 @@ Supported consequence kinds in schema v1:
 - `custom`
 
 Effect Forge references support `embedded` definitions and `item` UUIDs. Their execution is deferred to the planned integration bridge.
+
+
+## ChasePack
+
+A Chase Pack is the transactional content unit used by the dev.2 registry layer. Add-ons may provide cards, templates, and image providers together. The public registered pack record stores metadata plus the resulting resource ids and activation state.
+
+Key registered fields:
+
+```text
+schemaVersion
+id
+label / description
+version
+priority
+enabledByDefault
+enabled
+sourceModule
+cardIds[]
+templateIds[]
+imageProviderIds[]
+metadata
+```
+
+Pack activation is presentation/content-discovery state. It does not alter Chase Card, Template, Blueprint, Session, or Result schema semantics.
