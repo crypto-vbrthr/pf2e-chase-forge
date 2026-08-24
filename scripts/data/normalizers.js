@@ -1,5 +1,6 @@
 import {
   APPROACH_TYPES,
+  BLUEPRINT_CONTENT_MODES,
   CARD_TYPES,
   CHASE_LENGTHS,
   CHASE_TYPES,
@@ -284,6 +285,34 @@ export function normalizeChaseTemplate(input = {}) {
   };
 }
 
+
+function normalizeContentSnapshotRecord(input = {}, kind = "resource") {
+  const record = isPlainObject(input) ? input : {};
+  return {
+    ref: asString(record.ref),
+    source: normalizeSource(record.source),
+    data: isPlainObject(record.data) ? cloneData(record.data) : null,
+    capturedAt: record.capturedAt ?? nowIso(),
+    metadata: isPlainObject(record.metadata) ? cloneData(record.metadata) : {},
+    kind
+  };
+}
+
+function normalizeBlueprintContentSnapshots(input = {}) {
+  const snapshots = isPlainObject(input) ? input : {};
+  return {
+    mode: pickEnum(snapshots.mode, BLUEPRINT_CONTENT_MODES, "references"),
+    cards: (Array.isArray(snapshots.cards) ? snapshots.cards : []).map(record => {
+      const normalized = normalizeContentSnapshotRecord(record, "card");
+      if (normalized.data) normalized.data = normalizeChaseCard(normalized.data);
+      return normalized;
+    }),
+    images: (Array.isArray(snapshots.images) ? snapshots.images : []).map(record => normalizeContentSnapshotRecord(record, "image")),
+    effects: (Array.isArray(snapshots.effects) ? snapshots.effects : []).map(record => normalizeContentSnapshotRecord(record, "effect")),
+    metadata: isPlainObject(snapshots.metadata) ? cloneData(snapshots.metadata) : {}
+  };
+}
+
 export function normalizeChaseBlueprint(input = {}) {
   const blueprint = isPlainObject(input) ? input : {};
   const timestamp = blueprint.createdAt ?? nowIso();
@@ -299,6 +328,7 @@ export function normalizeChaseBlueprint(input = {}) {
     graph: normalizeRouteGraph(blueprint.graph),
     tags: uniqueStrings(blueprint.tags),
     image: normalizeImage(blueprint.image),
+    contentSnapshots: normalizeBlueprintContentSnapshots(blueprint.contentSnapshots),
     createdAt: timestamp,
     updatedAt: blueprint.updatedAt ?? timestamp,
     metadata: isPlainObject(blueprint.metadata) ? cloneData(blueprint.metadata) : {}

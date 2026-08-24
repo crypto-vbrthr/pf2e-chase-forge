@@ -1,4 +1,4 @@
-# PF2E Chase Forge Public API - dev.5
+# PF2E Chase Forge Public API - dev.6
 
 ## Access
 
@@ -6,33 +6,117 @@
 const forge = game.modules.get("pf2e-chase-forge")?.api;
 ```
 
-Current public API version: `5`  
+Current public API version: `6`  
 Extension Contract version: `1`
 
 ## Capabilities
 
-New dev.5 capabilities:
+New dev.6 capabilities:
 
 ```text
-consequenceEngine
-effectForgeBridge
-effectForgeAvailable
+persistence
+protectedPersistence
+blueprintJsonTransfer
+contentSnapshots
+sessionLifecycle
 ```
 
-`effectForgeBridge` means the optional integration bridge exists. `effectForgeAvailable` dynamically reports whether a compatible Critical Forge API is currently available.
+`protectedPersistence` is true in Foundry when the API is backed by the ownership-protected Journal vault. Pure test/memory stores advertise persistence without claiming that protection boundary.
 
-Persistence, GM Runner, Player View, and Campaign Forge integration remain false.
+GM Runner, Player View, and Campaign Forge integration remain false.
 
 ## Schemas
 
 ```text
+forge.schemas.blueprint === 2
 forge.schemas.session === 4
 forge.schemas.consequence === 2
+forge.schemas.persistence === 1
 ```
 
-Other existing schema versions remain unchanged.
+## Persistence
+
+```js
+await forge.persistence.initialize();
+forge.persistence.status();
+```
+
+### Blueprints
+
+```js
+await forge.persistence.blueprints.list();
+await forge.persistence.blueprints.get(idOrReference);
+await forge.persistence.blueprints.create(data, options);
+await forge.persistence.blueprints.save(blueprint);
+await forge.persistence.blueprints.duplicate(id, options);
+await forge.persistence.blueprints.delete(id);
+await forge.persistence.blueprints.freezeContent(id);
+await forge.persistence.blueprints.useLiveContent(id, options);
+await forge.persistence.blueprints.inspectReferences(idOrBlueprint, options);
+const json = await forge.persistence.blueprints.exportJson(idOrBlueprint);
+await forge.persistence.blueprints.importJson(json, { idPolicy: "new" });
+forge.persistence.blueprints.reference(id);
+```
+
+### Sessions
+
+```js
+await forge.persistence.sessions.list(options);
+await forge.persistence.sessions.get(idOrReference);
+await forge.persistence.sessions.createFromBlueprint(blueprintId, options);
+await forge.persistence.sessions.save(session);
+await forge.persistence.sessions.start(id);
+await forge.persistence.sessions.pause(id);
+await forge.persistence.sessions.resume(id);
+await forge.persistence.sessions.finish(id, endingEvaluation);
+await forge.persistence.sessions.abort(id);
+await forge.persistence.sessions.delete(id);
+forge.persistence.sessions.reference(id);
+```
+
+### Results
+
+```js
+await forge.persistence.results.list(options);
+await forge.persistence.results.get(idOrReference);
+forge.persistence.results.reference(id);
+```
+
+### Stable references
+
+```js
+forge.persistence.references.create("blueprint", id);
+forge.persistence.references.parse("ChaseBlueprint.some-id");
+```
+
+Reference formats:
+
+```text
+ChaseBlueprint.<id>
+ChaseSession.<id>
+ChaseResult.<id>
+```
+
+## ChaseSessionManager facade
+
+The higher-level facade mirrors common session lifecycle operations:
+
+```js
+forge.sessionManager.createSession(...);
+forge.sessionManager.startSession(...);
+forge.sessionManager.pauseSession(...);
+forge.sessionManager.resumeSession(...);
+forge.sessionManager.saveSession(...);
+forge.sessionManager.finishSession(...);
+forge.sessionManager.abortSession(...);
+forge.sessionManager.getSession(...);
+forge.sessionManager.listSessions(...);
+forge.sessionManager.getActiveSessions();
+```
 
 ## Consequence Engine
+
+The dev.5 consequence surfaces remain unchanged:
 
 ```js
 forge.consequences.createOccurrence(consequence, context);
@@ -41,24 +125,6 @@ forge.consequences.plan(session, occurrences, options);
 await forge.consequences.execute(session, occurrences, options);
 await forge.consequences.executeRulesResult(rulesResult, options);
 forge.consequences.records(session, filter);
-```
-
-Important execution options include:
-
-```text
-autoConfirm
-confirmedOccurrenceIds[]
-confirmedConsequenceIds[]
-routeSelections
-skippedOccurrenceIds[]
-skipOptional
-retryFailed
-retryFallback
-retryBlocked
-retrySkipped
-targetsByOccurrence
-targetsByConsequence
-effectForgeOptions
 ```
 
 ## Effect Forge bridge
@@ -72,22 +138,7 @@ await forge.integrations.effectForge.apply(reference, targets, options);
 await forge.integrations.effectForge.openEditor(reference);
 ```
 
-The bridge uses Critical Forge's public API only.
-
-## Rules Engine integration
-
-`resolveCheck()` and `applyDegree()` now return both the historical raw `deferredConsequences` array and stable `consequenceOccurrences` plus `consequenceContext`.
-
-```js
-const resolved = forge.rules.resolveCheck(session, request);
-const applied = await forge.consequences.executeRulesResult(resolved, {
-  confirmedOccurrenceIds: resolved.consequenceOccurrences.map(item => item.occurrenceId)
-});
-```
-
 ## Existing surfaces
-
-The complete dev.1-dev.4 APIs remain available:
 
 ```text
 forge.route

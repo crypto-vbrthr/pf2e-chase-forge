@@ -1,46 +1,59 @@
 # PF2E Chase Forge
 
-**Version:** 0.1.0-dev.5  
+**Version:** 0.1.0-dev.6  
 **Foundry VTT:** 14  
 **System:** Pathfinder 2e
 
-PF2E Chase Forge is a modular chase framework for Foundry VTT. `0.1.0-dev.5` adds the Consequence Engine and the optional Critical Forge / Effect Forge bridge on top of the graph, registry, and PF2e chase-rules architecture from dev.1-dev.4.
+PF2E Chase Forge is a modular chase framework for Foundry VTT. `0.1.0-dev.6` adds protected Blueprint and Session persistence on top of the graph, registry, PF2e rules, consequence, and Effect Forge foundations from dev.1-dev.5.
 
-The module still has no Chase Builder or Runner UI. This build completes the headless logic path from a PF2e check result to deferred chase consequences and, when available, real PF2e Actor effects through Critical Forge's public Effect Forge API.
+The module still has no Chase Builder or Runner UI. This build makes prepared and running chases durable Foundry world data so the next UI blocks can operate on stable, restart-safe state.
 
-## dev.5 scope
+## dev.6 scope
 
 Implemented:
 
-- Chase Consequence schema v2 with:
-  - severity (`info`, `minor`, `significant`, `severe`);
-  - optional consequences;
-  - GM-confirmation policy;
-  - route consequences;
-  - Effect Forge consequences;
-  - participant, runtime-group, and explicit effect targeting;
-- Chase Session schema v4 with persistent in-session consequence records;
-- stable consequence occurrence ids derived from the originating rules event;
-- idempotent consequence execution so repeated socket/UI requests cannot apply the same occurrence twice;
-- GM-confirmation state and route-selection state;
-- core execution for:
-  - route unlock;
-  - route lock;
-  - route select;
-  - narrative consequences;
-  - Effect Forge application;
-- explicit ownership boundary for Chase Point consequences: the PF2e Chase Rules Engine resolves them and the Consequence Engine records them as rules-handled rather than applying them twice;
-- optional Critical Forge / Effect Forge integration through the public API only;
-- embedded Effect Definition support;
-- existing Effect Item UUID support through `api.effects.readItem()`;
-- Effect Definition migration and validation through Critical Forge;
-- Actor/Token target resolution from Chase participants;
-- manual fallback when Critical Forge is absent and the consequence is not declared required;
-- blocked consequence records for consequences that explicitly require Effect Forge;
-- serializable evidence of applied Effect Forge effects rather than storing Foundry document instances inside ChaseSession;
-- shared Effect Forge editor bridge for future Chase Card editing;
-- retry controls for failed, blocked, skipped, or manual-fallback records;
-- public Consequence Engine and Effect Forge integration APIs.
+- ownership-protected canonical persistence in an internal `JournalEntry` flag;
+- no secret Chase data stored in world settings;
+- hidden world settings store only the storage schema marker and protected vault id;
+- fail-closed handling if a previously established protected vault goes missing;
+- Persistence schema v1 with revisioned Blueprint, Session, and Result collections;
+- serialized persistence mutations;
+- `BlueprintRepository` operations for create, read, update, duplicate, list, and delete;
+- stable `ChaseBlueprint.*`, `ChaseSession.*`, and `ChaseResult.*` references;
+- Blueprint schema v2 with explicit live-reference vs. frozen-content snapshot policy;
+- Chase Card snapshots for add-on-safe prepared chases;
+- Rules Engine fallback to frozen card content when an add-on is unavailable;
+- reference diagnostics for Actor/Token UUIDs, Chase Cards, snapshot fallback, and image providers;
+- JSON Blueprint export/import with explicit transfer versioning and id policies;
+- normalization of older Blueprint schemas during import;
+- rejection of future unsupported Blueprint schemas;
+- persistent Session lifecycle: create, start, pause, resume, save, finish, abort, delete;
+- independent sessions from the same Blueprint;
+- atomic persistence of completed Session plus `ChaseResult`;
+- protected persistence exposed through the public API and `ChaseSessionManager` facade.
+
+## Persistence example
+
+```js
+const forge = game.modules.get("pf2e-chase-forge")?.api;
+
+const blueprint = await forge.persistence.blueprints.create({
+  name: "Night Chase",
+  groups: [],
+  graph: { /* validated DAG */ }
+});
+
+const draft = await forge.persistence.sessions.createFromBlueprint(blueprint.id);
+await forge.persistence.sessions.start(draft.id);
+```
+
+A second session created from the same Blueprint starts fresh and does not mutate the source Blueprint.
+
+## Protected storage
+
+Canonical GM state lives in an ownership-protected internal `JournalEntry`. Player clients cannot use the persistence API to read this state. The later Player Chase View will be driven by a separate `ChasePublicState` projection, not by exposing raw `ChaseSession` data.
+
+See `docs/PERSISTENCE.md` for the storage contract.
 
 ## Consequence flow
 
@@ -106,9 +119,17 @@ Critical Forge is optional. Without it, a non-required Effect Forge consequence 
 const forge = game.modules.get("pf2e-chase-forge")?.api;
 ```
 
-New dev.5 surfaces:
+Public persistence surfaces:
 
 ```text
+forge.persistence.initialize()
+forge.persistence.status()
+forge.persistence.blueprints.*
+forge.persistence.sessions.*
+forge.persistence.results.*
+forge.persistence.references.*
+forge.sessionManager.*
+
 forge.consequences.createOccurrence(...)
 forge.consequences.fromRulesResult(...)
 forge.consequences.plan(...)
@@ -136,11 +157,11 @@ See:
 - `docs/CONSEQUENCE_ENGINE.md`
 - `docs/EFFECT_FORGE_INTEGRATION.md`
 - `docs/REGISTRIES.md`
+- `docs/PERSISTENCE.md`
 - `docs/EXTENSION_CONTRACT.md`
 
 ## Deliberately not implemented yet
 
-- blueprint/session persistence as Foundry world storage;
 - GM Chase Runner;
 - Player Chase View and synchronization;
 - generator/content library;
@@ -152,4 +173,4 @@ See:
 npm test
 ```
 
-The dev.5 suite covers the complete dev.1-dev.4 baseline plus consequence occurrence identity, GM confirmation, route consequences, Effect Forge targeting, missing-module fallbacks, required-effect blocking, Effect Item resolution, public API compatibility, editor handoff, and duplicate-application protection.
+The dev.6 suite covers the complete dev.1-dev.5 baseline plus protected Foundry storage, restart recovery, Blueprint CRUD, JSON transfer, content snapshots, reference diagnostics, independent Session instances, and lifecycle persistence.

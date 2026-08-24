@@ -2,7 +2,7 @@
 
 ## Baseline
 
-Version `0.1.0-dev.5` adds consequence orchestration and an optional Effect Forge bridge while retaining the system-neutral Route Graph Engine and the PF2e Chase Rules Engine as separate layers.
+Version `0.1.0-dev.6` adds protected Blueprint and Session persistence while retaining the route, PF2e rules, consequence, Effect Forge, and extension layers as separate services.
 
 ```text
 External Chase Add-ons
@@ -62,3 +62,18 @@ Players will never receive raw `ChaseSession` data. `ChasePublicState` remains t
 Critical Forge is optional and discovered at runtime through its public API. Missing optional effects degrade to manual fallbacks. Chase Forge contains no direct imports from Critical Forge.
 
 Campaign Forge and Journal integration remain later milestones.
+
+
+## Protected persistence
+
+`0.1.0-dev.6` introduces the persistence boundary:
+
+```text
+BlueprintRepository ─┐
+SessionManager ──────┼─> Persistence Service ─> Protected Journal Vault
+ResultRepository ────┘
+```
+
+Canonical GM data is never stored in a client-readable world-setting payload. Non-GM clients cannot read the canonical persistence service. A later synchronization block will project only `ChasePublicState` to players.
+
+Blueprint and Session references are storage-location independent (`ChaseBlueprint.*`, `ChaseSession.*`, `ChaseResult.*`) so Journal and Campaign Forge integrations do not depend on the internal vault document.

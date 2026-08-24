@@ -1,7 +1,9 @@
 import { MODULE_ID } from "./core/constants.js";
 
 export const SETTINGS = Object.freeze({
-  CONTENT_PACK_STATES: "contentPackStates"
+  CONTENT_PACK_STATES: "contentPackStates",
+  STORAGE_VERSION: "storageVersion",
+  VAULT_ID: "vaultId"
 });
 
 export function registerSettings() {
@@ -13,6 +15,22 @@ export function registerSettings() {
     config: false,
     type: Object,
     default: {}
+  });
+  game.settings.register(MODULE_ID, SETTINGS.STORAGE_VERSION, {
+    name: "PF2E Chase Forge storage version",
+    hint: "Internal protected persistence schema marker.",
+    scope: "world",
+    config: false,
+    type: Number,
+    default: 0
+  });
+  game.settings.register(MODULE_ID, SETTINGS.VAULT_ID, {
+    name: "PF2E Chase Forge protected vault id",
+    hint: "Internal reference to the ownership-protected Chase Forge persistence document.",
+    scope: "world",
+    config: false,
+    type: String,
+    default: ""
   });
 }
 

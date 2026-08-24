@@ -7,15 +7,16 @@ Current versions:
 ```text
 ChaseCard        1
 ChaseTemplate    1
-ChaseBlueprint   1
+ChaseBlueprint   2
 ChaseSession     4
 ChaseResult      1
 ChasePublicState 1
 ChaseConsequence 2
 ChasePack        1
+PersistenceState 1
 ```
 
-World persistence has not been introduced yet, so the development-only Session/Consequence schema changes do not require a world migration.
+dev.6 introduces canonical protected world persistence. Older Blueprint payloads are normalized to Blueprint schema v2 when imported or loaded through the persistence layer; future unsupported schema versions are rejected.
 
 ## ChaseCard
 
@@ -25,7 +26,19 @@ The Rules Engine consumes `chasePoints` immediately and emits all other outcomes
 
 ## ChaseBlueprint
 
-Prepared chase definition containing settings, groups, a DAG route graph, tags, image data, metadata, and timestamps.
+Prepared chase definition containing settings, groups, a DAG route graph, tags, image data, content snapshot policy, metadata, and timestamps.
+
+### contentSnapshots
+
+```text
+mode: references | snapshot
+cards[]
+images[]
+effects[]
+metadata
+```
+
+Snapshot mode freezes currently captured content for repeatable prepared chases. Card snapshots include full normalized `ChaseCard` data and are preferred by the Rules Engine while snapshot mode is active.
 
 ## Route graph
 
@@ -126,3 +139,23 @@ Completion record containing outcome, ending node, winner/loser groups, route su
 ## ChasePublicState
 
 Dedicated future player-facing transport contract. A raw `ChaseSession` must never be treated as player-safe state.
+
+
+## PersistenceState v1
+
+Canonical GM world storage contains:
+
+```text
+schemaVersion
+revision
+blueprints[]
+sessions[]
+results[]
+createdAt
+updatedAt
+metadata
+```
+
+The state lives in an ownership-protected internal JournalEntry flag. World settings hold only the storage schema marker and vault document id.
+
+Every Session stores a normalized Blueprint snapshot, so running a prepared chase never mutates its source Blueprint and multiple sessions from one Blueprint remain independent.

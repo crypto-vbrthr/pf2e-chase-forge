@@ -1,17 +1,18 @@
 export const MODULE_ID = "pf2e-chase-forge";
-export const MODULE_VERSION = "0.1.0-dev.5";
-export const API_VERSION = 5;
+export const MODULE_VERSION = "0.1.0-dev.6";
+export const API_VERSION = 6;
 export const EXTENSION_CONTRACT_VERSION = 1;
 
 export const SCHEMA_VERSIONS = Object.freeze({
   card: 1,
   template: 1,
-  blueprint: 1,
+  blueprint: 2,
   session: 4,
   result: 1,
   publicState: 1,
   consequence: 2,
-  pack: 1
+  pack: 1,
+  persistence: 1
 });
 
 export const EXTENSION_CAPABILITIES = Object.freeze([
@@ -31,7 +32,12 @@ export const EXTENSION_CAPABILITIES = Object.freeze([
   "rules.chaseTypes",
   "rules.pf2eDc",
   "consequences.engine",
-  "consequences.effectForge"
+  "consequences.effectForge",
+  "persistence.protectedVault",
+  "persistence.blueprints",
+  "persistence.sessions",
+  "persistence.jsonTransfer",
+  "persistence.contentSnapshots"
 ]);
 
 export const CHASE_TYPES = Object.freeze([
@@ -292,6 +298,30 @@ export const EFFECT_FORGE_MIN_API_SURFACE = Object.freeze([
   "effects.apply",
   "effects.readItem"
 ]);
+
+
+export const BLUEPRINT_CONTENT_MODES = Object.freeze([
+  "references",
+  "snapshot"
+]);
+
+export const CHASE_REFERENCE_TYPES = Object.freeze([
+  "blueprint",
+  "session",
+  "result"
+]);
+
+export const PERSISTENCE_STORAGE = Object.freeze({
+  VERSION: 1,
+  KIND_VAULT: "vault",
+  FLAG_META: "storage",
+  FLAG_STATE: "state"
+});
+
+export const BLUEPRINT_TRANSFER = Object.freeze({
+  FORMAT: "pf2e-chase-forge.blueprint",
+  VERSION: 1
+});
 
 export const IMAGE_MODES = Object.freeze([
   "none",

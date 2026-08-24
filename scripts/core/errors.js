@@ -64,3 +64,11 @@ export class ChaseIntegrationError extends ChaseDataError {
     this.name = "ChaseIntegrationError";
   }
 }
+
+
+export class ChasePersistenceError extends ChaseDataError {
+  constructor(message, options = {}) {
+    super(message, { code: "CHASE_PERSISTENCE_ERROR", ...options });
+    this.name = "ChasePersistenceError";
+  }
+}

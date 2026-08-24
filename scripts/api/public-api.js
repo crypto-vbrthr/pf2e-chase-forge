@@ -37,6 +37,10 @@ import { evaluateRouteCondition, evaluateRouteConditions } from "../engine/route
 import { createRegistryService } from "../registries/registry-service.js";
 import { createConsequenceEngine, createConsequenceOccurrence } from "../consequences/consequence-engine.js";
 import { createEffectForgeBridge, inspectEffectForgeApi } from "../integrations/effect-forge-bridge.js";
+import { createChasePersistenceService } from "../persistence/persistence-service.js";
+import { createMemoryChaseStore } from "../persistence/memory-store.js";
+import { createChaseSessionManager } from "../persistence/session-manager.js";
+import { validatePersistenceState } from "../persistence/state.js";
 
 function contentApi(registries) {
   return {
@@ -66,7 +70,7 @@ function contentApi(registries) {
   };
 }
 
-export function createPublicApi({ registries = createRegistryService() } = {}) {
+export function createPublicApi({ registries = createRegistryService(), persistenceStore = createMemoryChaseStore() } = {}) {
   const content = contentApi(registries);
   const extensions = createExtensionPublicApi(registries);
   const route = createRouteGraphEngine();
@@ -74,6 +78,8 @@ export function createPublicApi({ registries = createRegistryService() } = {}) {
   const pf2eAdapter = createPf2eChaseAdapter();
   const effectForgeBridge = createEffectForgeBridge();
   const consequences = createConsequenceEngine({ routeEngine: route, effectForgeBridge });
+  const persistence = createChasePersistenceService({ store: persistenceStore, routeEngine: route, rulesEngine: rules, registries });
+  const sessionManager = createChaseSessionManager(persistence);
 
   return Object.freeze({
     version: API_VERSION,
@@ -94,7 +100,10 @@ export function createPublicApi({ registries = createRegistryService() } = {}) {
       degreeOfSuccess: 1,
       pf2eAdapter: 1,
       consequenceEngine: 1,
-      effectForgeBridge: 1
+      effectForgeBridge: 1,
+      protectedPersistence: 1,
+      blueprintTransfer: 1,
+      chaseReference: 1
     }),
     getCapabilities: () => Object.freeze({
       coreDataModel: true,
@@ -120,7 +129,11 @@ export function createPublicApi({ registries = createRegistryService() } = {}) {
       pf2eDcTables: true,
       degreeOfSuccess: true,
       pf2eAdapter: true,
-      persistence: false,
+      persistence: true,
+      protectedPersistence: persistence.status().protected === true,
+      blueprintJsonTransfer: true,
+      contentSnapshots: true,
+      sessionLifecycle: true,
       gmRunner: false,
       playerView: false,
       consequenceEngine: true,
@@ -151,6 +164,7 @@ export function createPublicApi({ registries = createRegistryService() } = {}) {
       session: validateChaseSession,
       result: validateChaseResult,
       publicState: validateChasePublicState,
+      persistenceState: validatePersistenceState,
       participantGroup: validateParticipantGroup,
       graph: validateRouteGraph,
       consequence: validateConsequence
@@ -212,6 +226,8 @@ export function createPublicApi({ registries = createRegistryService() } = {}) {
         createBridge: createEffectForgeBridge
       })
     }),
+    persistence,
+    sessionManager,
     cards: content.cards,
     templates: content.templates,
     packs: content.packs,
@@ -223,10 +239,10 @@ export function createPublicApi({ registries = createRegistryService() } = {}) {
   });
 }
 
-export function initializePublicApi({ registries = createRegistryService() } = {}) {
+export function initializePublicApi({ registries = createRegistryService(), persistenceStore = createMemoryChaseStore() } = {}) {
   const module = game.modules.get(MODULE_ID);
   if (!module) throw new Error(`Module ${MODULE_ID} is unavailable.`);
-  const api = createPublicApi({ registries });
+  const api = createPublicApi({ registries, persistenceStore });
   module.api = api;
   return api;
 }

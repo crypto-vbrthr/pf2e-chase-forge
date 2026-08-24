@@ -1,8 +1,8 @@
 {
   "id": "pf2e-chase-forge",
   "title": "PF2E Chase Forge",
-  "description": "A modular Pathfinder 2e chase framework for Foundry VTT with graph-based routes, PF2e chase rules, consequence orchestration, optional Critical Forge / Effect Forge integration, extension-safe content registries, and multi-group chase state.",
-  "version": "0.1.0-dev.5",
+  "description": "A modular Pathfinder 2e chase framework for Foundry VTT with graph-based routes, PF2e chase rules, consequence orchestration, protected Blueprint and Session persistence, optional Critical Forge / Effect Forge integration, and extension-safe content registries.",
+  "version": "0.1.0-dev.6",
   "authors": [
     {
       "name": "crypto-vbrthr"
@@ -41,5 +41,5 @@
   "readme": "README.md",
   "url": "https://github.com/crypto-vbrthr/pf2e-chase-forge",
   "manifest": "https://raw.githubusercontent.com/crypto-vbrthr/pf2e-chase-forge/main/module.json",
-  "download": "https://github.com/crypto-vbrthr/pf2e-chase-forge/releases/download/v0.1.0-dev.5/pf2e-chase-forge.zip"
+  "download": "https://github.com/crypto-vbrthr/pf2e-chase-forge/releases/download/v0.1.0-dev.6/pf2e-chase-forge.zip"
 }

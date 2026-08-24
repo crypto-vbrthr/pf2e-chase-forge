@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { createPublicApi } from "../scripts/api/public-api.js";
 import { sampleBlueprint } from "./helpers.js";
 
-test("dev.5 public API advertises route, rules, and consequence capabilities", () => {
+test("dev.6 public API advertises persistence, route, rules, and consequence capabilities", () => {
   const api = createPublicApi();
   const caps = api.getCapabilities();
   assert.equal(caps.coreDataModel, true);
@@ -28,7 +28,10 @@ test("dev.5 public API advertises route, rules, and consequence capabilities", (
   assert.equal(caps.pf2eDcTables, true);
   assert.equal(caps.degreeOfSuccess, true);
   assert.equal(caps.pf2eAdapter, true);
-  assert.equal(caps.persistence, false);
+  assert.equal(caps.persistence, true);
+  assert.equal(caps.blueprintJsonTransfer, true);
+  assert.equal(caps.contentSnapshots, true);
+  assert.equal(caps.sessionLifecycle, true);
   assert.equal(caps.gmRunner, false);
   assert.equal(caps.playerView, false);
   assert.equal(caps.consequenceEngine, true);
@@ -39,11 +42,12 @@ test("dev.5 public API advertises route, rules, and consequence capabilities", (
 
 test("public API exposes schema versions", () => {
   const api = createPublicApi();
-  assert.equal(api.schemas.blueprint, 1);
+  assert.equal(api.schemas.blueprint, 2);
   assert.equal(api.schemas.session, 4);
   assert.equal(api.schemas.publicState, 1);
   assert.equal(api.schemas.consequence, 2);
   assert.equal(api.schemas.pack, 1);
+  assert.equal(api.schemas.persistence, 1);
 });
 
 test("public API factory plus validator round trip", () => {
@@ -74,6 +78,10 @@ test("public API containers are frozen", () => {
   assert.equal(Object.isFrozen(api.consequences), true);
   assert.equal(Object.isFrozen(api.integrations), true);
   assert.equal(Object.isFrozen(api.integrations.effectForge), true);
+  assert.equal(Object.isFrozen(api.persistence), true);
+  assert.equal(Object.isFrozen(api.persistence.blueprints), true);
+  assert.equal(Object.isFrozen(api.persistence.sessions), true);
+  assert.equal(Object.isFrozen(api.sessionManager), true);
   assert.equal(Object.isFrozen(api.cards), true);
   assert.equal(Object.isFrozen(api.templates), true);
   assert.equal(Object.isFrozen(api.packs), true);

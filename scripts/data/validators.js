@@ -1,4 +1,5 @@
 import {
+  BLUEPRINT_CONTENT_MODES,
   CARD_TYPES,
   CHASE_LENGTHS,
   CHASE_TYPES,
@@ -289,6 +290,31 @@ export function validateRouteGraph(graph, { allowEmpty = false } = {}) {
   return c.result();
 }
 
+
+function validateBlueprintContentSnapshots(snapshots, collector, path = "contentSnapshots") {
+  if (!requireObject(snapshots, collector, path)) return;
+  validateEnum(snapshots.mode, BLUEPRINT_CONTENT_MODES, collector, `${path}.mode`);
+  for (const key of ["cards", "images", "effects"]) {
+    if (!Array.isArray(snapshots[key])) {
+      collector.error("SNAPSHOT_ARRAY", `${path}.${key}`, `${key} snapshots must be an array.`);
+      continue;
+    }
+    const refs = new Set();
+    snapshots[key].forEach((record, index) => {
+      const recordPath = `${path}.${key}[${index}]`;
+      if (!requireObject(record, collector, recordPath)) return;
+      if (!requireNonEmptyString(record.ref, collector, `${recordPath}.ref`)) return;
+      if (refs.has(record.ref)) collector.error("DUPLICATE_SNAPSHOT_REF", `${recordPath}.ref`, `Duplicate ${key} snapshot ref '${record.ref}'.`);
+      refs.add(record.ref);
+      if (!isPlainObject(record.data)) collector.error("SNAPSHOT_DATA", `${recordPath}.data`, "Snapshot data must be an object.");
+      if (key === "cards" && isPlainObject(record.data)) {
+        const result = validateChaseCard(record.data);
+        if (!result.valid) collector.error("SNAPSHOT_CARD_INVALID", `${recordPath}.data`, `Snapshot card '${record.ref}' is invalid.`, { errors: result.errors });
+      }
+    });
+  }
+}
+
 export function validateChaseBlueprint(blueprint) {
   const c = createCollector();
   if (!requireObject(blueprint, c, "blueprint")) return c.result();
@@ -315,6 +341,7 @@ export function validateChaseBlueprint(blueprint) {
   c.errors.push(...graph.errors);
   c.warnings.push(...graph.warnings);
   validateImage(blueprint.image, c, "image");
+  validateBlueprintContentSnapshots(blueprint.contentSnapshots, c);
   return c.result();
 }
 

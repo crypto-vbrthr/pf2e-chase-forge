@@ -120,7 +120,7 @@ A failed registration leaves all registries unchanged. This includes:
 
 ## Compatibility
 
-Available capability names through dev.5:
+Available capability names through dev.6:
 
 ```text
 registries.cards
@@ -134,9 +134,17 @@ extensions.registrationDiagnostics
 rules.chasePoints
 rules.rounds
 rules.chaseTypes
+routing.traversal
+routing.conditions
+routing.multiGroup
 rules.pf2eDc
 consequences.engine
 consequences.effectForge
+persistence.protectedVault
+persistence.blueprints
+persistence.sessions
+persistence.jsonTransfer
+persistence.contentSnapshots
 ```
 
 Version expressions support exact values and `>`, `>=`, `<`, `<=`, `^`, and `~`.

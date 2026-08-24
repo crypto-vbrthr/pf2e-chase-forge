@@ -107,7 +107,7 @@ function resolveCard(cardResolver, session, runtimeGroupId) {
   const node = currentNode(session, group);
   if (!node || node.type !== "card") throw rulesError("NO_ACTIVE_OBSTACLE", `Runtime group '${runtimeGroupId}' is not currently on a chase card.`, { nodeId: group.position.nodeId, nodeType: node?.type ?? null });
   if (!node.cardRef) throw rulesError("CARD_REFERENCE_MISSING", `Route node '${node.id}' has no Chase Card reference.`, { nodeId: node.id });
-  const card = cardResolver(node.cardRef);
+  const card = cardResolver(node.cardRef, session);
   if (!card) throw rulesError("CARD_NOT_FOUND", `Chase Card '${node.cardRef}' is not registered.`, { cardRef: node.cardRef, nodeId: node.id });
   return { group, node, card };
 }
@@ -377,7 +377,13 @@ export function getTurnPolicy(session) {
 }
 
 export function createChaseRulesEngine({ registries = null, cardResolver = null, routeEngine = createRouteGraphEngine() } = {}) {
-  const resolveCardRef = cardResolver ?? (id => registries?.getCard?.(id, { includeDisabled: true }) ?? null);
+  const resolveCardRef = cardResolver ?? ((id, session = null) => {
+    const snapshot = session?.blueprintSnapshot?.contentSnapshots?.cards?.find?.(record => record.ref === id)?.data ?? null;
+    if (session?.blueprintSnapshot?.contentSnapshots?.mode === "snapshot" && snapshot) return cloneData(snapshot);
+    const live = registries?.getCard?.(id, { includeDisabled: true }) ?? null;
+    if (live) return live;
+    return snapshot ? cloneData(snapshot) : null;
+  });
 
   function initializeSession(blueprint, {
     status = "active",

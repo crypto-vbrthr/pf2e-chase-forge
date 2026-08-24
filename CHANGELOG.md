@@ -1,5 +1,22 @@
 # Changelog
 
+## 0.1.0-dev.6 - Blueprint & Session Persistence
+
+- Added ownership-protected canonical Chase Forge persistence in an internal JournalEntry flag.
+- Added hidden storage-version and vault-id world settings without placing GM Chase payloads in ClientSettings.
+- Added fail-closed `VAULT_MISSING` handling to prevent silent replacement of lost protected storage.
+- Added Persistence schema v1 with revisioned Blueprint, Session, and Result collections plus serialized mutations.
+- Added Blueprint CRUD, duplication, stable Chase references, JSON export/import, import id policies, and future-schema rejection.
+- Raised Chase Blueprint schema to v2 with `contentSnapshots` and live-reference/snapshot modes.
+- Added Chase Card content freezing so prepared chases can survive disabled or removed add-on content.
+- Updated the Rules Engine to prefer frozen card snapshots when a Blueprint is in snapshot mode.
+- Added reference diagnostics for Actor/Token UUIDs, Chase Cards, snapshot fallbacks, and image providers.
+- Added persistent Session lifecycle operations for create/start/pause/resume/save/finish/abort/delete.
+- Added independent Session snapshots for repeated runs of the same Blueprint.
+- Added atomic Session completion plus ChaseResult persistence.
+- Added public `persistence` and `sessionManager` APIs and raised the public API version to `6`.
+- Expanded the automated suite to 221 passing tests, including protected Journal storage and simulated Foundry restart recovery.
+
 ## 0.1.0-dev.5 - Consequence Engine & Effect Forge Integration
 
 - Added Chase Consequence Engine for deferred outcome processing after PF2e Chase Point resolution.
