@@ -1,0 +1,401 @@
+
+> pf2e-chase-forge@0.1.0-dev.1 test
+> node --test --test-concurrency=1
+
+TAP version 13
+# Subtest: dev.1 public API advertises only implemented capabilities
+ok 1 - dev.1 public API advertises only implemented capabilities
+  ---
+  duration_ms: 0.925875
+  type: 'test'
+  ...
+# Subtest: public API exposes schema versions
+ok 2 - public API exposes schema versions
+  ---
+  duration_ms: 0.169872
+  type: 'test'
+  ...
+# Subtest: public API factory plus validator round trip
+ok 3 - public API factory plus validator round trip
+  ---
+  duration_ms: 4.758165
+  type: 'test'
+  ...
+# Subtest: public API graph helpers can topologically order a blueprint
+ok 4 - public API graph helpers can topologically order a blueprint
+  ---
+  duration_ms: 0.802792
+  type: 'test'
+  ...
+# Subtest: public API containers are frozen
+ok 5 - public API containers are frozen
+  ---
+  duration_ms: 0.121401
+  type: 'test'
+  ...
+# Subtest: core factories stamp schema versions
+ok 6 - core factories stamp schema versions
+  ---
+  duration_ms: 4.399772
+  type: 'test'
+  ...
+# Subtest: card normalization supplies every PF2e degree of success
+ok 7 - card normalization supplies every PF2e degree of success
+  ---
+  duration_ms: 2.817984
+  type: 'test'
+  ...
+# Subtest: card required points are clamped to at least one
+ok 8 - card required points are clamped to at least one
+  ---
+  duration_ms: 0.208891
+  type: 'test'
+  ...
+# Subtest: tags normalize to unique strings
+ok 9 - tags normalize to unique strings
+  ---
+  duration_ms: 0.171245
+  type: 'test'
+  ...
+# Subtest: image contract reserves external providers and candidates
+ok 10 - image contract reserves external providers and candidates
+  ---
+  duration_ms: 0.16168
+  type: 'test'
+  ...
+# Subtest: template is a preset and contains no session state
+ok 11 - template is a preset and contains no session state
+  ---
+  duration_ms: 0.134339
+  type: 'test'
+  ...
+# Subtest: blueprint stores a route graph rather than a flat card list
+ok 12 - blueprint stores a route graph rather than a flat card list
+  ---
+  duration_ms: 0.568474
+  type: 'test'
+  ...
+# Subtest: blueprint supports multiple endings
+ok 13 - blueprint supports multiple endings
+  ---
+  duration_ms: 0.354497
+  type: 'test'
+  ...
+# Subtest: participant group supports placeholders
+ok 14 - participant group supports placeholders
+  ---
+  duration_ms: 0.302579
+  type: 'test'
+  ...
+# Subtest: participant group supports abstract opposition
+ok 15 - participant group supports abstract opposition
+  ---
+  duration_ms: 0.442126
+  type: 'test'
+  ...
+# Subtest: session position is node plus progress, not a single track number
+ok 16 - session position is node plus progress, not a single track number
+  ---
+  duration_ms: 0.502596
+  type: 'test'
+  ...
+# Subtest: session can carry two runtime subgroups from one blueprint group
+ok 17 - session can carry two runtime subgroups from one blueprint group
+  ---
+  duration_ms: 0.302379
+  type: 'test'
+  ...
+# Subtest: session can embed a blueprint snapshot
+ok 18 - session can embed a blueprint snapshot
+  ---
+  duration_ms: 0.412542
+  type: 'test'
+  ...
+# Subtest: result records routes per runtime group
+ok 19 - result records routes per runtime group
+  ---
+  duration_ms: 0.130875
+  type: 'test'
+  ...
+# Subtest: public state is structurally separate from session state
+ok 20 - public state is structurally separate from session state
+  ---
+  duration_ms: 0.117304
+  type: 'test'
+  ...
+# Subtest: chase point consequence preserves negative values
+ok 21 - chase point consequence preserves negative values
+  ---
+  duration_ms: 0.075813
+  type: 'test'
+  ...
+# Subtest: Effect Forge embedded consequence stores a definition snapshot
+ok 22 - Effect Forge embedded consequence stores a definition snapshot
+  ---
+  duration_ms: 0.093859
+  type: 'test'
+  ...
+# Subtest: Effect Forge item consequence stores an item UUID
+ok 23 - Effect Forge item consequence stores an item UUID
+  ---
+  duration_ms: 0.074621
+  type: 'test'
+  ...
+# Subtest: route consequence stores target edge ids
+ok 24 - route consequence stores target edge ids
+  ---
+  duration_ms: 0.081171
+  type: 'test'
+  ...
+# Subtest: linear route graph validates
+ok 25 - linear route graph validates
+  ---
+  duration_ms: 4.138204
+  type: 'test'
+  ...
+# Subtest: branched route with merge and multiple endings validates
+ok 26 - branched route with merge and multiple endings validates
+  ---
+  duration_ms: 0.493743
+  type: 'test'
+  ...
+# Subtest: graph index reports branch and merge arity
+ok 27 - graph index reports branch and merge arity
+  ---
+  duration_ms: 0.290291
+  type: 'test'
+  ...
+# Subtest: reachable analysis covers every valid branch
+ok 28 - reachable analysis covers every valid branch
+  ---
+  duration_ms: 0.135912
+  type: 'test'
+  ...
+# Subtest: topological sort returns every node for a DAG
+ok 29 - topological sort returns every node for a DAG
+  ---
+  duration_ms: 0.26941
+  type: 'test'
+  ...
+# Subtest: cycle detection rejects cyclic routes
+ok 30 - cycle detection rejects cyclic routes
+  ---
+  duration_ms: 0.243822
+  type: 'test'
+  ...
+# Subtest: self edges are rejected
+ok 31 - self edges are rejected
+  ---
+  duration_ms: 0.213367
+  type: 'test'
+  ...
+# Subtest: unknown edge source is rejected
+ok 32 - unknown edge source is rejected
+  ---
+  duration_ms: 0.287998
+  type: 'test'
+  ...
+# Subtest: unknown edge target is rejected
+ok 33 - unknown edge target is rejected
+  ---
+  duration_ms: 1.154474
+  type: 'test'
+  ...
+# Subtest: unreachable nodes are rejected
+ok 34 - unreachable nodes are rejected
+  ---
+  duration_ms: 0.721171
+  type: 'test'
+  ...
+# Subtest: graph requires exactly one typed start node
+ok 35 - graph requires exactly one typed start node
+  ---
+  duration_ms: 0.210623
+  type: 'test'
+  ...
+# Subtest: graph requires at least one declared ending
+ok 36 - graph requires at least one declared ending
+  ---
+  duration_ms: 0.171094
+  type: 'test'
+  ...
+# Subtest: declared endings must be end nodes
+ok 37 - declared endings must be end nodes
+  ---
+  duration_ms: 0.209321
+  type: 'test'
+  ...
+# Subtest: start node may not have incoming edges
+ok 38 - start node may not have incoming edges
+  ---
+  duration_ms: 0.624957
+  type: 'test'
+  ...
+# Subtest: end nodes may not have outgoing edges
+ok 39 - end nodes may not have outgoing edges
+  ---
+  duration_ms: 2.504719
+  type: 'test'
+  ...
+# Subtest: choice arity is an authoring warning instead of a hard error
+ok 40 - choice arity is an authoring warning instead of a hard error
+  ---
+  duration_ms: 0.14788
+  type: 'test'
+  ...
+# Subtest: merge arity is an authoring warning instead of a hard error
+ok 41 - merge arity is an authoring warning instead of a hard error
+  ---
+  duration_ms: 0.133698
+  type: 'test'
+  ...
+# Subtest: card nodes without a card reference remain structurally inspectable
+ok 42 - card nodes without a card reference remain structurally inspectable
+  ---
+  duration_ms: 0.133619
+  type: 'test'
+  ...
+# Subtest: manifest identity matches constants
+ok 43 - manifest identity matches constants
+  ---
+  duration_ms: 0.527303
+  type: 'test'
+  ...
+# Subtest: manifest targets Foundry 14 and PF2e
+ok 44 - manifest targets Foundry 14 and PF2e
+  ---
+  duration_ms: 0.100039
+  type: 'test'
+  ...
+# Subtest: dev.1 contract versions are explicit
+ok 45 - dev.1 contract versions are explicit
+  ---
+  duration_ms: 9.302932
+  type: 'test'
+  ...
+# Subtest: sample obstacle card validates
+ok 46 - sample obstacle card validates
+  ---
+  duration_ms: 3.305978
+  type: 'test'
+  ...
+# Subtest: duplicate approach ids are rejected
+ok 47 - duplicate approach ids are rejected
+  ---
+  duration_ms: 0.524969
+  type: 'test'
+  ...
+# Subtest: invalid card schema is rejected
+ok 48 - invalid card schema is rejected
+  ---
+  duration_ms: 0.212235
+  type: 'test'
+  ...
+# Subtest: template settings validate
+ok 49 - template settings validate
+  ---
+  duration_ms: 0.504509
+  type: 'test'
+  ...
+# Subtest: invalid template setting is rejected if raw data bypasses normalizer
+ok 50 - invalid template setting is rejected if raw data bypasses normalizer
+  ---
+  duration_ms: 0.151615
+  type: 'test'
+  ...
+# Subtest: blueprint with branched graph validates
+ok 51 - blueprint with branched graph validates
+  ---
+  duration_ms: 1.840442
+  type: 'test'
+  ...
+# Subtest: duplicate blueprint group ids are rejected
+ok 52 - duplicate blueprint group ids are rejected
+  ---
+  duration_ms: 0.489888
+  type: 'test'
+  ...
+# Subtest: actor participants without UUID generate a warning
+ok 53 - actor participants without UUID generate a warning
+  ---
+  duration_ms: 0.150814
+  type: 'test'
+  ...
+# Subtest: sample active session validates
+ok 54 - sample active session validates
+  ---
+  duration_ms: 0.805757
+  type: 'test'
+  ...
+# Subtest: session progress cannot be negative
+ok 55 - session progress cannot be negative
+  ---
+  duration_ms: 0.605899
+  type: 'test'
+  ...
+# Subtest: invalid embedded blueprint snapshot invalidates session
+ok 56 - invalid embedded blueprint snapshot invalidates session
+  ---
+  duration_ms: 0.407636
+  type: 'test'
+  ...
+# Subtest: result requires a session id
+ok 57 - result requires a session id
+  ---
+  duration_ms: 0.219937
+  type: 'test'
+  ...
+# Subtest: valid result passes
+ok 58 - valid result passes
+  ---
+  duration_ms: 0.59921
+  type: 'test'
+  ...
+# Subtest: public state contract validates
+ok 59 - public state contract validates
+  ---
+  duration_ms: 0.278283
+  type: 'test'
+  ...
+# Subtest: embedded Effect Forge consequence requires definition
+ok 60 - embedded Effect Forge consequence requires definition
+  ---
+  duration_ms: 0.170733
+  type: 'test'
+  ...
+# Subtest: Effect Forge item consequence requires UUID
+ok 61 - Effect Forge item consequence requires UUID
+  ---
+  duration_ms: 0.088491
+  type: 'test'
+  ...
+# Subtest: route unlock consequence requires at least one edge id
+ok 62 - route unlock consequence requires at least one edge id
+  ---
+  duration_ms: 0.092317
+  type: 'test'
+  ...
+# Subtest: valid embedded Effect Forge consequence passes structural validation
+ok 63 - valid embedded Effect Forge consequence passes structural validation
+  ---
+  duration_ms: 0.131455
+  type: 'test'
+  ...
+# Subtest: raw blueprint with invalid settings is caught even if factories were bypassed
+ok 64 - raw blueprint with invalid settings is caught even if factories were bypassed
+  ---
+  duration_ms: 0.327887
+  type: 'test'
+  ...
+1..64
+# tests 64
+# suites 0
+# pass 64
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 396.622121
+
+JavaScript syntax checks: PASS
+Total tests: 64/64 passing

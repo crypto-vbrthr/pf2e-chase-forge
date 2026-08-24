@@ -1,0 +1,45 @@
+{
+  "id": "pf2e-chase-forge",
+  "title": "PF2E Chase Forge",
+  "description": "A modular Pathfinder 2e chase framework for Foundry VTT with graph-based chase blueprints, templates, sessions, consequences, player-safe state contracts, and an extension-ready data model.",
+  "version": "0.1.0-dev.1",
+  "authors": [
+    {
+      "name": "crypto-vbrthr"
+    }
+  ],
+  "compatibility": {
+    "minimum": "14",
+    "verified": "14"
+  },
+  "relationships": {
+    "systems": [
+      {
+        "id": "pf2e",
+        "type": "system",
+        "compatibility": {
+          "minimum": "8.1.2"
+        }
+      }
+    ]
+  },
+  "esmodules": [
+    "scripts/main.js"
+  ],
+  "languages": [
+    {
+      "lang": "de",
+      "name": "Deutsch",
+      "path": "lang/de.json"
+    },
+    {
+      "lang": "en",
+      "name": "English",
+      "path": "lang/en.json"
+    }
+  ],
+  "readme": "README.md",
+  "url": "https://github.com/crypto-vbrthr/pf2e-chase-forge",
+  "manifest": "https://raw.githubusercontent.com/crypto-vbrthr/pf2e-chase-forge/main/module.json",
+  "download": "https://github.com/crypto-vbrthr/pf2e-chase-forge/releases/download/v0.1.0-dev.1/pf2e-chase-forge.zip"
+}

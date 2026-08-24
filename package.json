@@ -1,0 +1,12 @@
+{
+  "name": "pf2e-chase-forge",
+  "version": "0.1.0-dev.1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test --test-concurrency=1"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
