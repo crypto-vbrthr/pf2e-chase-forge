@@ -172,3 +172,9 @@ test("route consequence stores target edge ids", () => {
   const consequence = createConsequence({ kind: "routeUnlock", edgeIds: ["shortcut", "shortcut"] });
   assert.deepEqual(consequence.payload.edgeIds, ["shortcut"]);
 });
+
+test("dev.3 session runtime groups reserve explicit edge history", () => {
+  const session = sampleSession();
+  assert.deepEqual(session.groups[0].edgeHistory, []);
+  assert.equal(session.schemaVersion, 2);
+});

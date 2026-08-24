@@ -120,7 +120,7 @@ A failed registration leaves all registries unchanged. This includes:
 
 ## Compatibility
 
-Available capability names in dev.2:
+Available capability names in dev.3:
 
 ```text
 registries.cards

@@ -1,5 +1,22 @@
 # Changelog
 
+## 0.1.0-dev.3 - Route Graph Engine
+
+- Added a system-neutral Route Graph Engine for live traversal of Chase Blueprint DAGs.
+- Added route-session initialization from validated blueprints with independent runtime positions for every chase group.
+- Raised Chase Session schema to v2 and added explicit per-group `edgeHistory` alongside node route history.
+- Added branch selection by edge id, shared merge-node handling, multiple-ending completion detection, and support for routes of unequal length.
+- Added discoverable/hidden route semantics with explicit edge unlock and lock state; locks override prior unlocks.
+- Added Route Condition Contract v1 with `context`, `session`, `group`, and `nodeState` sources plus equality, truth, inclusion, and numeric comparison operators.
+- Added deterministic traversal through non-interactive routing nodes while always stopping at explicit `choice` nodes.
+- Added route mutation event records without coupling route completion to overall PF2e chase victory.
+- Added runtime route-integrity validation for stale nodes, broken node/edge histories, invalid blueprint-group references, participant mismatches, and unknown route-state edge ids.
+- Strengthened graph validation to reject non-end dead ends and nodes that cannot reach any declared ending.
+- Added reverse reachability and shortest-distance-to-ending graph analysis helpers.
+- Added public route APIs, route-condition APIs, and extension capability flags for traversal, conditions, and multi-group routing.
+- Raised the public API version to `3`.
+- Expanded the automated suite from 89 to 110 passing tests before release packaging.
+
 ## 0.1.0-dev.2 - Registries & Public Add-On API
 
 - Added module-owned registries for Chase Cards, Chase Templates, Chase Packs, and image providers.

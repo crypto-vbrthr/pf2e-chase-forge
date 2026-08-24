@@ -1,13 +1,13 @@
 export const MODULE_ID = "pf2e-chase-forge";
-export const MODULE_VERSION = "0.1.0-dev.2";
-export const API_VERSION = 2;
+export const MODULE_VERSION = "0.1.0-dev.3";
+export const API_VERSION = 3;
 export const EXTENSION_CONTRACT_VERSION = 1;
 
 export const SCHEMA_VERSIONS = Object.freeze({
   card: 1,
   template: 1,
   blueprint: 1,
-  session: 1,
+  session: 2,
   result: 1,
   publicState: 1,
   consequence: 1,
@@ -22,7 +22,10 @@ export const EXTENSION_CAPABILITIES = Object.freeze([
   "packs.activation",
   "extensions.boundOwnership",
   "extensions.transactionalRegistration",
-  "extensions.registrationDiagnostics"
+  "extensions.registrationDiagnostics",
+  "routing.traversal",
+  "routing.conditions",
+  "routing.multiGroup"
 ]);
 
 export const CHASE_TYPES = Object.freeze([
@@ -80,6 +83,26 @@ export const EDGE_VISIBILITY = Object.freeze([
   "public",
   "hidden",
   "discoverable"
+]);
+
+
+export const ROUTE_CONDITION_SOURCES = Object.freeze([
+  "context",
+  "session",
+  "group",
+  "nodeState"
+]);
+
+export const ROUTE_CONDITION_OPERATORS = Object.freeze([
+  "equals",
+  "notEquals",
+  "truthy",
+  "falsy",
+  "includes",
+  "gt",
+  "gte",
+  "lt",
+  "lte"
 ]);
 
 export const GROUP_ROLES = Object.freeze([

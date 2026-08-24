@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { createPublicApi } from "../scripts/api/public-api.js";
 import { sampleBlueprint } from "./helpers.js";
 
-test("dev.2 public API advertises implemented registry capabilities", () => {
+test("dev.3 public API advertises route and registry capabilities", () => {
   const api = createPublicApi();
   const caps = api.getCapabilities();
   assert.equal(caps.coreDataModel, true);
@@ -15,6 +15,10 @@ test("dev.2 public API advertises implemented registry capabilities", () => {
   assert.equal(caps.transactionalPackRegistration, true);
   assert.equal(caps.contentPackActivation, true);
   assert.equal(caps.imageProviders, true);
+  assert.equal(caps.routeGraphEngine, true);
+  assert.equal(caps.deterministicRouteResolution, true);
+  assert.equal(caps.routeConditions, true);
+  assert.equal(caps.multiGroupRouting, true);
   assert.equal(caps.rulesEngine, false);
   assert.equal(caps.persistence, false);
   assert.equal(caps.gmRunner, false);
@@ -26,6 +30,7 @@ test("dev.2 public API advertises implemented registry capabilities", () => {
 test("public API exposes schema versions", () => {
   const api = createPublicApi();
   assert.equal(api.schemas.blueprint, 1);
+  assert.equal(api.schemas.session, 2);
   assert.equal(api.schemas.publicState, 1);
   assert.equal(api.schemas.consequence, 1);
   assert.equal(api.schemas.pack, 1);
@@ -51,6 +56,8 @@ test("public API containers are frozen", () => {
   assert.equal(Object.isFrozen(api.factories), true);
   assert.equal(Object.isFrozen(api.validation), true);
   assert.equal(Object.isFrozen(api.graph), true);
+  assert.equal(Object.isFrozen(api.route), true);
+  assert.equal(Object.isFrozen(api.routeConditions), true);
   assert.equal(Object.isFrozen(api.cards), true);
   assert.equal(Object.isFrozen(api.templates), true);
   assert.equal(Object.isFrozen(api.packs), true);
@@ -68,4 +75,16 @@ test("registry stats are exposed without leaking mutable registry instances", ()
     enabledPacks: 0
   });
   assert.equal(api.registries.cards, undefined);
+});
+
+
+test("public route API can initialize and traverse a simple chase", () => {
+  const api = createPublicApi();
+  const blueprint = sampleBlueprint();
+  let session = api.route.initializeSession(blueprint, { sessionId: "api-route-session", status: "active" });
+  session = api.route.resolveDeterministic(session, "runtime-heroes").session;
+  assert.equal(session.groups[0].position.nodeId, "obstacle-1");
+  session = api.route.advanceGroup(session, "runtime-heroes");
+  assert.equal(session.groups[0].position.nodeId, "end");
+  assert.equal(api.route.completion(session).allGroupsCompleted, true);
 });

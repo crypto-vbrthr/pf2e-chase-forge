@@ -277,6 +277,7 @@ function normalizeGroupState(input = {}) {
       progress: Math.max(0, asNonNegativeInteger(state.position?.progress, DEFAULTS.obstacleProgress))
     },
     routeHistory: uniqueStrings(state.routeHistory),
+    edgeHistory: uniqueStrings(state.edgeHistory),
     completed: state.completed === true,
     metadata: isPlainObject(state.metadata) ? cloneData(state.metadata) : {}
   };

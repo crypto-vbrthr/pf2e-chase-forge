@@ -90,3 +90,43 @@ export function topologicalSort(graph = {}) {
 export function cloneGraph(graph) {
   return cloneData(graph ?? { nodes: [], edges: [], startNodeId: null, endNodeIds: [] });
 }
+
+
+export function getNodeIdsReachingAnyEnd(graph = {}, endNodeIds = graph.endNodeIds) {
+  const { incoming, nodeById } = buildGraphIndex(graph);
+  const ends = (Array.isArray(endNodeIds) ? endNodeIds : []).filter(id => nodeById.has(id));
+  const visited = new Set();
+  const queue = [...ends];
+  while (queue.length) {
+    const id = queue.shift();
+    if (visited.has(id)) continue;
+    visited.add(id);
+    for (const edge of incoming.get(id) ?? []) {
+      if (!visited.has(edge.from)) queue.push(edge.from);
+    }
+  }
+  return visited;
+}
+
+export function getShortestDistancesToEnds(graph = {}, endNodeIds = graph.endNodeIds) {
+  const { incoming, nodeById } = buildGraphIndex(graph);
+  const distances = new Map();
+  const queue = [];
+  for (const endId of Array.isArray(endNodeIds) ? endNodeIds : []) {
+    if (!nodeById.has(endId)) continue;
+    distances.set(endId, 0);
+    queue.push(endId);
+  }
+  while (queue.length) {
+    const id = queue.shift();
+    const distance = distances.get(id);
+    for (const edge of incoming.get(id) ?? []) {
+      const candidate = distance + 1;
+      if (!distances.has(edge.from) || candidate < distances.get(edge.from)) {
+        distances.set(edge.from, candidate);
+        queue.push(edge.from);
+      }
+    }
+  }
+  return distances;
+}

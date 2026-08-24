@@ -28,3 +28,11 @@ export class ChaseExtensionError extends ChaseDataError {
     this.name = "ChaseExtensionError";
   }
 }
+
+
+export class ChaseRouteError extends ChaseDataError {
+  constructor(message, options = {}) {
+    super(message, { code: "CHASE_ROUTE_ERROR", ...options });
+    this.name = "ChaseRouteError";
+  }
+}

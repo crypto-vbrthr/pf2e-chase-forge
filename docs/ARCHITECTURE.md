@@ -2,138 +2,67 @@
 
 ## Baseline
 
-Version `0.1.0-dev.2` adds the extension and registry layer on top of the dev.1 core data model. Gameplay services and UI remain intentionally deferred.
+Version `0.1.0-dev.3` adds the first gameplay-state service: a system-neutral Route Graph Engine. PF2e chase rules and UI remain later layers.
 
 ```text
 External Chase Add-ons
         |
         v
-Extension Contract v1
+Extension Contract / Registries
         |
         v
 +-------------------------------+
-| Registries                    |
-| Card / Template / Pack        |
-| Image Provider                |
+| Core Data Model               |
+| Blueprint DAG / Session v2    |
 +---------------+---------------+
                 |
                 v
-         Public Chase API
++-------------------------------+
+| Route Graph Engine            |
+| traversal / branches / merges |
+| conditions / unlocks / groups |
++---------------+---------------+
                 |
-        +-------+------------------------------+
-        |                                      |
- Core Data Model                        Future Services
- (dev.1)                                Route / Rules / Session
-        |                                      |
-        +-------------------+------------------+
-                            |
-                    Future GM / Player UI
+        +-------+-------------------------+
+        |                                 |
+ Future PF2e Rules Engine          Future Session Sync
+        |                                 |
+        +----------------+----------------+
+                         |
+                 Future GM / Player UI
 ```
 
-## Registry ownership
+## Authority boundary
 
-Every external resource has one owning Foundry module id. Third-party extensions receive a bound controller through:
+Route mutations are pure snapshot-in/snapshot-out operations. They return a new normalized session and never mutate the supplied session in place. Later `ChaseSessionManager`/socket code will own persistence and authority.
 
-```js
-forge.extensions.forModule("my-module")
-```
+Players will never receive raw `ChaseSession` data. The future `ChasePublicState` projector remains the security boundary for hidden routes, DCs, GM notes, and undiscovered content.
 
-Local ids such as `city` are normalized to `my-module:city`. Explicit ids must use the bound module namespace. An extension cannot claim another module's namespace.
+## Route graph
 
-The `core:` namespace is reserved for Chase Forge itself.
+Blueprint routes remain directed acyclic graphs. A linear chase is simply the smallest useful DAG. Branches, shortcuts, merges, multiple endings, and routes of different lengths use the same structure.
 
-Ownership applies to:
+Schema v1 still prohibits cycles.
 
-- Chase Packs;
-- Chase Cards;
-- Chase Templates;
-- image providers.
+## Runtime groups
 
-A module may replace or remove only its own resources.
+Blueprint participant groups are immutable chase definitions. Runtime groups carry independent positions. This allows quarry and pursuers to take different branches today and reserves the same model for later party splitting.
 
-## Transaction boundary
+A merge is spatial/topological, not an automatic group merge.
 
-A Chase Pack is the atomic registration unit. A pack may contain:
+## Route conditions
 
-```text
-Pack
- |- Chase Cards
- |- Chase Templates
- `- Image Providers
-```
+Conditions are deliberately system-neutral. The engine evaluates generic values from explicit runtime sources. The future PF2e rules engine can place derived facts into the supplied context instead of contaminating route code with PF2e logic.
 
-`registerPack()` and `registerPacks()` are transactional. Validation or collision failures restore every registry to its previous state. Batch registration is atomic across all packs in the batch.
+## Registries and ownership
 
-Replacing a pack removes the previous resources from that pack and registers the replacement in one transaction. Existing resources in unrelated packs remain protected.
+The dev.2 registry boundary remains unchanged. External resources are module-owned, namespaced, transactionally registered, and individually activatable. Image providers remain presentation extensions and do not participate in route state.
 
-## Pack activation
+## Future boundaries retained
 
-Registration and activation are separate concepts.
-
-A disabled pack:
-
-- remains registered;
-- remains visible to diagnostic/management reads;
-- is omitted from normal card and template discovery;
-- does not contribute image providers or image candidates.
-
-Activation is persisted in a hidden world setting. This allows a later settings UI to enable or disable individual add-on content packs without unregistering them.
-
-## Image provider boundary
-
-Image providers are presentation extensions. They do not participate in chase rules or route state.
-
-A provider supplies:
-
-```js
-{
-  id,
-  label,
-  version,
-  priority,
-  tags,
-  supports(context),       // optional
-  getImages(context)       // required, sync or async
-}
-```
-
-Providers are queried by descending priority. Candidate weights order images within equal provider priority. A failing provider is isolated and reported without blocking other providers.
-
-This is intentionally only the provider foundation. Automatic image-selection policy belongs to the later presentation/generator layer.
-
-## Extension compatibility
-
-Extension Contract v1 can check:
-
-- Chase Forge module version;
-- public API version;
-- extension contract version;
-- individual schema versions;
-- named extension capabilities.
-
-Extensions should check compatibility before registering content. Bound controllers also enforce configured requirements before every registration operation.
-
-## Diagnostics
-
-Extension registration diagnostics are session-only and intentionally not persisted to world settings. Entries record:
-
-- source module;
-- resource type;
-- operation;
-- success/error status;
-- stable error/diagnostic code;
-- resource ids;
-- structured details.
-
-This journal will feed the later Chase Forge diagnostics GUI.
-
-## Existing dev.1 boundaries
-
-The following architectural rules remain unchanged:
-
-- `ChaseBlueprint` routes are DAGs rather than flat card lists;
-- the future GM/session owner is authoritative for gameplay mutations;
-- players receive a projected `ChasePublicState`, never a raw `ChaseSession`;
-- Chase Forge owns chase-state consequences;
-- Critical Forge / Effect Forge will own PF2e Actor effect application;
-- Journal and Campaign Forge integration remain optional bridges rather than hard dependencies.
+- Chase Forge owns chase-state consequences.
+- Critical Forge / Effect Forge will own Actor effect application.
+- PF2e adapter/rules engine will own checks, DCs, degrees of success, and chase-point logic.
+- Session Manager will own persistence, pause/resume, and authoritative mutation.
+- Player clients will send intents, not mutate sessions directly.
+- Journal and Campaign Forge integration remain optional bridges.

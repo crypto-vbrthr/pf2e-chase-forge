@@ -2,7 +2,7 @@
 
 ## Overview
 
-`0.1.0-dev.2` introduces four runtime registries:
+`0.1.0-dev.2` introduced four runtime registries; they remain unchanged in dev.3:
 
 - Card Registry
 - Template Registry

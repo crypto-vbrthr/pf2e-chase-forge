@@ -123,3 +123,13 @@ test("extension version is inherited by packs that omit their own version", () =
   assert.equal(api.packs.get("versioned-addon:pack").version, "2.3.4");
   assert.equal(api.cards.get("versioned-addon:card").source.version, "2.3.4");
 });
+
+test("dev.3 exposes route capabilities to compatibility checks", () => {
+  const api = createPublicApi();
+  const report = api.extensions.checkCompatibility({
+    apiVersion: ">=3",
+    schemas: { session: ">=2" },
+    capabilities: ["routing.traversal", "routing.conditions", "routing.multiGroup"]
+  });
+  assert.equal(report.compatible, true, JSON.stringify(report.issues));
+});

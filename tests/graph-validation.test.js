@@ -137,3 +137,19 @@ test("card nodes without a card reference remain structurally inspectable", () =
   assert.equal(result.valid, true);
   assert.ok(result.warnings.some(warning => warning.code === "CARD_REF"));
 });
+
+test("non-end dead ends are rejected", () => {
+  const graph = linearGraph();
+  graph.edges = graph.edges.filter(edge => edge.id !== "e2");
+  const result = validateRouteGraph(graph);
+  assert.ok(result.errors.some(error => error.code === "DEAD_END"));
+  assert.ok(result.errors.some(error => error.code === "NO_PATH_TO_END"));
+});
+
+test("route conditions require a supported source, operator, and path", () => {
+  const graph = linearGraph();
+  graph.edges[0].conditions = [{ source: "context", path: "weather.clear", operator: "equals", value: true }];
+  assert.equal(validateRouteGraph(graph).valid, true);
+  graph.edges[0].conditions = [{ source: "mystery", path: "x", operator: "equals", value: true }];
+  assert.ok(validateRouteGraph(graph).errors.some(error => error.code === "ENUM"));
+});

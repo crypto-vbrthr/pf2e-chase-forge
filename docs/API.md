@@ -1,4 +1,4 @@
-# PF2E Chase Forge Public API - dev.2
+# PF2E Chase Forge Public API - dev.3
 
 ## Access
 
@@ -6,80 +6,82 @@
 const forge = game.modules.get("pf2e-chase-forge")?.api;
 ```
 
-Current public API version: `2`  
+Current public API version: `3`  
 Extension Contract version: `1`
 
-The API is exposed during Foundry `init`. External content modules should register on:
+## Capabilities
 
-```js
-Hooks.once("pf2eChaseForge.ready", forge => { /* register */ });
+`forge.getCapabilities()` now reports these route capabilities as implemented:
+
+```text
+routeGraphEngine
+deterministicRouteResolution
+routeConditions
+multiGroupRouting
 ```
 
-## Capability detection
+PF2e rules, persistence, runners, Player View, Effect Forge execution, and Campaign Forge integration remain false.
+
+## Schemas
+
+`forge.schemas.session === 2`; other dev.1 schemas remain v1 and ChasePack remains v1.
+
+## Graph analysis
 
 ```js
-forge.getCapabilities();
+forge.graph.index(graph);
+forge.graph.reachable(graph);
+forge.graph.findCycle(graph);
+forge.graph.topologicalSort(graph);
+forge.graph.reachingEnds(graph);
+forge.graph.shortestDistancesToEnds(graph);
 ```
 
-dev.2 reports the core data/graph contracts plus implemented registry, extension, transaction, pack-activation, and image-provider capabilities. Rules, persistence, runners, Player View, Effect Forge execution, and Campaign Forge integration remain `false`.
-
-## Data contracts
+## Route traversal
 
 ```js
-forge.schemas;
-forge.factories;
-forge.validation;
-forge.graph;
+forge.route.initializeSession(blueprint, options);
+forge.route.inspectIntegrity(session);
+forge.route.assertIntegrity(session);
+forge.route.listTransitions(session, runtimeGroupId, options);
+forge.route.availableTransitions(session, runtimeGroupId, options);
+forge.route.moveGroup(session, runtimeGroupId, edgeId, options);
+forge.route.advanceGroup(session, runtimeGroupId, options);
+forge.route.resolveDeterministic(session, runtimeGroupId, options);
+forge.route.unlockEdges(session, edgeIds);
+forge.route.lockEdges(session, edgeIds);
+forge.route.completion(session);
+forge.route.groupsAtNode(session, nodeId);
 ```
 
-Existing dev.1 schema versions remain `1`. dev.2 adds `pack: 1`.
+Every mutation returns a new normalized session snapshot.
 
-## Content reads
+## Route conditions
 
 ```js
-forge.cards.get(id, options);
-forge.cards.list(options);
-forge.cards.has(id, options);
-
-forge.templates.get(id, options);
-forge.templates.list(options);
-forge.templates.has(id, options);
-
-forge.packs.get(id);
-forge.packs.list(options);
-forge.packs.isEnabled(id);
-await forge.packs.setEnabled(id, enabled);
+forge.routeConditions.evaluate(condition, runtime);
+forge.routeConditions.evaluateAll(conditions, runtime);
 ```
 
-`setEnabled` is a GM management mutation when running inside Foundry.
+Malformed or unknown conditions fail closed.
 
-## Images
+## Content and extensions
 
-```js
-forge.images.providers.get(id, options);
-forge.images.providers.list(options);
-await forge.images.collectCandidates(context, options);
+The dev.2 APIs remain available without breaking changes:
+
+```text
+forge.cards
+forge.templates
+forge.packs
+forge.images
+forge.extensions
+forge.registries
 ```
 
-`collectCandidates` isolates provider failures and returns `{ candidates, errors }`.
+Extension compatibility can now require:
 
-## Extensions
-
-```js
-forge.extensions.environment;
-forge.extensions.checkCompatibility(requirements);
-forge.extensions.assertCompatible(requirements);
-forge.extensions.forModule(moduleId, options);
-forge.extensions.diagnostics.list(options);
-forge.extensions.diagnostics.clear(options);
+```text
+routing.traversal
+routing.conditions
+routing.multiGroup
 ```
-
-Third-party modules should prefer a module-bound controller from `forModule()` because it enforces ownership and configured compatibility requirements.
-
-## Registry diagnostics
-
-```js
-forge.registries.getStats();
-```
-
-Raw mutable registry instances are intentionally not exposed.

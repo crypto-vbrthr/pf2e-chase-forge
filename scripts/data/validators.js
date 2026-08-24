@@ -14,10 +14,12 @@ import {
   PARTICIPANT_KINDS,
   RESULT_OUTCOMES,
   ROUTE_COMPLEXITIES,
+  ROUTE_CONDITION_OPERATORS,
+  ROUTE_CONDITION_SOURCES,
   SCHEMA_VERSIONS,
   SESSION_STATUSES
 } from "../core/constants.js";
-import { buildGraphIndex, findCycle, getReachableNodeIds } from "./graph.js";
+import { buildGraphIndex, findCycle, getNodeIdsReachingAnyEnd, getReachableNodeIds } from "./graph.js";
 import { isPlainObject } from "./utils.js";
 
 function issue(code, path, message, details = null) {
@@ -103,6 +105,14 @@ function validateOutcomes(outcomes, collector, path) {
     validateUniqueIds(outcomes[degree], collector, `${path}.${degree}`);
     outcomes[degree].forEach((consequence, index) => validateConsequenceInternal(consequence, collector, `${path}.${degree}[${index}]`));
   }
+}
+
+
+function validateRouteCondition(condition, collector, path) {
+  if (!requireObject(condition, collector, path)) return;
+  validateEnum(condition.source, ROUTE_CONDITION_SOURCES, collector, `${path}.source`);
+  validateEnum(condition.operator, ROUTE_CONDITION_OPERATORS, collector, `${path}.operator`);
+  requireNonEmptyString(condition.path, collector, `${path}.path`);
 }
 
 function validateImage(image, collector, path) {
@@ -197,6 +207,8 @@ export function validateRouteGraph(graph, { allowEmpty = false } = {}) {
   graph.edges.forEach((edge, index) => {
     validateEnum(edge.type, EDGE_TYPES, c, `graph.edges[${index}].type`);
     validateEnum(edge.visibility, EDGE_VISIBILITY, c, `graph.edges[${index}].visibility`);
+    if (!Array.isArray(edge.conditions)) c.error("EDGE_CONDITIONS", `graph.edges[${index}].conditions`, "Edge conditions must be an array.");
+    else edge.conditions.forEach((condition, conditionIndex) => validateRouteCondition(condition, c, `graph.edges[${index}].conditions[${conditionIndex}]`));
     if (!nodeIds.has(edge.from)) c.error("EDGE_FROM", `graph.edges[${index}].from`, `Unknown source node '${edge.from}'.`);
     if (!nodeIds.has(edge.to)) c.error("EDGE_TO", `graph.edges[${index}].to`, `Unknown target node '${edge.to}'.`);
     if (edge.from === edge.to) c.error("SELF_EDGE", `graph.edges[${index}]`, "Self-referencing graph edges are not allowed.");
@@ -234,7 +246,13 @@ export function validateRouteGraph(graph, { allowEmpty = false } = {}) {
     const outCount = outgoing.get(node.id)?.length ?? 0;
     if (node.type === "choice" && outCount < 2) c.warn("CHOICE_ARITY", `graph.nodes.${node.id}`, "Choice node should have at least two outgoing edges.");
     if (node.type === "merge" && inCount < 2) c.warn("MERGE_ARITY", `graph.nodes.${node.id}`, "Merge node should have at least two incoming edges.");
+    if (node.type !== "end" && outCount === 0) c.error("DEAD_END", `graph.nodes.${node.id}`, `Non-end node '${node.id}' has no outgoing route.`);
   });
+
+  if (!c.errors.some(error => ["END_NODE", "EDGE_FROM", "EDGE_TO", "GRAPH_CYCLE"].includes(error.code))) {
+    const productive = getNodeIdsReachingAnyEnd(graph);
+    for (const id of nodeIds) if (!productive.has(id)) c.error("NO_PATH_TO_END", "graph", `Node '${id}' cannot reach any declared end node.`);
+  }
 
   return c.result();
 }
@@ -281,7 +299,12 @@ export function validateChaseSession(session) {
     session.groups.forEach((group, index) => {
       requireNonEmptyString(group.groupId, c, `groups[${index}].groupId`);
       if (!isPlainObject(group.position)) c.error("POSITION", `groups[${index}].position`, "Runtime group position must be an object.");
-      else if (!Number.isInteger(group.position.progress) || group.position.progress < 0) c.error("PROGRESS", `groups[${index}].position.progress`, "Progress must be a non-negative integer.");
+      else {
+        requireNonEmptyString(group.position.nodeId, c, `groups[${index}].position.nodeId`);
+        if (!Number.isInteger(group.position.progress) || group.position.progress < 0) c.error("PROGRESS", `groups[${index}].position.progress`, "Progress must be a non-negative integer.");
+      }
+      if (!Array.isArray(group.routeHistory)) c.error("ROUTE_HISTORY", `groups[${index}].routeHistory`, "Runtime group routeHistory must be an array.");
+      if (!Array.isArray(group.edgeHistory)) c.error("EDGE_HISTORY", `groups[${index}].edgeHistory`, "Runtime group edgeHistory must be an array.");
     });
   }
   if (session.blueprintSnapshot) {

@@ -14,7 +14,7 @@ import {
   createParticipantGroup,
   createRouteGraph
 } from "../data/factories.js";
-import { buildGraphIndex, findCycle, getReachableNodeIds, topologicalSort } from "../data/graph.js";
+import { buildGraphIndex, findCycle, getNodeIdsReachingAnyEnd, getReachableNodeIds, getShortestDistancesToEnds, topologicalSort } from "../data/graph.js";
 import {
   validateChaseBlueprint,
   validateChaseCard,
@@ -28,6 +28,8 @@ import {
   validateRouteGraph
 } from "../data/validators.js";
 import { createExtensionPublicApi } from "../extensions/extension-service.js";
+import { createRouteGraphEngine } from "../engine/route-graph-engine.js";
+import { evaluateRouteCondition, evaluateRouteConditions } from "../engine/route-conditions.js";
 import { createRegistryService } from "../registries/registry-service.js";
 
 function contentApi(registries) {
@@ -61,6 +63,7 @@ function contentApi(registries) {
 export function createPublicApi({ registries = createRegistryService() } = {}) {
   const content = contentApi(registries);
   const extensions = createExtensionPublicApi(registries);
+  const route = createRouteGraphEngine();
 
   return Object.freeze({
     version: API_VERSION,
@@ -73,7 +76,9 @@ export function createPublicApi({ registries = createRegistryService() } = {}) {
       consequenceReference: 1,
       extension: 1,
       registry: 1,
-      imageProvider: 1
+      imageProvider: 1,
+      routeTraversal: 1,
+      routeCondition: 1
     }),
     getCapabilities: () => Object.freeze({
       coreDataModel: true,
@@ -86,6 +91,10 @@ export function createPublicApi({ registries = createRegistryService() } = {}) {
       transactionalPackRegistration: true,
       contentPackActivation: true,
       imageProviders: true,
+      routeGraphEngine: true,
+      deterministicRouteResolution: true,
+      routeConditions: true,
+      multiGroupRouting: true,
       rulesEngine: false,
       persistence: false,
       gmRunner: false,
@@ -124,7 +133,14 @@ export function createPublicApi({ registries = createRegistryService() } = {}) {
       index: buildGraphIndex,
       reachable: getReachableNodeIds,
       findCycle,
-      topologicalSort
+      topologicalSort,
+      reachingEnds: getNodeIdsReachingAnyEnd,
+      shortestDistancesToEnds: getShortestDistancesToEnds
+    }),
+    route,
+    routeConditions: Object.freeze({
+      evaluate: evaluateRouteCondition,
+      evaluateAll: evaluateRouteConditions
     }),
     cards: content.cards,
     templates: content.templates,

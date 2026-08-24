@@ -1,83 +1,93 @@
 # PF2E Chase Forge
 
-**Version:** 0.1.0-dev.2  
+**Version:** 0.1.0-dev.3  
 **Foundry VTT:** 14  
 **System:** Pathfinder 2e
 
-PF2E Chase Forge is a modular chase framework for Foundry VTT. `0.1.0-dev.2` builds on the graph-based core data model from dev.1 and adds the first live extension layer: content registries, transactional add-on packs, pack activation, image providers, compatibility checks, and registration diagnostics.
+PF2E Chase Forge is a modular chase framework for Foundry VTT. `0.1.0-dev.3` turns the route graph from a validated data contract into a live traversal engine. Runtime groups can now move independently through linear routes, branches, shortcuts, merges, conditional routes, and multiple endings.
 
-There is still no chase builder or runner UI in this development build. The goal of dev.2 is to prove that independent Foundry modules can contribute Chase Forge content without importing or patching Chase Forge internals.
+There is still no chase builder, PF2e chase-roll automation, or runner UI in this development build. dev.3 is intentionally the route-state layer that those later systems will use.
 
-## dev.2 scope
+## dev.3 scope
 
 Implemented:
 
-- `CardRegistry` for Chase Cards;
-- `TemplateRegistry` for quick-start Chase Templates;
-- `PackRegistry` for logical add-on content packs;
-- `ImageProviderRegistry` for external visual providers;
-- globally unique, module-owned resource namespaces;
-- automatic namespacing of local add-on ids;
-- ownership isolation between external modules;
-- atomic single-pack and multi-pack registration;
-- same-owner transactional pack replacement;
-- per-pack activation with hidden world-state persistence;
-- disabled-pack filtering for cards, templates, and image providers;
-- prioritized image-provider discovery and candidate collection;
-- provider failure isolation;
-- extension compatibility checks for API, contract, schema, and named capabilities;
-- module-bound extension controllers;
-- session-only structured registration diagnostics;
-- public read APIs for cards, templates, packs, image providers, and registry statistics;
-- synthetic add-on integration tests proving external registration works.
+- route-session initialization from a validated `ChaseBlueprint`;
+- independent runtime positions for multiple chase groups;
+- explicit node and edge route history per runtime group;
+- traversal by edge id;
+- branch selection without moving unrelated groups;
+- merge handling through shared graph nodes;
+- public, hidden, and discoverable route visibility semantics;
+- explicit route unlock and lock state;
+- conditional edges using a small system-neutral condition contract;
+- deterministic traversal through non-interactive routing nodes;
+- explicit stopping at `choice` nodes so player/GM decisions are never silently skipped;
+- route completion detection per group and across all groups;
+- runtime integrity validation before state mutation;
+- protection against unknown nodes, unknown edges, broken history, invalid participants, and stale route state;
+- graph validation for non-end dead ends and branches that cannot reach an ending;
+- shortest-distance-to-ending graph analysis;
+- new public route API and route capability flags;
+- Chase Session schema v2 with explicit `edgeHistory`.
 
-The dev.1 architecture remains intact, including the route DAG, participant-group model, consequence references, and player-safe state contract.
+The dev.1 and dev.2 architecture remains intact: route graphs are DAGs, add-on content is registry-owned, image providers remain presentation-only, players will later receive projected public state rather than raw sessions, and integrations remain optional.
 
-## Deliberately not implemented yet
+## Route condition contract v1
 
-- PF2e chase rules and roll automation;
-- route traversal/session mutation engine;
-- blueprint/session persistence;
-- GM Chase Runner;
-- Player Chase View and socket synchronization;
-- Effect Forge execution;
-- generator/content library;
-- Journal and Campaign Forge integration.
+An edge may contain zero or more conditions. Every condition must pass before the edge is traversable.
+
+```js
+{
+  source: "context",        // context | session | group | nodeState
+  path: "weather.clear",
+  operator: "equals",      // equals, notEquals, truthy, falsy, includes, gt, gte, lt, lte
+  value: true
+}
+```
+
+`context` is supplied by the caller. Later PF2e and scenario systems can therefore expose chase-specific facts without coupling the Route Graph Engine to PF2e rules.
 
 ## Public API
 
-At Foundry `init`, Chase Forge exposes:
+At Foundry `init`:
 
 ```js
-game.modules.get("pf2e-chase-forge").api
+const forge = game.modules.get("pf2e-chase-forge")?.api;
 ```
 
-External add-ons should register after the ready hook:
+Route example:
 
 ```js
-Hooks.once("pf2eChaseForge.ready", forge => {
-  const extension = forge.extensions.forModule("my-chase-addon", {
-    version: "1.0.0",
-    requirements: {
-      apiVersion: ">=2",
-      extensionContractVersion: ">=1",
-      schemas: { card: ">=1", template: ">=1", pack: ">=1" },
-      capabilities: ["registries.packs", "extensions.transactionalRegistration"]
-    }
-  });
-
-  extension.assertCompatible();
-  extension.registerPack({
-    id: "city",
-    label: "City Chases",
-    cards: [],
-    templates: [],
-    imageProviders: []
-  });
+let session = forge.route.initializeSession(blueprint, {
+  status: "active"
 });
+
+// Move through deterministic Start/Merge routing until the next card or choice.
+session = forge.route.resolveDeterministic(
+  session,
+  "runtime-heroes"
+).session;
+
+const choices = forge.route.availableTransitions(
+  session,
+  "runtime-heroes"
+);
+
+session = forge.route.moveGroup(
+  session,
+  "runtime-heroes",
+  choices[0].edge.id
+);
 ```
 
-Local ids are automatically namespaced. The example pack above becomes `my-chase-addon:city`. A module cannot register, replace, or unregister resources owned by another module.
+Discoverable route:
+
+```js
+session = forge.route.unlockEdges(session, ["shortcut-roof"]);
+```
+
+Route traversal does **not** decide PF2e chase points, success degrees, initiative, or chase victory. That belongs to the planned rules engine.
 
 See:
 
@@ -86,6 +96,17 @@ See:
 - `docs/REGISTRIES.md`
 - `docs/EXTENSION_CONTRACT.md`
 - `docs/API.md`
+- `docs/ROUTE_ENGINE.md`
+
+## Deliberately not implemented yet
+
+- PF2e chase rules and roll automation;
+- consequence execution / Effect Forge bridge;
+- blueprint/session persistence;
+- GM Chase Runner;
+- Player Chase View and socket synchronization;
+- generator/content library;
+- Journal and Campaign Forge integration.
 
 ## Testing
 
@@ -93,4 +114,4 @@ See:
 npm test
 ```
 
-The dev.2 suite includes the complete dev.1 baseline plus registry, ownership, transaction, activation, image-provider, compatibility, diagnostics, and synthetic add-on tests.
+The dev.3 suite includes the complete dev.1/dev.2 baseline plus route traversal, independent groups, branching, merges, route locking/unlocking, conditional edges, completion, runtime integrity, and path-length tests.
