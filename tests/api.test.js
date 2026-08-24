@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { createPublicApi } from "../scripts/api/public-api.js";
 import { sampleBlueprint } from "./helpers.js";
 
-test("dev.3 public API advertises route and registry capabilities", () => {
+test("dev.4 public API advertises route, registry, and rules capabilities", () => {
   const api = createPublicApi();
   const caps = api.getCapabilities();
   assert.equal(caps.coreDataModel, true);
@@ -19,7 +19,15 @@ test("dev.3 public API advertises route and registry capabilities", () => {
   assert.equal(caps.deterministicRouteResolution, true);
   assert.equal(caps.routeConditions, true);
   assert.equal(caps.multiGroupRouting, true);
-  assert.equal(caps.rulesEngine, false);
+  assert.equal(caps.rulesEngine, true);
+  assert.equal(caps.chasePoints, true);
+  assert.equal(caps.roundTracking, true);
+  assert.equal(caps.chaseTypeOutcomes, true);
+  assert.equal(caps.steadyPace, true);
+  assert.equal(caps.separatedParticipantRule, true);
+  assert.equal(caps.pf2eDcTables, true);
+  assert.equal(caps.degreeOfSuccess, true);
+  assert.equal(caps.pf2eAdapter, true);
   assert.equal(caps.persistence, false);
   assert.equal(caps.gmRunner, false);
   assert.equal(caps.playerView, false);
@@ -30,7 +38,7 @@ test("dev.3 public API advertises route and registry capabilities", () => {
 test("public API exposes schema versions", () => {
   const api = createPublicApi();
   assert.equal(api.schemas.blueprint, 1);
-  assert.equal(api.schemas.session, 2);
+  assert.equal(api.schemas.session, 3);
   assert.equal(api.schemas.publicState, 1);
   assert.equal(api.schemas.consequence, 1);
   assert.equal(api.schemas.pack, 1);
@@ -57,6 +65,9 @@ test("public API containers are frozen", () => {
   assert.equal(Object.isFrozen(api.validation), true);
   assert.equal(Object.isFrozen(api.graph), true);
   assert.equal(Object.isFrozen(api.route), true);
+  assert.equal(Object.isFrozen(api.rules), true);
+  assert.equal(Object.isFrozen(api.pf2e), true);
+  assert.equal(Object.isFrozen(api.guidelines), true);
   assert.equal(Object.isFrozen(api.routeConditions), true);
   assert.equal(Object.isFrozen(api.cards), true);
   assert.equal(Object.isFrozen(api.templates), true);

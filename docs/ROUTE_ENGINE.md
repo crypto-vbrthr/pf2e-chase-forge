@@ -1,6 +1,6 @@
 # Route Graph Engine
 
-`0.1.0-dev.3` introduces Route Traversal Contract v1.
+`0.1.0-dev.3` introduced Route Traversal Contract v1; it remains unchanged in dev.4.
 
 ## Boundary
 

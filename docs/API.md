@@ -1,4 +1,4 @@
-# PF2E Chase Forge Public API - dev.3
+# PF2E Chase Forge Public API - dev.4
 
 ## Access
 
@@ -6,68 +6,109 @@
 const forge = game.modules.get("pf2e-chase-forge")?.api;
 ```
 
-Current public API version: `3`  
+Current public API version: `4`  
 Extension Contract version: `1`
 
 ## Capabilities
 
-`forge.getCapabilities()` now reports these route capabilities as implemented:
+New dev.4 capabilities:
 
 ```text
-routeGraphEngine
-deterministicRouteResolution
-routeConditions
-multiGroupRouting
+rulesEngine
+chasePoints
+roundTracking
+chaseTypeOutcomes
+steadyPace
+separatedParticipantRule
+pf2eDcTables
+degreeOfSuccess
+pf2eAdapter
 ```
 
-PF2e rules, persistence, runners, Player View, Effect Forge execution, and Campaign Forge integration remain false.
+The dev.2 registry and dev.3 route capabilities remain available.
+
+Persistence, GM Runner, Player View, Effect Forge execution, and Campaign Forge integration remain false.
 
 ## Schemas
 
-`forge.schemas.session === 2`; other dev.1 schemas remain v1 and ChasePack remains v1.
+`forge.schemas.session === 3`. Card, Template, Blueprint, Result, PublicState, Consequence, and Pack remain v1.
 
-## Graph analysis
+## Rules engine
 
 ```js
-forge.graph.index(graph);
-forge.graph.reachable(graph);
-forge.graph.findCycle(graph);
-forge.graph.topologicalSort(graph);
-forge.graph.reachingEnds(graph);
-forge.graph.shortestDistancesToEnds(graph);
+forge.rules.initializeSession(blueprint, options);
+forge.rules.configureGroupPace(session, runtimeGroupId, options);
+forge.rules.beginRound(session, options);
+forge.rules.endRound(session, options);
+forge.rules.currentObstacle(session, runtimeGroupId);
+forge.rules.resolveCheck(session, request);
+forge.rules.applyDegree(session, request);
+forge.rules.applyAutomaticContribution(session, request);
+forge.rules.skipParticipantTurn(session, request);
+forge.rules.chooseRoute(session, request);
+forge.rules.advanceSteadyGroup(session, runtimeGroupId, options);
+forge.rules.pendingCheckBonus(session, runtimeGroupId);
+forge.rules.consumePendingCheckBonus(session, runtimeGroupId);
+forge.rules.getTurnPolicy(session);
+forge.rules.getObstacleIndex(session, runtimeGroupId);
+forge.rules.getObstacleLead(session, quarryGroupId, pursuerGroupId);
+forge.rules.evaluateOutcome(session, options);
+forge.rules.completeSession(session, evaluation);
+forge.rules.recommendObstaclePoints(groupSize);
+forge.rules.getChaseLengthGuideline(length);
+forge.rules.deriveStartPositions(blueprint, options);
+```
+
+Mutating calls return new normalized snapshots rather than mutating the supplied session.
+
+## PF2e helpers
+
+```js
+forge.pf2e.dc.simple("expert");
+forge.pf2e.dc.level(10);
+forge.pf2e.dc.adjustment("veryHard");
+forge.pf2e.dc.applyAdjustment(27, "hard");
+forge.pf2e.dc.resolveApproach(approach, options);
+forge.pf2e.dc.tables();
+
+forge.pf2e.degree.resolve({ total, dc, natural });
+forge.pf2e.degree.step("success", 1);
+
+forge.pf2e.adapter.resolveActor(uuid);
+forge.pf2e.adapter.getStatistic(actor, slug);
+forge.pf2e.adapter.rollStatistic(request);
+forge.pf2e.createAdapter(options);
+```
+
+## Guidelines
+
+```js
+forge.guidelines.obstaclePoints(groupSize);
+forge.guidelines.chaseLength("short");
+forge.guidelines.turnPolicy(session);
+forge.guidelines.startPositions(blueprint);
 ```
 
 ## Route traversal
 
-```js
-forge.route.initializeSession(blueprint, options);
-forge.route.inspectIntegrity(session);
-forge.route.assertIntegrity(session);
-forge.route.listTransitions(session, runtimeGroupId, options);
-forge.route.availableTransitions(session, runtimeGroupId, options);
-forge.route.moveGroup(session, runtimeGroupId, edgeId, options);
-forge.route.advanceGroup(session, runtimeGroupId, options);
-forge.route.resolveDeterministic(session, runtimeGroupId, options);
-forge.route.unlockEdges(session, edgeIds);
-forge.route.lockEdges(session, edgeIds);
-forge.route.completion(session);
-forge.route.groupsAtNode(session, nodeId);
-```
-
-Every mutation returns a new normalized session snapshot.
-
-## Route conditions
+The complete dev.3 route surface is unchanged:
 
 ```js
-forge.routeConditions.evaluate(condition, runtime);
-forge.routeConditions.evaluateAll(conditions, runtime);
+forge.route.initializeSession(...);
+forge.route.inspectIntegrity(...);
+forge.route.assertIntegrity(...);
+forge.route.listTransitions(...);
+forge.route.availableTransitions(...);
+forge.route.moveGroup(...);
+forge.route.advanceGroup(...);
+forge.route.resolveDeterministic(...);
+forge.route.unlockEdges(...);
+forge.route.lockEdges(...);
+forge.route.completion(...);
+forge.route.groupsAtNode(...);
 ```
-
-Malformed or unknown conditions fail closed.
 
 ## Content and extensions
-
-The dev.2 APIs remain available without breaking changes:
 
 ```text
 forge.cards
@@ -76,12 +117,4 @@ forge.packs
 forge.images
 forge.extensions
 forge.registries
-```
-
-Extension compatibility can now require:
-
-```text
-routing.traversal
-routing.conditions
-routing.multiGroup
 ```

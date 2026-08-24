@@ -9,7 +9,7 @@ Hooks.once("init", () => {
   registerSettings();
   registryService = createRegistryService({ stateStore: new FoundryPackStateStore() });
   initializePublicApi({ registries: registryService });
-  console.info(`${MODULE_ID} | ${MODULE_VERSION} Route Graph Engine initialized.`);
+  console.info(`${MODULE_ID} | ${MODULE_VERSION} PF2e Chase Rules Engine initialized.`);
 });
 
 Hooks.once("ready", () => {

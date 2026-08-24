@@ -29,6 +29,10 @@ import {
 } from "../data/validators.js";
 import { createExtensionPublicApi } from "../extensions/extension-service.js";
 import { createRouteGraphEngine } from "../engine/route-graph-engine.js";
+import { createPf2eChaseAdapter } from "../pf2e/pf2e-adapter.js";
+import { createChaseRulesEngine, deriveChaseStartPositions, getChaseLengthGuideline, getTurnPolicy, recommendObstaclePoints } from "../rules/chase-rules-engine.js";
+import { degreeOfSuccess, stepDegree } from "../rules/degree-of-success.js";
+import { applyDifficultyAdjustment, getDifficultyAdjustment, getLevelDc, getPf2eDcTables, getSimpleDc, resolveApproachDc } from "../rules/pf2e-dc.js";
 import { evaluateRouteCondition, evaluateRouteConditions } from "../engine/route-conditions.js";
 import { createRegistryService } from "../registries/registry-service.js";
 
@@ -64,6 +68,8 @@ export function createPublicApi({ registries = createRegistryService() } = {}) {
   const content = contentApi(registries);
   const extensions = createExtensionPublicApi(registries);
   const route = createRouteGraphEngine();
+  const rules = createChaseRulesEngine({ registries, routeEngine: route });
+  const pf2eAdapter = createPf2eChaseAdapter();
 
   return Object.freeze({
     version: API_VERSION,
@@ -78,7 +84,11 @@ export function createPublicApi({ registries = createRegistryService() } = {}) {
       registry: 1,
       imageProvider: 1,
       routeTraversal: 1,
-      routeCondition: 1
+      routeCondition: 1,
+      chaseRules: 1,
+      pf2eDc: 1,
+      degreeOfSuccess: 1,
+      pf2eAdapter: 1
     }),
     getCapabilities: () => Object.freeze({
       coreDataModel: true,
@@ -95,7 +105,15 @@ export function createPublicApi({ registries = createRegistryService() } = {}) {
       deterministicRouteResolution: true,
       routeConditions: true,
       multiGroupRouting: true,
-      rulesEngine: false,
+      rulesEngine: true,
+      chasePoints: true,
+      roundTracking: true,
+      chaseTypeOutcomes: true,
+      steadyPace: true,
+      separatedParticipantRule: true,
+      pf2eDcTables: true,
+      degreeOfSuccess: true,
+      pf2eAdapter: true,
       persistence: false,
       gmRunner: false,
       playerView: false,
@@ -138,6 +156,29 @@ export function createPublicApi({ registries = createRegistryService() } = {}) {
       shortestDistancesToEnds: getShortestDistancesToEnds
     }),
     route,
+    rules,
+    pf2e: Object.freeze({
+      dc: Object.freeze({
+        simple: getSimpleDc,
+        level: getLevelDc,
+        adjustment: getDifficultyAdjustment,
+        applyAdjustment: applyDifficultyAdjustment,
+        resolveApproach: resolveApproachDc,
+        tables: getPf2eDcTables
+      }),
+      degree: Object.freeze({
+        resolve: degreeOfSuccess,
+        step: stepDegree
+      }),
+      adapter: pf2eAdapter,
+      createAdapter: createPf2eChaseAdapter
+    }),
+    guidelines: Object.freeze({
+      obstaclePoints: recommendObstaclePoints,
+      chaseLength: getChaseLengthGuideline,
+      turnPolicy: getTurnPolicy,
+      startPositions: deriveChaseStartPositions
+    }),
     routeConditions: Object.freeze({
       evaluate: evaluateRouteCondition,
       evaluateAll: evaluateRouteConditions

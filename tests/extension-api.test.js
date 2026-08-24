@@ -124,7 +124,7 @@ test("extension version is inherited by packs that omit their own version", () =
   assert.equal(api.cards.get("versioned-addon:card").source.version, "2.3.4");
 });
 
-test("dev.3 exposes route capabilities to compatibility checks", () => {
+test("dev.4 exposes route and rules capabilities to compatibility checks", () => {
   const api = createPublicApi();
   const report = api.extensions.checkCompatibility({
     apiVersion: ">=3",

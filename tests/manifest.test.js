@@ -25,14 +25,14 @@ test("manifest targets Foundry 14 and PF2e", () => {
   assert.equal(moduleJson.relationships.systems[0].id, "pf2e");
 });
 
-test("dev.3 contract versions are explicit", () => {
-  assert.equal(API_VERSION, 3);
+test("dev.4 contract versions are explicit", () => {
+  assert.equal(API_VERSION, 4);
   assert.equal(EXTENSION_CONTRACT_VERSION, 1);
   assert.deepEqual(SCHEMA_VERSIONS, {
     card: 1,
     template: 1,
     blueprint: 1,
-    session: 2,
+    session: 3,
     result: 1,
     publicState: 1,
     consequence: 1,

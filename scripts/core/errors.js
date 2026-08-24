@@ -36,3 +36,17 @@ export class ChaseRouteError extends ChaseDataError {
     this.name = "ChaseRouteError";
   }
 }
+
+export class ChaseRulesError extends ChaseDataError {
+  constructor(message, options = {}) {
+    super(message, { code: "CHASE_RULES_ERROR", ...options });
+    this.name = "ChaseRulesError";
+  }
+}
+
+export class ChasePf2eError extends ChaseDataError {
+  constructor(message, options = {}) {
+    super(message, { code: "CHASE_PF2E_ERROR", ...options });
+    this.name = "ChasePf2eError";
+  }
+}

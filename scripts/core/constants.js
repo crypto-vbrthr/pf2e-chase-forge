@@ -1,13 +1,13 @@
 export const MODULE_ID = "pf2e-chase-forge";
-export const MODULE_VERSION = "0.1.0-dev.3";
-export const API_VERSION = 3;
+export const MODULE_VERSION = "0.1.0-dev.4";
+export const API_VERSION = 4;
 export const EXTENSION_CONTRACT_VERSION = 1;
 
 export const SCHEMA_VERSIONS = Object.freeze({
   card: 1,
   template: 1,
   blueprint: 1,
-  session: 2,
+  session: 3,
   result: 1,
   publicState: 1,
   consequence: 1,
@@ -25,7 +25,11 @@ export const EXTENSION_CAPABILITIES = Object.freeze([
   "extensions.registrationDiagnostics",
   "routing.traversal",
   "routing.conditions",
-  "routing.multiGroup"
+  "routing.multiGroup",
+  "rules.chasePoints",
+  "rules.rounds",
+  "rules.chaseTypes",
+  "rules.pf2eDc"
 ]);
 
 export const CHASE_TYPES = Object.freeze([
@@ -41,6 +45,12 @@ export const CHASE_LENGTHS = Object.freeze([
   "long",
   "custom"
 ]);
+
+export const CHASE_LENGTH_GUIDELINES = Object.freeze({
+  short: 6,
+  medium: 8,
+  long: 10
+});
 
 export const DIFFICULTY_PROFILES = Object.freeze([
   "easy",
@@ -85,7 +95,6 @@ export const EDGE_VISIBILITY = Object.freeze([
   "discoverable"
 ]);
 
-
 export const ROUTE_CONDITION_SOURCES = Object.freeze([
   "context",
   "session",
@@ -112,6 +121,11 @@ export const GROUP_ROLES = Object.freeze([
   "participant"
 ]);
 
+export const GROUP_PACE_MODES = Object.freeze([
+  "roll",
+  "steady"
+]);
+
 export const PARTICIPANT_KINDS = Object.freeze([
   "actor",
   "token",
@@ -125,6 +139,12 @@ export const SESSION_STATUSES = Object.freeze([
   "paused",
   "completed",
   "aborted"
+]);
+
+export const ROUND_PHASES = Object.freeze([
+  "idle",
+  "active",
+  "ended"
 ]);
 
 export const RESULT_OUTCOMES = Object.freeze([
@@ -154,12 +174,74 @@ export const DC_MODES = Object.freeze([
   "none"
 ]);
 
+export const PF2E_PROFICIENCY_RANKS = Object.freeze([
+  "untrained",
+  "trained",
+  "expert",
+  "master",
+  "legendary"
+]);
+
+export const PF2E_SIMPLE_DCS = Object.freeze({
+  untrained: 10,
+  trained: 15,
+  expert: 20,
+  master: 30,
+  legendary: 40
+});
+
+export const PF2E_LEVEL_DCS = Object.freeze({
+  0: 14,
+  1: 15,
+  2: 16,
+  3: 18,
+  4: 19,
+  5: 20,
+  6: 22,
+  7: 23,
+  8: 24,
+  9: 26,
+  10: 27,
+  11: 28,
+  12: 30,
+  13: 31,
+  14: 32,
+  15: 34,
+  16: 35,
+  17: 36,
+  18: 38,
+  19: 39,
+  20: 40,
+  21: 42,
+  22: 44,
+  23: 46,
+  24: 48,
+  25: 50
+});
+
+export const PF2E_DIFFICULTY_ADJUSTMENTS = Object.freeze({
+  incrediblyEasy: -10,
+  veryEasy: -5,
+  easy: -2,
+  standard: 0,
+  hard: 2,
+  veryHard: 5,
+  incrediblyHard: 10
+});
+
 export const DEGREE_KEYS = Object.freeze([
   "criticalSuccess",
   "success",
   "failure",
   "criticalFailure"
 ]);
+
+export const DEFAULT_CHASE_POINT_DELTAS = Object.freeze({
+  criticalSuccess: 2,
+  success: 1,
+  failure: 0,
+  criticalFailure: -1
+});
 
 export const CONSEQUENCE_KINDS = Object.freeze([
   "chasePoints",
@@ -195,5 +277,9 @@ export const DEFAULTS = Object.freeze({
   requiredPoints: 1,
   packEnabled: true,
   packPriority: 0,
-  imageProviderPriority: 0
+  imageProviderPriority: 0,
+  roundPhase: "idle",
+  groupPaceMode: "roll",
+  steadyObstaclesPerRound: 1,
+  escapeLead: 3
 });

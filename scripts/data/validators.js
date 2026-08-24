@@ -3,16 +3,20 @@ import {
   CHASE_LENGTHS,
   CHASE_TYPES,
   CONSEQUENCE_KINDS,
+  DC_MODES,
   DEGREE_KEYS,
   DIFFICULTY_PROFILES,
   EDGE_TYPES,
   EDGE_VISIBILITY,
   EFFECT_FORGE_SOURCES,
+  GROUP_PACE_MODES,
   GROUP_ROLES,
   IMAGE_MODES,
   NODE_TYPES,
   PARTICIPANT_KINDS,
+  PF2E_PROFICIENCY_RANKS,
   RESULT_OUTCOMES,
+  ROUND_PHASES,
   ROUTE_COMPLEXITIES,
   ROUTE_CONDITION_OPERATORS,
   ROUTE_CONDITION_SOURCES,
@@ -134,7 +138,19 @@ export function validateChaseCard(card) {
     validateUniqueIds(card.approaches, c, "approaches");
     card.approaches.forEach((approach, index) => {
       requireNonEmptyString(approach.id, c, `approaches[${index}].id`);
-      if (!isPlainObject(approach.dc)) c.error("DC", `approaches[${index}].dc`, "Approach DC must be an object.");
+      if (!isPlainObject(approach.dc)) {
+        c.error("DC", `approaches[${index}].dc`, "Approach DC must be an object.");
+      } else {
+        validateEnum(approach.dc.mode, DC_MODES, c, `approaches[${index}].dc.mode`);
+        if (approach.dc.mode === "fixed" && !Number.isFinite(approach.dc.value)) {
+          c.error("FIXED_DC", `approaches[${index}].dc.value`, "Fixed DC approaches require a finite numeric value.");
+        }
+        if (approach.dc.mode === "simple" && !PF2E_PROFICIENCY_RANKS.includes(approach.dc.proficiency)) {
+          c.error("SIMPLE_DC_PROFICIENCY", `approaches[${index}].dc.proficiency`, "Simple DC approaches require a supported proficiency rank.");
+        }
+        if (!Number.isFinite(approach.dc.levelOffset)) c.error("LEVEL_OFFSET", `approaches[${index}].dc.levelOffset`, "Level offset must be numeric.");
+        if (!Number.isFinite(approach.dc.difficultyAdjustment)) c.error("DIFFICULTY_ADJUSTMENT", `approaches[${index}].dc.difficultyAdjustment`, "Difficulty adjustment must be numeric after normalization.");
+      }
       validateOutcomes(approach.outcomes, c, `approaches[${index}].outcomes`);
     });
   }
@@ -293,6 +309,27 @@ export function validateChaseSession(session) {
   requireNonEmptyString(session.id, c, "id");
   validateEnum(session.status, SESSION_STATUSES, c, "status");
   if (!Number.isInteger(session.round) || session.round < 0) c.error("ROUND", "round", "Session round must be a non-negative integer.");
+
+  if (!isPlainObject(session.roundState)) {
+    c.error("ROUND_STATE", "roundState", "Session roundState must be an object.");
+  } else {
+    validateEnum(session.roundState.phase, ROUND_PHASES, c, "roundState.phase");
+    for (const key of ["actedParticipantIds", "skippedParticipantIds", "initiativeOrder"]) {
+      if (!Array.isArray(session.roundState[key])) c.error("ROUND_STATE_ARRAY", `roundState.${key}`, `${key} must be an array.`);
+    }
+  }
+
+  if (!isPlainObject(session.rules)) {
+    c.error("RULE_STATE", "rules", "Session rules must be an object.");
+  } else {
+    if (session.rules.roundLimit !== null && (!Number.isInteger(session.rules.roundLimit) || session.rules.roundLimit < 1)) {
+      c.error("ROUND_LIMIT", "rules.roundLimit", "Round limit must be null or an integer of at least 1.");
+    }
+    if (!Number.isInteger(session.rules.escapeLead) || session.rules.escapeLead < 1) {
+      c.error("ESCAPE_LEAD", "rules.escapeLead", "Escape lead must be an integer of at least 1.");
+    }
+  }
+
   if (!Array.isArray(session.groups)) c.error("GROUP_STATES", "groups", "Session groups must be an array.");
   else {
     validateUniqueIds(session.groups, c, "groups");
@@ -305,6 +342,21 @@ export function validateChaseSession(session) {
       }
       if (!Array.isArray(group.routeHistory)) c.error("ROUTE_HISTORY", `groups[${index}].routeHistory`, "Runtime group routeHistory must be an array.");
       if (!Array.isArray(group.edgeHistory)) c.error("EDGE_HISTORY", `groups[${index}].edgeHistory`, "Runtime group edgeHistory must be an array.");
+      if (!isPlainObject(group.rules)) {
+        c.error("GROUP_RULES", `groups[${index}].rules`, "Runtime group rules must be an object.");
+      } else {
+        validateEnum(group.rules.paceMode, GROUP_PACE_MODES, c, `groups[${index}].rules.paceMode`);
+        if (!Number.isFinite(group.rules.obstaclesPerRound) || group.rules.obstaclesPerRound < 0) {
+          c.error("PACE_RATE", `groups[${index}].rules.obstaclesPerRound`, "Steady pace must be a non-negative finite number.");
+        }
+        if (!Number.isFinite(group.rules.steadyProgress) || group.rules.steadyProgress < 0) {
+          c.error("PACE_PROGRESS", `groups[${index}].rules.steadyProgress`, "Steady progress must be a non-negative finite number.");
+        }
+        if (group.rules.pendingCheckBonus !== null) {
+          if (!isPlainObject(group.rules.pendingCheckBonus)) c.error("PENDING_BONUS", `groups[${index}].rules.pendingCheckBonus`, "Pending check bonus must be null or an object.");
+          else if (!Number.isFinite(group.rules.pendingCheckBonus.value)) c.error("PENDING_BONUS_VALUE", `groups[${index}].rules.pendingCheckBonus.value`, "Pending check bonus value must be finite.");
+        }
+      }
     });
   }
   if (session.blueprintSnapshot) {

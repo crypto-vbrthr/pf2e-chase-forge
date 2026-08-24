@@ -11,11 +11,14 @@ import {
   EDGE_TYPES,
   EDGE_VISIBILITY,
   EFFECT_FORGE_SOURCES,
+  GROUP_PACE_MODES,
   GROUP_ROLES,
   IMAGE_MODES,
   NODE_TYPES,
   PARTICIPANT_KINDS,
+  PF2E_DIFFICULTY_ADJUSTMENTS,
   RESULT_OUTCOMES,
+  ROUND_PHASES,
   ROUTE_COMPLEXITIES,
   SCHEMA_VERSIONS,
   SESSION_STATUSES
@@ -93,6 +96,13 @@ function normalizeOutcomes(outcomes = {}) {
   return normalized;
 }
 
+function normalizeDifficultyAdjustment(value) {
+  if (typeof value === "string" && Object.hasOwn(PF2E_DIFFICULTY_ADJUSTMENTS, value)) {
+    return PF2E_DIFFICULTY_ADJUSTMENTS[value];
+  }
+  return asFiniteNumber(value, 0);
+}
+
 function normalizeApproach(input = {}) {
   const approach = isPlainObject(input) ? input : {};
   return {
@@ -105,7 +115,7 @@ function normalizeApproach(input = {}) {
       mode: pickEnum(approach.dc?.mode, DC_MODES, "gm"),
       value: approach.dc?.value === null || approach.dc?.value === undefined ? null : asFiniteNumber(approach.dc.value, 0),
       levelOffset: asFiniteNumber(approach.dc?.levelOffset, 0),
-      difficultyAdjustment: asFiniteNumber(approach.dc?.difficultyAdjustment, 0),
+      difficultyAdjustment: normalizeDifficultyAdjustment(approach.dc?.difficultyAdjustment),
       proficiency: approach.dc?.proficiency ? asString(approach.dc.proficiency) : null,
       hidden: approach.dc?.hidden !== false
     },
@@ -267,6 +277,8 @@ export function normalizeChaseBlueprint(input = {}) {
 
 function normalizeGroupState(input = {}) {
   const state = isPlainObject(input) ? input : {};
+  const rawRules = isPlainObject(state.rules) ? state.rules : {};
+  const pending = isPlainObject(rawRules.pendingCheckBonus) ? rawRules.pendingCheckBonus : null;
   return {
     id: asString(state.id, createId("runtime-group")),
     groupId: asString(state.groupId),
@@ -279,6 +291,17 @@ function normalizeGroupState(input = {}) {
     routeHistory: uniqueStrings(state.routeHistory),
     edgeHistory: uniqueStrings(state.edgeHistory),
     completed: state.completed === true,
+    rules: {
+      paceMode: pickEnum(rawRules.paceMode, GROUP_PACE_MODES, DEFAULTS.groupPaceMode),
+      obstaclesPerRound: Math.max(0, asFiniteNumber(rawRules.obstaclesPerRound, DEFAULTS.steadyObstaclesPerRound)),
+      steadyProgress: Math.max(0, asFiniteNumber(rawRules.steadyProgress, 0)),
+      pendingCheckBonus: pending ? {
+        value: asFiniteNumber(pending.value, 0),
+        type: asString(pending.type, "circumstance"),
+        source: asString(pending.source),
+        grantedAtRound: Math.max(0, asNonNegativeInteger(pending.grantedAtRound, 0))
+      } : null
+    },
     metadata: isPlainObject(state.metadata) ? cloneData(state.metadata) : {}
   };
 }
@@ -286,6 +309,8 @@ function normalizeGroupState(input = {}) {
 export function normalizeChaseSession(input = {}) {
   const session = isPlainObject(input) ? input : {};
   const timestamp = session.createdAt ?? nowIso();
+  const rawRoundState = isPlainObject(session.roundState) ? session.roundState : {};
+  const rawRules = isPlainObject(session.rules) ? session.rules : {};
   return {
     schemaVersion: SCHEMA_VERSIONS.session,
     id: asString(session.id, createId("session")),
@@ -295,6 +320,20 @@ export function normalizeChaseSession(input = {}) {
     round: Math.max(0, asNonNegativeInteger(session.round, DEFAULTS.round)),
     activeGroupId: session.activeGroupId ? asString(session.activeGroupId) : null,
     groups: (Array.isArray(session.groups) ? session.groups : []).map(normalizeGroupState),
+    roundState: {
+      phase: pickEnum(rawRoundState.phase, ROUND_PHASES, DEFAULTS.roundPhase),
+      actedParticipantIds: uniqueStrings(rawRoundState.actedParticipantIds),
+      skippedParticipantIds: uniqueStrings(rawRoundState.skippedParticipantIds),
+      initiativeOrder: uniqueStrings(rawRoundState.initiativeOrder),
+      startedAt: rawRoundState.startedAt ?? null,
+      endedAt: rawRoundState.endedAt ?? null
+    },
+    rules: {
+      roundLimit: rawRules.roundLimit === null || rawRules.roundLimit === undefined
+        ? null
+        : Math.max(1, asNonNegativeInteger(rawRules.roundLimit, 1)),
+      escapeLead: Math.max(1, asNonNegativeInteger(rawRules.escapeLead, DEFAULTS.escapeLead))
+    },
     nodeState: isPlainObject(session.nodeState) ? cloneData(session.nodeState) : {},
     unlockedEdgeIds: uniqueStrings(session.unlockedEdgeIds),
     lockedEdgeIds: uniqueStrings(session.lockedEdgeIds),

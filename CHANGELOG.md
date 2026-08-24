@@ -1,5 +1,25 @@
 # Changelog
 
+## 0.1.0-dev.4 - PF2E Chase Rules Engine
+
+- Added PF2e Chase Point resolution for all four degrees of success, including the default +2/+1/0/-1 mapping.
+- Added immediate obstacle completion, zero-floor progress, no point carry-over, and same-round continuation for participants who have not yet acted.
+- Added round-state tracking for acted and skipped participants plus the automatic skipped-turn Chase Point penalty.
+- Added automatic non-check contributions with one or two Chase Points.
+- Added separated-character handling: one success advances and critical success grants a pending +2 circumstance bonus to the first check against the next obstacle.
+- Raised Chase Session schema to v3 with round state, runtime rules state, pace state, and pending check-bonus state.
+- Added rolled and steady group pace modes, one-obstacle-per-round steady advancement, and fractional pace accumulation for deliberately slower opposition.
+- Added initial start-distance derivation for the unbranched opening section of pursuit/escape routes.
+- Added pursuit, escape, against-the-clock, and race outcome evaluation plus ChaseResult materialization.
+- Added three-obstacle escape-lead handling and same-node catch detection.
+- Added PF2e simple DCs, level DCs 0-25, and the standard difficulty adjustment values.
+- Added fixed, simple, level-based, GM-defined, and no-DC Chase Card resolution.
+- Added PF2e degree-of-success calculation with natural 20/1 shifts.
+- Added a thin PF2e adapter that delegates Actor statistic rolls to the PF2e system.
+- Added public `rules`, `pf2e`, and `guidelines` API surfaces and raised the public API version to `4`.
+- Added Rules Engine Contract v1 documentation.
+- Expanded the automated suite to 186 passing tests before release packaging.
+
 ## 0.1.0-dev.3 - Route Graph Engine
 
 - Added a system-neutral Route Graph Engine for live traversal of Chase Blueprint DAGs.

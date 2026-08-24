@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { MODULE_ID, MODULE_VERSION } from "../scripts/core/constants.js";
 
-test("Foundry init registers hidden pack state storage and exposes the dev.3 API before ready", async () => {
+test("Foundry init registers hidden pack state storage and exposes the dev.4 API before ready", async () => {
   const onceHandlers = new Map();
   const calls = [];
   const settingDefinitions = new Map();
@@ -42,6 +42,8 @@ test("Foundry init registers hidden pack state storage and exposes the dev.3 API
     assert.equal(moduleRecord.api.moduleVersion, MODULE_VERSION);
     assert.equal(moduleRecord.api.getCapabilities().registries, true);
     assert.equal(moduleRecord.api.getCapabilities().routeGraphEngine, true);
+    assert.equal(moduleRecord.api.getCapabilities().rulesEngine, true);
+    assert.equal(moduleRecord.api.pf2e.dc.level(10), 27);
 
     onceHandlers.get("ready")();
     assert.equal(calls.at(-1).name, "pf2eChaseForge.ready");
