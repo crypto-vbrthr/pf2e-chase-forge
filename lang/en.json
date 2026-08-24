@@ -155,5 +155,6 @@
   "PF2E_CHASE_FORGE.Builder.WeatherForgeNoChange": "The current Weather Forge values were already set.",
   "PF2E_CHASE_FORGE.Builder.WeatherForgeUnavailable": "Weather Forge is not available.",
   "PF2E_CHASE_FORGE.Builder.WeatherForgeFailed": "Weather Forge could not be read.",
-  "PF2E_CHASE_FORGE.Builder.WeatherForgeSource": "Weather Forge"
+  "PF2E_CHASE_FORGE.Builder.WeatherForgeSource": "Weather Forge",
+  "PF2E_CHASE_FORGE.Builder.WeatherForgeNotReady": "Weather Forge is active, but could not provide its current weather state."
 }

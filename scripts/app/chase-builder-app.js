@@ -342,6 +342,11 @@ function getAppClass() {
           if (notifyUser) notify("warn", i18n("PF2E_CHASE_FORGE.Builder.WeatherForgeUnavailable", "Weather Forge ist nicht verfügbar."));
           return current;
         }
+        if (current.readable === false) {
+          if (notifyUser) notify("warn", i18n("PF2E_CHASE_FORGE.Builder.WeatherForgeNotReady", "Weather Forge ist aktiv, konnte seinen aktuellen Wetterzustand aber nicht bereitstellen."));
+          else if (current.errors?.length) console.warn(`${MODULE_ID} | Weather Forge is active but its current state is not readable.`, current.errors);
+          return current;
+        }
         const next = cloneData(this._draft);
         let changed = false;
         if (current.timeOfDay && (!onlyUnset || !next.settings.timeOfDay)) {

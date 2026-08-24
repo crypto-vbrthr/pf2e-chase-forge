@@ -1,3 +1,12 @@
+# Changelog
+
+## 0.1.0-dev.7.5.1 – Weather Forge Read Hardening
+
+- Weather Forge API read failures are now contained by the optional bridge instead of bubbling into the Chase Builder.
+- The bridge falls back from `getCurrentWeatherContext()` to `getWeather()` when possible.
+- Active-but-unreadable Weather Forge state is reported as a structured diagnostic instead of a thrown exception.
+- Added regression coverage for missing/unregistered Weather Forge state.
+
 ## 0.1.0-dev.7.5 – Weather Forge Builder Prefill
 
 - Adds an optional Weather Forge integration through its public API only; no hard dependency is introduced.

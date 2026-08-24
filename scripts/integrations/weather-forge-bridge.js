@@ -106,13 +106,35 @@ export function createWeatherForgeBridge({ getApi = moduleApi } = {}) {
 
     let context = null;
     let weather = null;
+    const readErrors = [];
+
     if (typeof api.getCurrentWeatherContext === "function") {
-      context = await api.getCurrentWeatherContext();
-      weather = context?.weather ?? null;
+      try {
+        context = await api.getCurrentWeatherContext();
+        weather = context?.weather ?? null;
+      } catch (error) {
+        readErrors.push({ method: "getCurrentWeatherContext", message: String(error?.message ?? error) });
+      }
     }
-    if (!weather && typeof api.getWeather === "function") weather = api.getWeather();
+
+    if (!weather && typeof api.getWeather === "function") {
+      try {
+        weather = await api.getWeather();
+      } catch (error) {
+        readErrors.push({ method: "getWeather", message: String(error?.message ?? error) });
+      }
+    }
+
     if (!weather || typeof weather !== "object") {
-      return Object.freeze({ inspection, available: true, timeOfDay: null, weather: null, raw: null });
+      return Object.freeze({
+        inspection,
+        available: true,
+        readable: false,
+        timeOfDay: null,
+        weather: null,
+        raw: null,
+        errors: Object.freeze(readErrors.map(entry => Object.freeze({ ...entry })))
+      });
     }
 
     const timeOfDay = mapWeatherForgeTimeSegment(weather.timeSegment);
@@ -120,12 +142,14 @@ export function createWeatherForgeBridge({ getApi = moduleApi } = {}) {
     return Object.freeze({
       inspection,
       available: true,
+      readable: true,
       timeOfDay,
       weather: Object.freeze(normalizedWeather),
       raw: Object.freeze({
         context: context ? cloneData(context) : null,
         weather: cloneData(weather)
-      })
+      }),
+      errors: Object.freeze(readErrors.map(entry => Object.freeze({ ...entry })))
     });
   }
 

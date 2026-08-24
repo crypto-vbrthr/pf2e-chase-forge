@@ -106,3 +106,19 @@ test("Weather Forge bridge degrades cleanly when optional module API is absent",
   assert.equal(current.timeOfDay, null);
   assert.equal(current.weather, null);
 });
+
+
+test("Weather Forge bridge contains provider read failures instead of throwing", async () => {
+  const fakeApi = {
+    version: 1,
+    async getCurrentWeatherContext() { throw new Error("weatherState is not registered"); },
+    getWeather() { throw new Error("weatherState is not registered"); }
+  };
+  const bridge = createWeatherForgeBridge({ getApi: () => fakeApi });
+  const current = await bridge.readCurrent();
+  assert.equal(current.available, true);
+  assert.equal(current.readable, false);
+  assert.equal(current.weather, null);
+  assert.equal(current.errors.length, 2);
+  assert.equal(current.errors[0].method, "getCurrentWeatherContext");
+});

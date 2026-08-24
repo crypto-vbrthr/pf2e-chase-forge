@@ -1,10 +1,10 @@
 # PF2E Chase Forge
 
-**Version:** 0.1.0-dev.7.5  
+**Version:** 0.1.0-dev.7.5.1  
 **Foundry VTT:** 14  
 **System:** Pathfinder 2e
 
-PF2E Chase Forge is a modular Pathfinder 2e chase framework for Foundry VTT. `0.1.0-dev.7.5` extends the **Basic Chase Builder** with optional Weather Forge prefill while retaining the graph, rules, consequence, persistence, registry, and Builder architecture introduced in earlier development builds.
+PF2E Chase Forge is a modular Pathfinder 2e chase framework for Foundry VTT. `0.1.0-dev.7.5.1` hardens the **Basic Chase Builder** with optional Weather Forge prefill while retaining the graph, rules, consequence, persistence, registry, and Builder architecture introduced in earlier development builds.
 
 The underlying dev.1-dev.6 architecture remains intact: DAG route graphs, add-on registries, PF2e chase rules, consequence orchestration, optional Critical Forge / Effect Forge integration, and protected restart-safe Blueprint/Session persistence.
 
@@ -211,3 +211,7 @@ chase.ui.debugBuilderLayout();
 ```
 
 The report contains client/scroll/offset heights and computed flex/overflow values for the ApplicationV2 root, `.window-content`, part wrapper, builder shell, main column, toolbar, editor scroll area, sidebar, and the editor's parent chain.
+
+
+### Weather Forge compatibility note (dev.7.5.1)
+If Weather Forge is active but its own persistent `weatherState` setting is not registered, Chase Forge now degrades safely and reports the provider state as unreadable instead of throwing. The Weather Forge registration issue itself must be corrected by Weather Forge.
