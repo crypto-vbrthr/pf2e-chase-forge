@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { createPublicApi } from "../scripts/api/public-api.js";
 import { sampleBlueprint } from "./helpers.js";
 
-test("dev.4 public API advertises route, registry, and rules capabilities", () => {
+test("dev.5 public API advertises route, rules, and consequence capabilities", () => {
   const api = createPublicApi();
   const caps = api.getCapabilities();
   assert.equal(caps.coreDataModel, true);
@@ -31,16 +31,18 @@ test("dev.4 public API advertises route, registry, and rules capabilities", () =
   assert.equal(caps.persistence, false);
   assert.equal(caps.gmRunner, false);
   assert.equal(caps.playerView, false);
-  assert.equal(caps.effectForgeBridge, false);
+  assert.equal(caps.consequenceEngine, true);
+  assert.equal(caps.effectForgeBridge, true);
+  assert.equal(caps.effectForgeAvailable, false);
   assert.equal(caps.campaignForgeBridge, false);
 });
 
 test("public API exposes schema versions", () => {
   const api = createPublicApi();
   assert.equal(api.schemas.blueprint, 1);
-  assert.equal(api.schemas.session, 3);
+  assert.equal(api.schemas.session, 4);
   assert.equal(api.schemas.publicState, 1);
-  assert.equal(api.schemas.consequence, 1);
+  assert.equal(api.schemas.consequence, 2);
   assert.equal(api.schemas.pack, 1);
 });
 
@@ -69,6 +71,9 @@ test("public API containers are frozen", () => {
   assert.equal(Object.isFrozen(api.pf2e), true);
   assert.equal(Object.isFrozen(api.guidelines), true);
   assert.equal(Object.isFrozen(api.routeConditions), true);
+  assert.equal(Object.isFrozen(api.consequences), true);
+  assert.equal(Object.isFrozen(api.integrations), true);
+  assert.equal(Object.isFrozen(api.integrations.effectForge), true);
   assert.equal(Object.isFrozen(api.cards), true);
   assert.equal(Object.isFrozen(api.templates), true);
   assert.equal(Object.isFrozen(api.packs), true);
@@ -98,4 +103,31 @@ test("public route API can initialize and traverse a simple chase", () => {
   session = api.route.advanceGroup(session, "runtime-heroes");
   assert.equal(session.groups[0].position.nodeId, "end");
   assert.equal(api.route.completion(session).allGroupsCompleted, true);
+});
+
+test("Effect Forge availability capability is detected dynamically from Critical Forge public API", () => {
+  const previousGame = globalThis.game;
+  globalThis.game = {
+    modules: new Map([["pf2e-critical-forge", {
+      api: {
+        version: "0.9.6",
+        moduleVersion: "1.0.1-rc.4",
+        schemaVersion: 2,
+        effects: {
+          migrate() {},
+          analyze() {},
+          apply() {},
+          readItem() {}
+        }
+      }
+    }]])
+  };
+  try {
+    const api = createPublicApi();
+    assert.equal(api.getCapabilities().effectForgeAvailable, true);
+    assert.equal(api.integrations.effectForge.inspect().compatible, true);
+  } finally {
+    if (previousGame === undefined) delete globalThis.game;
+    else globalThis.game = previousGame;
+  }
 });

@@ -1,115 +1,130 @@
 # PF2E Chase Forge
 
-**Version:** 0.1.0-dev.4  
+**Version:** 0.1.0-dev.5  
 **Foundry VTT:** 14  
 **System:** Pathfinder 2e
 
-PF2E Chase Forge is a modular chase framework for Foundry VTT. `0.1.0-dev.4` adds the first PF2e rules layer on top of the graph, registry, and add-on architecture from dev.1-dev.3.
+PF2E Chase Forge is a modular chase framework for Foundry VTT. `0.1.0-dev.5` adds the Consequence Engine and the optional Critical Forge / Effect Forge bridge on top of the graph, registry, and PF2e chase-rules architecture from dev.1-dev.4.
 
-The module still has no Chase Builder or Runner UI. This build is the headless rules engine that later GM and player windows will call.
+The module still has no Chase Builder or Runner UI. This build completes the headless logic path from a PF2e check result to deferred chase consequences and, when available, real PF2e Actor effects through Critical Forge's public Effect Forge API.
 
-## dev.4 scope
+## dev.5 scope
 
 Implemented:
 
-- PF2e Chase Point resolution:
-  - critical success `+2`;
-  - success `+1`;
-  - failure `0`;
-  - critical failure `-1`;
-  - progress never below `0`;
-- immediate obstacle completion with no Chase Point carry-over;
-- unused participants may continue on the next obstacle during the same round;
-- skipped/unusable participant turns can apply the rules-defined `-1` Chase Point penalty;
-- automatic non-check contributions, normally 1 point and optionally 2 for especially helpful actions;
-- separated-character rule: one success advances; critical success also grants a pending `+2` circumstance bonus to the first check against the next obstacle;
-- explicit round state with acted/skipped participants;
-- quarry-first turn policy for pursuit/escape and initiative policy for races;
-- rolled and steady group pace modes;
-- steady opposition defaults to one obstacle per round when a group is configured as NPC/steady;
-- fractional steady pace such as `0.5` obstacles per round for deliberately slower opposition;
-- start-distance helper for the initial linear section of pursuit/escape routes;
-- outcome evaluation for:
-  - pursuit;
-  - escape;
-  - against the clock;
-  - race;
-- same-position catch detection;
-- escape endpoints and the standard three-obstacle escape-lead threshold;
-- against-the-clock round limits;
-- race endpoint winners;
-- ChaseResult materialization after completion;
-- PF2e simple DC table;
-- PF2e level-based DC table for levels 0-25;
-- difficulty adjustments `-10/-5/-2/0/+2/+5/+10`;
-- fixed, simple, level-based, GM-defined, and no-DC Chase Card approaches;
-- PF2e degree-of-success resolution including natural 20/1 shifts;
-- a thin PF2e adapter that delegates statistic rolls to the system instead of reproducing PF2e statistic math;
-- public rules/DC/degree APIs;
-- Chase Session schema v3 with explicit round and rules state.
+- Chase Consequence schema v2 with:
+  - severity (`info`, `minor`, `significant`, `severe`);
+  - optional consequences;
+  - GM-confirmation policy;
+  - route consequences;
+  - Effect Forge consequences;
+  - participant, runtime-group, and explicit effect targeting;
+- Chase Session schema v4 with persistent in-session consequence records;
+- stable consequence occurrence ids derived from the originating rules event;
+- idempotent consequence execution so repeated socket/UI requests cannot apply the same occurrence twice;
+- GM-confirmation state and route-selection state;
+- core execution for:
+  - route unlock;
+  - route lock;
+  - route select;
+  - narrative consequences;
+  - Effect Forge application;
+- explicit ownership boundary for Chase Point consequences: the PF2e Chase Rules Engine resolves them and the Consequence Engine records them as rules-handled rather than applying them twice;
+- optional Critical Forge / Effect Forge integration through the public API only;
+- embedded Effect Definition support;
+- existing Effect Item UUID support through `api.effects.readItem()`;
+- Effect Definition migration and validation through Critical Forge;
+- Actor/Token target resolution from Chase participants;
+- manual fallback when Critical Forge is absent and the consequence is not declared required;
+- blocked consequence records for consequences that explicitly require Effect Forge;
+- serializable evidence of applied Effect Forge effects rather than storing Foundry document instances inside ChaseSession;
+- shared Effect Forge editor bridge for future Chase Card editing;
+- retry controls for failed, blocked, skipped, or manual-fallback records;
+- public Consequence Engine and Effect Forge integration APIs.
 
-## Rules API example
+## Consequence flow
+
+A card may attach consequences to a PF2e degree of success. The Rules Engine still resolves Chase Points immediately and emits stable deferred consequence occurrences for everything else.
 
 ```js
-const forge = game.modules.get("pf2e-chase-forge")?.api;
-
-let session = forge.rules.initializeSession(blueprint, {
-  status: "active"
-});
-
-session = forge.rules.beginRound(session);
-
 const resolved = forge.rules.resolveCheck(session, {
   runtimeGroupId: "runtime-heroes",
   participantId: "hero-1",
   approachId: "athletics",
-  total: 27,
-  natural: 15
+  total: 14,
+  natural: 2
 });
 
-session = resolved.session;
+const consequenceResult = await forge.consequences.executeRulesResult(resolved, {
+  confirmedOccurrenceIds: resolved.consequenceOccurrences.map(item => item.occurrenceId)
+});
+
+session = consequenceResult.session;
 ```
 
-Level DC helper:
+GM confirmation is required by default. The future Runner UI will use the same API rather than bypassing it.
+
+## Effect Forge example
+
+An embedded consequence can carry a Critical Forge Effect Definition snapshot:
 
 ```js
-forge.pf2e.dc.level(10);                 // 27
-forge.pf2e.dc.applyAdjustment(27, "hard"); // 29
+const consequence = forge.factories.consequence({
+  id: "sprained-ankle",
+  kind: "effectForge",
+  label: "Sprained Ankle",
+  severity: "significant",
+  source: "embedded",
+  targetMode: "participant",
+  definition: {
+    schemaVersion: 2,
+    id: "pf2e-chase-forge.sprained-ankle",
+    name: "Sprained Ankle",
+    duration: { value: 10, unit: "minutes", expiry: null },
+    components: [
+      {
+        type: "movement",
+        movementType: "land",
+        value: -5,
+        modifierType: "status"
+      }
+    ],
+    application: {},
+    metadata: {
+      originModule: "pf2e-chase-forge",
+      originFeature: "chase-consequence"
+    }
+  }
+});
 ```
 
-Obstacle guideline for a four-character group:
-
-```js
-forge.guidelines.obstaclePoints(4);
-// { groupSize: 4, oneLess: 3, twoLess: 2 }
-```
-
-## Important boundary
-
-The rules engine resolves Chase Points, rounds, DCs, route advancement, and chase outcomes. It does **not** yet execute general consequences such as damage, conditions, route unlock effects, or Effect Forge definitions. Those are reserved for `0.1.0-dev.5 – Consequence Engine & Effect Forge Integration`.
-
-Likewise, the PF2e adapter is deliberately thin. It locates PF2e statistics and delegates rolls to the system; it does not clone PF2e's modifier stack.
+Critical Forge is optional. Without it, a non-required Effect Forge consequence becomes a structured manual fallback and the Chase Session continues normally.
 
 ## Public API
-
-At Foundry `init`:
 
 ```js
 const forge = game.modules.get("pf2e-chase-forge")?.api;
 ```
 
-Primary surfaces now include:
+New dev.5 surfaces:
 
 ```text
-forge.route
-forge.rules
-forge.pf2e.dc
-forge.pf2e.degree
-forge.pf2e.adapter
-forge.guidelines
-forge.cards / templates / packs / images
-forge.extensions
+forge.consequences.createOccurrence(...)
+forge.consequences.fromRulesResult(...)
+forge.consequences.plan(...)
+forge.consequences.execute(...)
+forge.consequences.executeRulesResult(...)
+forge.consequences.records(...)
+
+forge.integrations.effectForge.inspect()
+forge.integrations.effectForge.isAvailable()
+forge.integrations.effectForge.resolveDefinition(...)
+forge.integrations.effectForge.analyze(...)
+forge.integrations.effectForge.apply(...)
+forge.integrations.effectForge.openEditor(...)
 ```
+
+Existing route, rules, PF2e, registry, pack, and image-provider APIs remain available.
 
 See:
 
@@ -118,13 +133,14 @@ See:
 - `docs/API.md`
 - `docs/ROUTE_ENGINE.md`
 - `docs/RULES_ENGINE.md`
+- `docs/CONSEQUENCE_ENGINE.md`
+- `docs/EFFECT_FORGE_INTEGRATION.md`
 - `docs/REGISTRIES.md`
 - `docs/EXTENSION_CONTRACT.md`
 
 ## Deliberately not implemented yet
 
-- general consequence execution / Effect Forge bridge;
-- blueprint/session persistence;
+- blueprint/session persistence as Foundry world storage;
 - GM Chase Runner;
 - Player Chase View and synchronization;
 - generator/content library;
@@ -136,4 +152,4 @@ See:
 npm test
 ```
 
-The dev.4 suite covers the full dev.1-dev.3 baseline plus PF2e DC tables, degree-of-success math, Chase Points, round handling, no-carry-over advancement, skipped turns, separated characters, steady pace, branches after cleared obstacles, start distance, chase-type endings, PF2e adapter delegation, API/schema changes, and Foundry initialization.
+The dev.5 suite covers the complete dev.1-dev.4 baseline plus consequence occurrence identity, GM confirmation, route consequences, Effect Forge targeting, missing-module fallbacks, required-effect blocking, Effect Item resolution, public API compatibility, editor handoff, and duplicate-application protection.

@@ -1,16 +1,16 @@
 export const MODULE_ID = "pf2e-chase-forge";
-export const MODULE_VERSION = "0.1.0-dev.4";
-export const API_VERSION = 4;
+export const MODULE_VERSION = "0.1.0-dev.5";
+export const API_VERSION = 5;
 export const EXTENSION_CONTRACT_VERSION = 1;
 
 export const SCHEMA_VERSIONS = Object.freeze({
   card: 1,
   template: 1,
   blueprint: 1,
-  session: 3,
+  session: 4,
   result: 1,
   publicState: 1,
-  consequence: 1,
+  consequence: 2,
   pack: 1
 });
 
@@ -29,7 +29,9 @@ export const EXTENSION_CAPABILITIES = Object.freeze([
   "rules.chasePoints",
   "rules.rounds",
   "rules.chaseTypes",
-  "rules.pf2eDc"
+  "rules.pf2eDc",
+  "consequences.engine",
+  "consequences.effectForge"
 ]);
 
 export const CHASE_TYPES = Object.freeze([
@@ -256,6 +258,39 @@ export const CONSEQUENCE_KINDS = Object.freeze([
 export const EFFECT_FORGE_SOURCES = Object.freeze([
   "embedded",
   "item"
+]);
+
+export const CONSEQUENCE_STATUSES = Object.freeze([
+  "pendingConfirmation",
+  "pendingSelection",
+  "applied",
+  "skipped",
+  "manualFallback",
+  "blocked",
+  "failed",
+  "rulesHandled",
+  "unhandled"
+]);
+
+export const CONSEQUENCE_SEVERITIES = Object.freeze([
+  "info",
+  "minor",
+  "significant",
+  "severe"
+]);
+
+export const EFFECT_TARGET_MODES = Object.freeze([
+  "participant",
+  "runtimeGroup",
+  "explicit"
+]);
+
+export const CRITICAL_FORGE_MODULE_ID = "pf2e-critical-forge";
+export const EFFECT_FORGE_MIN_API_SURFACE = Object.freeze([
+  "effects.migrate",
+  "effects.analyze",
+  "effects.apply",
+  "effects.readItem"
 ]);
 
 export const IMAGE_MODES = Object.freeze([

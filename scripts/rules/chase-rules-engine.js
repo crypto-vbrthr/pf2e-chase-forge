@@ -136,6 +136,24 @@ function deferredConsequences(consequences) {
   return consequences.filter(consequence => consequence.kind !== "chasePoints").map(cloneData);
 }
 
+function hasRouteConsequences(consequences) {
+  return consequences.some(consequence => ["routeUnlock", "routeLock", "routeSelect"].includes(consequence.kind));
+}
+
+function consequenceOccurrences(consequences, context = {}) {
+  return deferredConsequences(consequences).map(consequence => ({
+    occurrenceId: `${context.sourceEventId}:${consequence.id}`,
+    consequence: cloneData(consequence),
+    sourceEventId: context.sourceEventId,
+    runtimeGroupId: context.runtimeGroupId ?? null,
+    participantId: context.participantId ?? null,
+    nodeId: context.nodeId ?? null,
+    cardId: context.cardId ?? null,
+    approachId: context.approachId ?? null,
+    degree: context.degree ?? null
+  }));
+}
+
 function updateGroupProgress(session, runtimeGroupId, delta) {
   const next = cloneData(session);
   const group = getRuntimeGroup(next, runtimeGroupId);
@@ -495,7 +513,7 @@ export function createChaseRulesEngine({ registries = null, cardResolver = null,
     let next = changed.session;
     let nextGroup = getRuntimeGroup(next, runtimeGroupId);
     markRoundParticipant(next, participantId);
-    next.events = [...(next.events ?? []), event("checkResolved", next, {
+    const resolutionEvent = event("checkResolved", next, {
       runtimeGroupId,
       participantId,
       nodeId: node.id,
@@ -505,10 +523,12 @@ export function createChaseRulesEngine({ registries = null, cardResolver = null,
       chasePointDelta: delta,
       progressBefore: changed.before,
       progressAfter: nextGroup.position.progress
-    })];
+    });
+    next.events = [...(next.events ?? []), resolutionEvent];
     next = createChaseSession(next);
 
     const obstacleCleared = separatedSuccess || getRuntimeGroup(next, runtimeGroupId).position.progress >= requiredPoints;
+    const routeResolutionDeferred = obstacleCleared && hasRouteConsequences(allConsequences);
     let routeChoiceRequired = false;
     let traversedEdgeIds = [];
     if (obstacleCleared) {
@@ -516,10 +536,12 @@ export function createChaseRulesEngine({ registries = null, cardResolver = null,
       getRuntimeGroup(copy, runtimeGroupId).position.progress = requiredPoints;
       next = markNodeCleared(createChaseSession(copy), node.id, runtimeGroupId, requiredPoints);
       if (group.participantIds.length === 1 && degree === "criticalSuccess") next = setPendingSeparatedBonus(next, runtimeGroupId);
-      const route = advanceFromClearedCard(next, runtimeGroupId, routeEngine, { context });
-      next = route.session;
-      routeChoiceRequired = route.routeChoiceRequired;
-      traversedEdgeIds = route.traversedEdgeIds;
+      if (!routeResolutionDeferred) {
+        const route = advanceFromClearedCard(next, runtimeGroupId, routeEngine, { context });
+        next = route.session;
+        routeChoiceRequired = route.routeChoiceRequired;
+        traversedEdgeIds = route.traversedEdgeIds;
+      }
     }
 
     const currentGroup = getRuntimeGroup(next, runtimeGroupId);
@@ -531,9 +553,28 @@ export function createChaseRulesEngine({ registries = null, cardResolver = null,
       progressAfter: currentGroup.position.progress,
       requiredPoints,
       obstacleCleared,
+      routeResolutionDeferred,
       routeChoiceRequired,
       traversedEdgeIds: [...traversedEdgeIds],
       deferredConsequences: deferredConsequences(allConsequences),
+      consequenceContext: Object.freeze({
+        sourceEventId: resolutionEvent.id,
+        runtimeGroupId,
+        participantId,
+        nodeId: node.id,
+        cardId: card.id,
+        approachId,
+        degree
+      }),
+      consequenceOccurrences: consequenceOccurrences(allConsequences, {
+        sourceEventId: resolutionEvent.id,
+        runtimeGroupId,
+        participantId,
+        nodeId: node.id,
+        cardId: card.id,
+        approachId,
+        degree
+      }),
       pendingCheckBonus: cloneData(currentGroup.rules.pendingCheckBonus)
     });
   }

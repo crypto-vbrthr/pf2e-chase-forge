@@ -16,7 +16,7 @@ The rules engine owns:
 - chase-type victory/escape/catch evaluation;
 - ChaseResult creation.
 
-It does not own general consequence execution, Actor mutation, or Effect Forge application.
+It does not own general consequence execution, Actor mutation, or Effect Forge application. In dev.5, those deferred outcomes are handed to the separate Consequence Engine.
 
 ## Chase Points
 
@@ -35,7 +35,7 @@ Progress is clamped to zero. When required points are reached, the obstacle is i
 
 ## Rounds
 
-`ChaseSession` schema v3 contains:
+`ChaseSession` schema v4 contains:
 
 ```text
 roundState.phase
@@ -134,3 +134,17 @@ If a cleared card has multiple available routes, the rules engine leaves the gro
 ## Lead calculation on branches
 
 The escape-lead helper counts encountered card nodes along actual route history, with a shortest-path card count as the baseline for groups initialized partway along a route. Same-node catches always take precedence over numeric branch-distance approximations.
+
+## Consequence handoff (dev.5)
+
+`applyDegree()` and `resolveCheck()` continue to return `deferredConsequences` for compatibility and now also return:
+
+```text
+consequenceContext
+consequenceOccurrences[]
+routeResolutionDeferred
+```
+
+Each occurrence is tied to the generated `checkResolved` rules-event id, giving the Consequence Engine a stable idempotency key.
+
+If a cleared obstacle produced a route-affecting consequence (`routeUnlock`, `routeLock`, or `routeSelect`), automatic post-obstacle traversal is deliberately deferred until that consequence is resolved. This prevents the group from leaving a card before a newly discovered shortcut or forced route can affect the choice.

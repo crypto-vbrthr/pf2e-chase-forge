@@ -50,3 +50,17 @@ export class ChasePf2eError extends ChaseDataError {
     this.name = "ChasePf2eError";
   }
 }
+
+export class ChaseConsequenceError extends ChaseDataError {
+  constructor(message, options = {}) {
+    super(message, { code: "CHASE_CONSEQUENCE_ERROR", ...options });
+    this.name = "ChaseConsequenceError";
+  }
+}
+
+export class ChaseIntegrationError extends ChaseDataError {
+  constructor(message, options = {}) {
+    super(message, { code: "CHASE_INTEGRATION_ERROR", ...options });
+    this.name = "ChaseIntegrationError";
+  }
+}

@@ -9,7 +9,7 @@ Hooks.once("init", () => {
   registerSettings();
   registryService = createRegistryService({ stateStore: new FoundryPackStateStore() });
   initializePublicApi({ registries: registryService });
-  console.info(`${MODULE_ID} | ${MODULE_VERSION} PF2e Chase Rules Engine initialized.`);
+  console.info(`${MODULE_ID} | ${MODULE_VERSION} Consequence Engine and Effect Forge bridge initialized.`);
 });
 
 Hooks.once("ready", () => {

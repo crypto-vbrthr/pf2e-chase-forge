@@ -124,7 +124,7 @@ test("rules session resolves a technical start node onto the first obstacle", ()
   const rules = engine();
   const session = rules.initializeSession(blueprint(), { status: "active" });
   assert.equal(session.groups[0].position.nodeId, "c1");
-  assert.equal(session.schemaVersion, 3);
+  assert.equal(session.schemaVersion, 4);
   assert.equal(session.rules.escapeLead, 3);
 });
 

@@ -35,6 +35,8 @@ import { degreeOfSuccess, stepDegree } from "../rules/degree-of-success.js";
 import { applyDifficultyAdjustment, getDifficultyAdjustment, getLevelDc, getPf2eDcTables, getSimpleDc, resolveApproachDc } from "../rules/pf2e-dc.js";
 import { evaluateRouteCondition, evaluateRouteConditions } from "../engine/route-conditions.js";
 import { createRegistryService } from "../registries/registry-service.js";
+import { createConsequenceEngine, createConsequenceOccurrence } from "../consequences/consequence-engine.js";
+import { createEffectForgeBridge, inspectEffectForgeApi } from "../integrations/effect-forge-bridge.js";
 
 function contentApi(registries) {
   return {
@@ -70,6 +72,8 @@ export function createPublicApi({ registries = createRegistryService() } = {}) {
   const route = createRouteGraphEngine();
   const rules = createChaseRulesEngine({ registries, routeEngine: route });
   const pf2eAdapter = createPf2eChaseAdapter();
+  const effectForgeBridge = createEffectForgeBridge();
+  const consequences = createConsequenceEngine({ routeEngine: route, effectForgeBridge });
 
   return Object.freeze({
     version: API_VERSION,
@@ -88,7 +92,9 @@ export function createPublicApi({ registries = createRegistryService() } = {}) {
       chaseRules: 1,
       pf2eDc: 1,
       degreeOfSuccess: 1,
-      pf2eAdapter: 1
+      pf2eAdapter: 1,
+      consequenceEngine: 1,
+      effectForgeBridge: 1
     }),
     getCapabilities: () => Object.freeze({
       coreDataModel: true,
@@ -117,7 +123,9 @@ export function createPublicApi({ registries = createRegistryService() } = {}) {
       persistence: false,
       gmRunner: false,
       playerView: false,
-      effectForgeBridge: false,
+      consequenceEngine: true,
+      effectForgeBridge: true,
+      effectForgeAvailable: effectForgeBridge.inspect().compatible,
       campaignForgeBridge: false
     }),
     factories: Object.freeze({
@@ -182,6 +190,27 @@ export function createPublicApi({ registries = createRegistryService() } = {}) {
     routeConditions: Object.freeze({
       evaluate: evaluateRouteCondition,
       evaluateAll: evaluateRouteConditions
+    }),
+    consequences: Object.freeze({
+      createOccurrence: createConsequenceOccurrence,
+      fromRulesResult: consequences.fromRulesResult,
+      plan: consequences.plan,
+      execute: consequences.execute,
+      executeRulesResult: consequences.executeRulesResult,
+      records: consequences.records
+    }),
+    integrations: Object.freeze({
+      effectForge: Object.freeze({
+        moduleId: effectForgeBridge.moduleId,
+        inspect: effectForgeBridge.inspect,
+        isAvailable: effectForgeBridge.isAvailable,
+        resolveDefinition: effectForgeBridge.resolveDefinition,
+        analyze: effectForgeBridge.analyze,
+        apply: effectForgeBridge.apply,
+        openEditor: effectForgeBridge.openEditor,
+        inspectApi: inspectEffectForgeApi,
+        createBridge: createEffectForgeBridge
+      })
     }),
     cards: content.cards,
     templates: content.templates,

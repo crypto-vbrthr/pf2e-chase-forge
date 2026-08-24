@@ -1,5 +1,23 @@
 # Changelog
 
+## 0.1.0-dev.5 - Consequence Engine & Effect Forge Integration
+
+- Added Chase Consequence Engine for deferred outcome processing after PF2e Chase Point resolution.
+- Raised Chase Consequence schema to v2 with severity and explicit Effect Forge target modes.
+- Raised Chase Session schema to v4 with serializable `consequenceState.records`.
+- Added stable consequence occurrence ids bound to the originating rules event.
+- Added idempotent consequence execution to prevent duplicate Actor effects after repeated UI/socket requests.
+- Added pending GM-confirmation and route-selection states.
+- Added route unlock, route lock, route select, narrative, and Effect Forge consequence executors.
+- Kept Chase Point ownership in the PF2e Rules Engine to prevent double application.
+- Added optional Critical Forge / Effect Forge bridge using only the published public API.
+- Added embedded Effect Definition and Effect Item UUID sources, schema migration, analysis, application, and Effect Forge editor handoff.
+- Added participant, runtime-group, explicit participant-list, and explicit UUID targeting for Actor effects.
+- Added structured manual fallback when Effect Forge is unavailable and explicit blocking when a consequence declares Effect Forge required.
+- Added retry controls for failed, blocked, skipped, and manual-fallback consequence records.
+- Added public `consequences` and `integrations.effectForge` API surfaces and raised the public API version to `5`.
+- Expanded the automated suite to 205 passing tests before release hardening.
+
 ## 0.1.0-dev.4 - PF2E Chase Rules Engine
 
 - Added PF2e Chase Point resolution for all four degrees of success, including the default +2/+1/0/-1 mapping.

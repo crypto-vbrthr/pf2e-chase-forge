@@ -2,7 +2,7 @@
 
 ## Baseline
 
-Version `0.1.0-dev.4` adds a PF2e Chase Rules Engine while retaining the system-neutral Route Graph Engine and extension registries beneath it.
+Version `0.1.0-dev.5` adds consequence orchestration and an optional Effect Forge bridge while retaining the system-neutral Route Graph Engine and the PF2e Chase Rules Engine as separate layers.
 
 ```text
 External Chase Add-ons
@@ -13,17 +13,24 @@ Extension Contract / Registries
         v
 +----------------------------------+
 | Core Data Model                  |
-| Blueprint DAG / ChaseSession v3  |
+| Blueprint DAG / ChaseSession v4  |
 +----------------+-----------------+
                  |
         +--------+---------+
         |                  |
         v                  v
- Route Graph Engine   PF2e Rules Layer
- system-neutral       DC / degree / points
- routes / branches    rounds / endings
+ Route Graph Engine   PF2e Rules Engine
+ routes / branches    DC / degree / points
         |                  |
         +--------+---------+
+                 |
+          Consequence Engine
+                 |
+        +--------+---------+
+        |                  |
+        v                  v
+   Route outcomes     Effect Forge Bridge
+                     optional Critical Forge
                  |
           Future Session Manager
                  |
@@ -32,41 +39,26 @@ Extension Contract / Registries
     GM Runner        Player View
 ```
 
-## Engine boundary
+## Engine boundaries
 
-The Route Graph Engine answers where a runtime group can move. It does not know PF2e Chase Points, DCs, or victory rules.
+The Route Graph Engine answers where runtime groups may move.
 
-The Chase Rules Engine answers whether an obstacle is cleared, who has acted, how many Chase Points are gained/lost, whether steady opposition moves, and whether the chase has ended. It calls the Route Graph Engine for actual route movement.
+The PF2e Rules Engine resolves DCs, degrees of success, Chase Points, rounds, steady pace, and chase-ending rules.
 
-This split is intentional so add-on route logic and future non-PF2e content services do not become entangled with PF2e roll math.
+The Consequence Engine applies the non-point consequences emitted by the Rules Engine and owns confirmation, idempotency, route-consequence execution, and external-effect fallback behavior.
 
-## PF2e integration boundary
-
-The PF2e adapter delegates statistic rolls to PF2e. It does not duplicate the system's modifier pipeline. The rules engine can resolve an already-known total/degree independently, which keeps it testable and lets the future Runner remain responsible for Foundry UI, roll messages, targeting, and secrecy.
-
-## Session v3
-
-Session v3 adds two explicit runtime structures:
-
-```text
-roundState
-rules
-```
-
-Every runtime group also gains a `rules` state for pace and pending next-check bonuses. These are runtime-only semantics; Blueprint schema remains v1.
+The Effect Forge bridge never compiles PF2e Rule Elements itself. Critical Forge owns Effect Definition migration, validation, compilation, and Actor effect application.
 
 ## Authority boundary
 
-All current route/rules mutations are snapshot-in/snapshot-out. The supplied session is not mutated. A later `ChaseSessionManager` will make the GM-side session authoritative and persist these snapshots.
+All route/rules/consequence mutations remain snapshot-in/snapshot-out. A later `ChaseSessionManager` will make the GM-side session authoritative and persist the snapshots.
 
-Players will never receive raw `ChaseSession` data. `ChasePublicState` remains the planned projection/security boundary for hidden routes, hidden DCs, GM notes, undiscovered content, and opponent-only state.
+Stable consequence occurrence ids are specifically intended to protect the future socket layer from duplicate requests.
 
-## Consequence boundary
+Players will never receive raw `ChaseSession` data. `ChasePublicState` remains the security boundary for hidden routes, hidden DCs, GM notes, undiscovered content, and opponent-only state.
 
-Dev.4 only consumes `chasePoints` consequences as part of result resolution. Other outcome consequences are returned as deferred data.
+## Optional integrations
 
-`0.1.0-dev.5` will add consequence orchestration and the optional Critical Forge / Effect Forge bridge. Chase Forge will decide why a consequence occurs; Effect Forge will own Actor-effect materialization/application.
+Critical Forge is optional and discovered at runtime through its public API. Missing optional effects degrade to manual fallbacks. Chase Forge contains no direct imports from Critical Forge.
 
-## Registries and ownership
-
-The dev.2 ownership model remains unchanged. Add-on cards can immediately participate in dev.4 rules resolution because the Rules Engine resolves node `cardRef` values through the existing Card Registry.
+Campaign Forge and Journal integration remain later milestones.

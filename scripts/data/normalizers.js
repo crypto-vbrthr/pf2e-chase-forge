@@ -4,6 +4,8 @@ import {
   CHASE_LENGTHS,
   CHASE_TYPES,
   CONSEQUENCE_KINDS,
+  CONSEQUENCE_SEVERITIES,
+  CONSEQUENCE_STATUSES,
   DC_MODES,
   DEFAULTS,
   DEGREE_KEYS,
@@ -11,6 +13,7 @@ import {
   EDGE_TYPES,
   EDGE_VISIBILITY,
   EFFECT_FORGE_SOURCES,
+  EFFECT_TARGET_MODES,
   GROUP_PACE_MODES,
   GROUP_ROLES,
   IMAGE_MODES,
@@ -62,6 +65,7 @@ export function normalizeConsequence(input = {}) {
     id: asString(consequence.id, createId("consequence")),
     kind,
     label: asString(consequence.label),
+    severity: pickEnum(consequence.severity, CONSEQUENCE_SEVERITIES, "info"),
     optional: consequence.optional === true,
     gmConfirmation: consequence.gmConfirmation !== false,
     payload: isPlainObject(consequence.payload) ? cloneData(consequence.payload) : {}
@@ -73,9 +77,13 @@ export function normalizeConsequence(input = {}) {
     normalized.payload.edgeIds = uniqueStrings(consequence.payload?.edgeIds ?? consequence.edgeIds);
   } else if (kind === "effectForge") {
     const source = pickEnum(consequence.payload?.source ?? consequence.source, EFFECT_FORGE_SOURCES, "embedded");
+    const targetMode = pickEnum(consequence.payload?.targetMode ?? consequence.targetMode, EFFECT_TARGET_MODES, "participant");
     normalized.payload = {
       source,
       required: consequence.payload?.required === true || consequence.required === true,
+      targetMode,
+      targetParticipantIds: uniqueStrings(consequence.payload?.targetParticipantIds ?? consequence.targetParticipantIds),
+      targetUuids: uniqueStrings(consequence.payload?.targetUuids ?? consequence.targetUuids),
       definition: source === "embedded" && isPlainObject(consequence.payload?.definition ?? consequence.definition)
         ? cloneData(consequence.payload?.definition ?? consequence.definition)
         : null,
@@ -86,6 +94,28 @@ export function normalizeConsequence(input = {}) {
   }
 
   return normalized;
+}
+
+function normalizeConsequenceRecord(input = {}) {
+  const record = isPlainObject(input) ? input : {};
+  return {
+    occurrenceId: asString(record.occurrenceId, createId("consequence-occurrence")),
+    consequenceId: asString(record.consequenceId),
+    kind: pickEnum(record.kind, CONSEQUENCE_KINDS, "custom"),
+    status: pickEnum(record.status, CONSEQUENCE_STATUSES, "unhandled"),
+    sourceEventId: record.sourceEventId ? asString(record.sourceEventId) : null,
+    runtimeGroupId: record.runtimeGroupId ? asString(record.runtimeGroupId) : null,
+    participantId: record.participantId ? asString(record.participantId) : null,
+    nodeId: record.nodeId ? asString(record.nodeId) : null,
+    cardId: record.cardId ? asString(record.cardId) : null,
+    approachId: record.approachId ? asString(record.approachId) : null,
+    degree: record.degree && DEGREE_KEYS.includes(record.degree) ? record.degree : null,
+    targetUuids: uniqueStrings(record.targetUuids),
+    result: isPlainObject(record.result) ? cloneData(record.result) : null,
+    message: asString(record.message),
+    createdAt: record.createdAt ?? nowIso(),
+    updatedAt: record.updatedAt ?? record.createdAt ?? nowIso()
+  };
 }
 
 function normalizeOutcomes(outcomes = {}) {
@@ -337,6 +367,9 @@ export function normalizeChaseSession(input = {}) {
     nodeState: isPlainObject(session.nodeState) ? cloneData(session.nodeState) : {},
     unlockedEdgeIds: uniqueStrings(session.unlockedEdgeIds),
     lockedEdgeIds: uniqueStrings(session.lockedEdgeIds),
+    consequenceState: {
+      records: (Array.isArray(session.consequenceState?.records) ? session.consequenceState.records : []).map(normalizeConsequenceRecord)
+    },
     events: Array.isArray(session.events) ? cloneData(session.events) : [],
     createdAt: timestamp,
     startedAt: session.startedAt ?? null,

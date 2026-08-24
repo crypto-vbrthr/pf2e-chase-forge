@@ -8,51 +8,24 @@ Current versions:
 ChaseCard        1
 ChaseTemplate    1
 ChaseBlueprint   1
-ChaseSession     3
+ChaseSession     4
 ChaseResult      1
 ChasePublicState 1
-ChaseConsequence 1
+ChaseConsequence 2
 ChasePack        1
 ```
 
-Session persistence has not been introduced yet, so the development-only Session schema changes do not require a world migration.
+World persistence has not been introduced yet, so the development-only Session/Consequence schema changes do not require a world migration.
 
 ## ChaseCard
 
-Reusable obstacle, complication, opportunity, or finale content. Approaches can use these DC modes:
+Reusable obstacle, complication, opportunity, or finale content. Approaches can use fixed, simple, level, GM, or no-DC resolution. Every approach and card carries outcome arrays for all four PF2e degrees of success.
 
-```text
-fixed
-simple
-level
-gm
-none
-```
-
-Every approach and card carries outcome arrays for all four PF2e degrees of success. Dev.4 consumes explicit `chasePoints` consequences and returns all other consequences for the later Consequence Engine.
-
-## ChaseTemplate
-
-Quick-start preset containing settings, filters, and generator hints, but no runtime progress.
+The Rules Engine consumes `chasePoints` immediately and emits all other outcomes as stable consequence occurrences.
 
 ## ChaseBlueprint
 
-Prepared chase definition:
-
-```text
-schemaVersion
-id / source
-name / description / gmNotes
-settings
-groups[]
-graph
-tags
-image
-timestamps
-metadata
-```
-
-Blueprints are later intended for Journal links and Campaign Forge references.
+Prepared chase definition containing settings, groups, a DAG route graph, tags, image data, metadata, and timestamps.
 
 ## Route graph
 
@@ -67,11 +40,9 @@ Node types: `start`, `card`, `choice`, `merge`, `end`.
 
 Edge types: `normal`, `branch`, `shortcut`, `conditional`.
 
-Visibility: `public`, `hidden`, `discoverable`.
-
 Graph schema v1 remains a DAG and rejects cycles, invalid references, unreachable nodes, non-end dead ends, and nodes that cannot reach an ending.
 
-## ChaseSession v3
+## ChaseSession v4
 
 ```text
 schemaVersion
@@ -87,96 +58,71 @@ rules
 nodeState
 unlockedEdgeIds[]
 lockedEdgeIds[]
+consequenceState
 events[]
 timestamps
 metadata
 ```
 
-### roundState
+### consequenceState
 
 ```text
-phase: idle | active | ended
-actedParticipantIds[]
-skippedParticipantIds[]
-initiativeOrder[]
-startedAt
-endedAt
+records[]
 ```
 
-### session rules
+Each record is serializable and contains occurrence identity, status, source context, target UUIDs, compact results, and timestamps. Foundry document instances are never stored.
+
+## ChaseConsequence v2
 
 ```text
-roundLimit: null | integer >= 1
-escapeLead: integer >= 1
-```
-
-The default escape lead is 3 obstacles.
-
-### runtime group
-
-```text
+schemaVersion
 id
-groupId
-participantIds[]
-parentRuntimeGroupId
-position.nodeId
-position.progress
-routeHistory[]
-edgeHistory[]
-completed
-rules
-metadata
+kind
+label
+severity
+optional
+gmConfirmation
+payload
 ```
 
-Group rules:
+Severity:
 
 ```text
-paceMode: roll | steady
-obstaclesPerRound: number >= 0
-steadyProgress: number >= 0
-pendingCheckBonus: null | {
-  value,
-  type,
-  source,
-  grantedAtRound
-}
+info
+minor
+significant
+severe
 ```
 
-The position remains `nodeId + progress`, never a flat numeric track.
-
-## nodeState
-
-The data model intentionally leaves node state extensible. Dev.4 records per-runtime-group obstacle clearance under a node so a cleared card can wait for a later route decision without allowing it to be resolved twice.
-
-## Route history invariant
-
-For:
+Kinds:
 
 ```text
-routeHistory = [A, B, C]
-edgeHistory  = [AB, BC]
+chasePoints
+routeUnlock
+routeLock
+routeSelect
+effectForge
+narrative
+custom
 ```
 
-edge `AB` must connect A to B and `BC` must connect B to C. Runtime integrity validates this before route mutations.
+### Effect Forge payload
+
+```text
+source: embedded | item
+required: boolean
+targetMode: participant | runtimeGroup | explicit
+targetParticipantIds[]
+targetUuids[]
+definition | uuid
+```
+
+The Effect Forge schema version is owned by Critical Forge, not by Chase Forge.
 
 ## ChaseResult
 
-Completion record containing outcome, ending node, winner/loser groups, route summaries, rounds, events, timestamps, and metadata. Dev.4 can now create this directly from a completed rules evaluation.
+Completion record containing outcome, ending node, winner/loser groups, route summaries, rounds, events, timestamps, and metadata.
 
 ## ChasePublicState
 
 Dedicated future player-facing transport contract. A raw `ChaseSession` must never be treated as player-safe state.
-
-## ChaseConsequence
-
-Schema v1 reserves:
-
-- `chasePoints`
-- `routeUnlock`
-- `routeLock`
-- `routeSelect`
-- `effectForge`
-- `narrative`
-- `custom`
-
-Dev.4 resolves Chase Point consequences only. General consequence execution comes next.

@@ -3,12 +3,15 @@ import {
   CHASE_LENGTHS,
   CHASE_TYPES,
   CONSEQUENCE_KINDS,
+  CONSEQUENCE_SEVERITIES,
+  CONSEQUENCE_STATUSES,
   DC_MODES,
   DEGREE_KEYS,
   DIFFICULTY_PROFILES,
   EDGE_TYPES,
   EDGE_VISIBILITY,
   EFFECT_FORGE_SOURCES,
+  EFFECT_TARGET_MODES,
   GROUP_PACE_MODES,
   GROUP_ROLES,
   IMAGE_MODES,
@@ -81,6 +84,7 @@ function validateConsequenceInternal(consequence, collector, path) {
   requireSchema(consequence.schemaVersion, SCHEMA_VERSIONS.consequence, collector, `${path}.schemaVersion`);
   requireNonEmptyString(consequence.id, collector, `${path}.id`);
   validateEnum(consequence.kind, CONSEQUENCE_KINDS, collector, `${path}.kind`);
+  validateEnum(consequence.severity, CONSEQUENCE_SEVERITIES, collector, `${path}.severity`);
   if (!isPlainObject(consequence.payload)) collector.error("PAYLOAD", `${path}.payload`, "Consequence payload must be an object.");
   if (consequence.kind === "effectForge") {
     const source = consequence.payload?.source;
@@ -90,6 +94,18 @@ function validateConsequenceInternal(consequence, collector, path) {
     }
     if (source === "item" && (typeof consequence.payload?.uuid !== "string" || !consequence.payload.uuid.trim())) {
       collector.error("EFFECT_UUID", `${path}.payload.uuid`, "Item Effect Forge consequences require an Item UUID.");
+    }
+    validateEnum(consequence.payload?.targetMode, EFFECT_TARGET_MODES, collector, `${path}.payload.targetMode`);
+    if (!Array.isArray(consequence.payload?.targetParticipantIds)) {
+      collector.error("EFFECT_TARGET_PARTICIPANTS", `${path}.payload.targetParticipantIds`, "Effect targetParticipantIds must be an array.");
+    }
+    if (!Array.isArray(consequence.payload?.targetUuids)) {
+      collector.error("EFFECT_TARGET_UUIDS", `${path}.payload.targetUuids`, "Effect targetUuids must be an array.");
+    }
+    if (consequence.payload?.targetMode === "explicit"
+      && (consequence.payload?.targetParticipantIds?.length ?? 0) === 0
+      && (consequence.payload?.targetUuids?.length ?? 0) === 0) {
+      collector.warn("EFFECT_EXPLICIT_TARGET_EMPTY", `${path}.payload`, "Explicit Effect Forge target mode has no stored targets; runtime targets must be supplied by the host.");
     }
   }
   if (["routeUnlock", "routeLock", "routeSelect"].includes(consequence.kind)) {
@@ -359,6 +375,23 @@ export function validateChaseSession(session) {
       }
     });
   }
+  if (!isPlainObject(session.consequenceState)) {
+    c.error("CONSEQUENCE_STATE", "consequenceState", "Session consequenceState must be an object.");
+  } else if (!Array.isArray(session.consequenceState.records)) {
+    c.error("CONSEQUENCE_RECORDS", "consequenceState.records", "Session consequenceState.records must be an array.");
+  } else {
+    const seen = new Set();
+    session.consequenceState.records.forEach((record, index) => {
+      if (!requireNonEmptyString(record?.occurrenceId, c, `consequenceState.records[${index}].occurrenceId`)) return;
+      if (seen.has(record.occurrenceId)) c.error("DUPLICATE_CONSEQUENCE_OCCURRENCE", `consequenceState.records[${index}].occurrenceId`, `Duplicate consequence occurrence '${record.occurrenceId}'.`);
+      seen.add(record.occurrenceId);
+      requireNonEmptyString(record?.consequenceId, c, `consequenceState.records[${index}].consequenceId`);
+      validateEnum(record?.kind, CONSEQUENCE_KINDS, c, `consequenceState.records[${index}].kind`);
+      validateEnum(record?.status, CONSEQUENCE_STATUSES, c, `consequenceState.records[${index}].status`);
+      if (!Array.isArray(record?.targetUuids)) c.error("CONSEQUENCE_TARGET_UUIDS", `consequenceState.records[${index}].targetUuids`, "Consequence record targetUuids must be an array.");
+    });
+  }
+
   if (session.blueprintSnapshot) {
     const result = validateChaseBlueprint(session.blueprintSnapshot);
     if (!result.valid) c.error("BLUEPRINT_SNAPSHOT", "blueprintSnapshot", "Session blueprint snapshot is invalid.", { errors: result.errors });

@@ -173,10 +173,41 @@ test("route consequence stores target edge ids", () => {
   assert.deepEqual(consequence.payload.edgeIds, ["shortcut"]);
 });
 
-test("dev.4 session runtime groups reserve route and rules state", () => {
+test("dev.5 session runtime groups reserve route, rules, and consequence state", () => {
   const session = sampleSession();
   assert.deepEqual(session.groups[0].edgeHistory, []);
-  assert.equal(session.schemaVersion, 3);
+  assert.equal(session.schemaVersion, 4);
   assert.equal(session.groups[0].rules.paceMode, "roll");
   assert.equal(session.roundState.phase, "idle");
+  assert.deepEqual(session.consequenceState.records, []);
+});
+
+test("dev.5 Effect Forge consequence normalizes severity and participant targeting", () => {
+  const consequence = createConsequence({
+    id: "ankle",
+    kind: "effectForge",
+    severity: "significant",
+    source: "embedded",
+    targetMode: "runtimeGroup",
+    definition: { schemaVersion: 2, id: "ankle-effect", name: "Ankle", components: [] }
+  });
+  assert.equal(consequence.schemaVersion, 2);
+  assert.equal(consequence.severity, "significant");
+  assert.equal(consequence.payload.targetMode, "runtimeGroup");
+  assert.deepEqual(consequence.payload.targetParticipantIds, []);
+  assert.deepEqual(consequence.payload.targetUuids, []);
+});
+
+test("explicit Effect Forge targets normalize duplicate participant ids and UUIDs", () => {
+  const consequence = createConsequence({
+    id: "explicit-effect",
+    kind: "effectForge",
+    source: "embedded",
+    targetMode: "explicit",
+    targetParticipantIds: ["hero-1", "hero-1", "hero-2"],
+    targetUuids: ["Actor.extra", "Actor.extra"],
+    definition: { schemaVersion: 2, id: "explicit", name: "Explicit", components: [] }
+  });
+  assert.deepEqual(consequence.payload.targetParticipantIds, ["hero-1", "hero-2"]);
+  assert.deepEqual(consequence.payload.targetUuids, ["Actor.extra"]);
 });
