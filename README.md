@@ -1,13 +1,44 @@
 # PF2E Chase Forge
 
-**Version:** 0.1.0-dev.8.1  
+**Version:** 0.1.0-dev.9.1  
 **Foundry VTT:** 14  
 **System:** Pathfinder 2e
 
-PF2E Chase Forge is a modular Pathfinder 2e chase framework for Foundry VTT. `0.1.0-dev.8.1` adds the first **GM Chase Runner and Chat workflow**, turning persisted Blueprints and Sessions into a playable chase surface while retaining the graph, PF2e rules, consequence, persistence, registry, Builder, Effect Forge, and Weather Forge architecture from earlier builds.
+PF2E Chase Forge is a modular Pathfinder 2e chase framework for Foundry VTT. `0.1.0-dev.9.1` adds the first synchronized **Player Chase View**, so players receive a dedicated chase window with images, obstacle text, progress, PF2e roll buttons, route choices, and a free-form action proposal flow while the GM remains authoritative over the persisted Chase Session.
 
 The underlying dev.1-dev.6 architecture remains intact: DAG route graphs, add-on registries, PF2e chase rules, consequence orchestration, optional Critical Forge / Effect Forge integration, and protected restart-safe Blueprint/Session persistence.
 
+
+## dev.9 Player Chase View & Session Synchronization
+
+Active and paused Chase Sessions can now be projected into a dedicated player-safe `ChasePublicState`. The GM client remains authoritative and the canonical `ChaseSession` never leaves protected GM persistence.
+
+The Player Chase View currently provides:
+
+- automatic opening/refresh when the GM publishes an active or paused Session;
+- current chase title, round, time of day, and Weather Forge-derived weather label;
+- public participant groups and current route position;
+- current obstacle image, description, and Chase Point progress;
+- PF2e roll buttons only for participants the current user owns;
+- no exact DC values, GM notes, future cards, or undiscovered route edges;
+- visible route choices once a route is actually available/discovered;
+- a free-form **Other Action** proposal sent privately to active GMs;
+- personal consequence status summaries;
+- automatic refresh after GM/Player actions, pause/resume, route changes, and chase completion.
+
+Player rolls are made on the player client without exposing the hidden DC. The resulting total and natural d20 value are sent as a player intent to one deterministic active GM, which validates ownership and current Session state before applying the PF2e Chase Rules Engine. Route choices follow the same authoritative intent path.
+
+The GM Runner now includes **Send Player View** to republish the current public state manually. Active Sessions are also republished when players connect or when the world reloads.
+
+Public surfaces:
+
+```js
+const forge = game.modules.get("pf2e-chase-forge")?.api;
+forge.player.projectState(session, { user });
+await forge.sync.publishSession(session); // GM
+await forge.sync.sendIntent("route", { sessionId, payload }); // player
+await forge.ui.openPlayerView({ sessionId });
+```
 
 ## dev.8 GM Chase Runner
 
@@ -25,7 +56,7 @@ The Runner currently provides:
 - automatic persistent result creation when a chase ending is reached;
 - public Chat obstacle cards and roll summaries.
 
-Chat obstacle cards intentionally omit exact DCs, GM notes, future obstacles, and hidden route information. The full Player Chase View remains a later milestone.
+Chat obstacle cards intentionally omit exact DCs, GM notes, future obstacles, and hidden route information. The dedicated Player Chase View introduced in dev.9 follows the same privacy boundary.
 
 Open a Runner directly:
 
@@ -178,13 +209,15 @@ Critical Forge / Effect Forge remains optional. When present, Chase Forge can ap
 const forge = game.modules.get("pf2e-chase-forge")?.api;
 ```
 
-Current API version: `8`.
+Current API version: `9`.
 
 Important surfaces:
 
 ```text
 forge.builder
 forge.ui
+forge.player
+forge.sync
 forge.presentation.chat
 forge.persistence
 forge.sessionManager
@@ -208,6 +241,7 @@ See:
 - `docs/API.md`
 - `docs/BASIC_BUILDER.md`
 - `docs/GM_RUNNER.md`
+- `docs/PLAYER_VIEW.md`
 - `docs/ROUTE_ENGINE.md`
 - `docs/RULES_ENGINE.md`
 - `docs/CONSEQUENCE_ENGINE.md`
@@ -218,7 +252,6 @@ See:
 
 ## Deliberately not implemented yet
 
-- Player Chase View and session synchronization;
 - visual branch/merge Route Builder;
 - generator and large Core Card library;
 - full Image Provider UI;
@@ -231,7 +264,7 @@ See:
 npm test
 ```
 
-The dev.8 suite covers the full dev.1-dev.7.5.1 baseline plus GM Runner UI wiring, Chat privacy/presenter behavior, Runner API capability advertisement, and the Builder-to-Runner handoff.
+The dev.9 suite covers the full earlier baseline plus player-safe state projection, player ownership filtering, hidden-DC/hidden-route privacy, Player View UI wiring, deterministic GM authority selection, and module-socket state/intent synchronization.
 
 ## Builder layout diagnostics (dev.7.4.1)
 

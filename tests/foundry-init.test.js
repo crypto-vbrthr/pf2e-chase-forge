@@ -70,6 +70,9 @@ test("Foundry init registers protected persistence settings and exposes the dev.
     assert.equal(moduleRecord.api.getCapabilities().builderUi, true);
     assert.equal(typeof moduleRecord.api.ui.openBuilder, "function");
     assert.equal(typeof moduleRecord.api.ui.debugBuilderLayout, "function");
+    assert.equal(moduleRecord.api.getCapabilities().playerView, true);
+    assert.equal(moduleRecord.api.getCapabilities().sessionSync, true);
+    assert.equal(typeof moduleRecord.api.ui.openPlayerView, "function");
 
     await onceHandlers.get("ready")();
     assert.equal(journal.size, 1);

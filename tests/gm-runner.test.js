@@ -16,6 +16,7 @@ test("GM Runner template and styles are packaged with core runner actions", asyn
   assert.match(template, /data-action="lockEdge"/);
   assert.match(template, /data-action="confirmConsequence"/);
   assert.match(template, /data-action="postObstacle"/);
+  assert.match(template, /data-action="syncPlayers"/);
   assert.match(css, /\.chase-runner-shell/);
   assert.match(css, /\.pf2e-chase-forge-chat/);
 });
@@ -101,7 +102,7 @@ test("Runner UI service is GM-only and reuses one ApplicationV2 per session", as
 test("public API advertises GM Runner only when a runner UI is supplied", async () => {
   const ui = { openRunner: async ({ sessionId }) => sessionId, closeRunner: () => true, getOpenRunner: () => null, getOpenRunners: () => [] };
   const api = createPublicApi({ ui });
-  assert.equal(api.version, 8);
+  assert.equal(api.version, 9);
   assert.equal(api.contracts.gmRunner, 1);
   assert.equal(api.contracts.chatPresenter, 1);
   assert.equal(api.getCapabilities().gmRunner, true);

@@ -1,5 +1,28 @@
 # Changelog
 
+## 0.1.0-dev.9.1 – Participant Drag & Drop Hotfix
+
+- Restores Actor and Token drag-and-drop into Builder participant groups.
+- Binds participant drop handling in the capture phase on both the stable ApplicationV2 root and freshly rendered drop zones, avoiding Foundry bubbling-phase interception.
+- Accepts Foundry `TextEditor.getDragEventData()` plus JSON/plain-text DataTransfer payloads and reconstructs Actor/Scene Token UUIDs when only IDs are supplied.
+- Adds a visible drop-target highlight while an Actor or Token is dragged over a participant group.
+- Keeps the existing “add selected tokens” path as a fallback.
+
+## 0.1.0-dev.9 – Player Chase View & Session Synchronization
+
+- Adds a dedicated ApplicationV2 Player Chase View with obstacle images, descriptions, Chase Point progress, participant status, PF2e roll buttons, route choices, personal consequence summaries, and free-form action proposals.
+- Adds player-safe `ChasePublicState` projection that excludes GM notes, exact DCs, undiscovered routes, future cards, and canonical protected Session data.
+- Adds participant ownership checks so a player receives actionable roll buttons only for Actors/Tokens they are allowed to control.
+- Adds a Foundry module-socket synchronization service with one deterministic active GM as the authoritative Chase processor.
+- Player PF2e checks are rolled locally without the hidden DC; only the total/natural die result and selected public action identifiers are sent to the GM for rules resolution.
+- Adds authoritative player intents for checks, route choices, public-state refresh, and private free-form action proposals.
+- Adds automatic Player View refresh after GM Runner mutations, route administration, pause/resume, consequence handling, and chase completion.
+- Active/paused Sessions are republished after world ready and when a player connects.
+- Adds a GM Runner **Send Player View** control for manual republishing.
+- Adds `forge.player`, `forge.sync`, Player View UI helpers, Player View Contract v1, Player State Projector Contract v1, and Session Sync Contract v1.
+- Raises the public API version to `9`; core persisted schema versions remain unchanged.
+- Expands automated coverage to 265 tests before final packaging.
+
 ## 0.1.0-dev.8.1 – Localization Namespace Hotfix
 
 - Fixes a Foundry localization namespace collision introduced in dev.8 by a nested `PF2E_CHASE_FORGE` object used only for `Runner.ChatStarted`.

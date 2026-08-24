@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { createPublicApi } from "../scripts/api/public-api.js";
 import { sampleBlueprint } from "./helpers.js";
 
-test("dev.8 public API advertises builder, persistence, route, rules, and consequence capabilities", () => {
+test("dev.9 public API advertises builder, persistence, route, rules, and consequence capabilities", () => {
   const api = createPublicApi();
   const caps = api.getCapabilities();
   assert.equal(caps.coreDataModel, true);
@@ -37,6 +37,8 @@ test("dev.8 public API advertises builder, persistence, route, rules, and conseq
   assert.equal(caps.gmRunner, false);
   assert.equal(caps.chatWorkflow, true);
   assert.equal(caps.playerView, false);
+  assert.equal(caps.sessionSync, false);
+  assert.equal(caps.playerIntents, false);
   assert.equal(caps.consequenceEngine, true);
   assert.equal(caps.effectForgeBridge, true);
   assert.equal(caps.effectForgeAvailable, false);
@@ -172,4 +174,18 @@ test("Weather Forge availability capability is detected dynamically from its pub
     if (previousGame === undefined) delete globalThis.game;
     else globalThis.game = previousGame;
   }
+});
+
+test("dev.9 advertises Player View and synchronization when their services are supplied", () => {
+  const ui = { openPlayerView() {}, getOpenPlayerViews() { return []; } };
+  const sync = { sendIntent() {}, publishSession() {} };
+  const api = createPublicApi({ ui, sync });
+  assert.equal(api.version, 9);
+  assert.equal(api.contracts.playerView, 1);
+  assert.equal(api.contracts.playerStateProjector, 1);
+  assert.equal(api.contracts.sessionSync, 1);
+  assert.equal(api.getCapabilities().playerView, true);
+  assert.equal(api.getCapabilities().sessionSync, true);
+  assert.equal(api.getCapabilities().playerIntents, true);
+  assert.equal(api.sync, sync);
 });

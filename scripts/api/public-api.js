@@ -44,6 +44,9 @@ import { createChaseSessionManager } from "../persistence/session-manager.js";
 import { validatePersistenceState } from "../persistence/state.js";
 import { CHASE_CHAT_PRESENTER_CONTRACT_VERSION, createChaseChatPresenter } from "../presentation/chat-presenter.js";
 import { GM_RUNNER_CONTRACT_VERSION } from "../app/chase-runner-app.js";
+import { PLAYER_CHASE_VIEW_CONTRACT_VERSION } from "../app/chase-player-app.js";
+import { CHASE_SESSION_SYNC_CONTRACT_VERSION } from "../sync/chase-session-sync.js";
+import { PLAYER_STATE_PROJECTOR_CONTRACT_VERSION, projectChasePublicState } from "../player/public-state-projector.js";
 import {
   BASIC_BUILDER_CONTRACT_VERSION,
   addApproachToBasicCard,
@@ -95,7 +98,7 @@ function contentApi(registries) {
   };
 }
 
-export function createPublicApi({ registries = createRegistryService(), persistenceStore = createMemoryChaseStore(), ui = null } = {}) {
+export function createPublicApi({ registries = createRegistryService(), persistenceStore = createMemoryChaseStore(), ui = null, sync = null } = {}) {
   const content = contentApi(registries);
   const extensions = createExtensionPublicApi(registries);
   const route = createRouteGraphEngine();
@@ -134,6 +137,9 @@ export function createPublicApi({ registries = createRegistryService(), persiste
       chaseReference: 1,
       basicBuilder: BASIC_BUILDER_CONTRACT_VERSION,
       gmRunner: GM_RUNNER_CONTRACT_VERSION,
+      playerView: PLAYER_CHASE_VIEW_CONTRACT_VERSION,
+      playerStateProjector: PLAYER_STATE_PROJECTOR_CONTRACT_VERSION,
+      sessionSync: CHASE_SESSION_SYNC_CONTRACT_VERSION,
       chatPresenter: CHASE_CHAT_PRESENTER_CONTRACT_VERSION
     }),
     getCapabilities: () => Object.freeze({
@@ -169,7 +175,9 @@ export function createPublicApi({ registries = createRegistryService(), persiste
       builderUi: Boolean(ui?.openBuilder),
       gmRunner: Boolean(ui?.openRunner),
       chatWorkflow: true,
-      playerView: false,
+      playerView: Boolean(ui?.openPlayerView),
+      sessionSync: Boolean(sync?.sendIntent && sync?.publishSession),
+      playerIntents: Boolean(sync?.sendIntent),
       consequenceEngine: true,
       effectForgeBridge: true,
       effectForgeAvailable: effectForgeBridge.inspect().compatible,
@@ -302,8 +310,18 @@ export function createPublicApi({ registries = createRegistryService(), persiste
       closeRunner: sessionId => ui?.closeRunner?.(sessionId) ?? false,
       closeAllRunners: () => ui?.closeAllRunners?.() ?? false,
       getOpenRunner: sessionId => ui?.getOpenRunner?.(sessionId) ?? null,
-      getOpenRunners: () => ui?.getOpenRunners?.() ?? []
+      getOpenRunners: () => ui?.getOpenRunners?.() ?? [],
+      openPlayerView: options => ui?.openPlayerView?.(options) ?? null,
+      closePlayerView: sessionId => ui?.closePlayerView?.(sessionId) ?? false,
+      closeAllPlayerViews: () => ui?.closeAllPlayerViews?.() ?? false,
+      getOpenPlayerView: sessionId => ui?.getOpenPlayerView?.(sessionId) ?? null,
+      getOpenPlayerViews: () => ui?.getOpenPlayerViews?.() ?? [],
+      getPlayerState: sessionId => ui?.getPlayerState?.(sessionId) ?? null
     }),
+    player: Object.freeze({
+      projectState: (session, options = {}) => projectChasePublicState({ cards: content.cards, images: content.images, rules, route }, session, options)
+    }),
+    sync: sync ?? Object.freeze({}),
     presentation: Object.freeze({ chat: chatPresenter }),
     persistence,
     sessionManager,
@@ -318,10 +336,10 @@ export function createPublicApi({ registries = createRegistryService(), persiste
   });
 }
 
-export function initializePublicApi({ registries = createRegistryService(), persistenceStore = createMemoryChaseStore(), ui = null } = {}) {
+export function initializePublicApi({ registries = createRegistryService(), persistenceStore = createMemoryChaseStore(), ui = null, sync = null } = {}) {
   const module = game.modules.get(MODULE_ID);
   if (!module) throw new Error(`Module ${MODULE_ID} is unavailable.`);
-  const api = createPublicApi({ registries, persistenceStore, ui });
+  const api = createPublicApi({ registries, persistenceStore, ui, sync });
   module.api = api;
   return api;
 }

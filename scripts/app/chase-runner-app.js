@@ -170,7 +170,8 @@ function getAppClass() {
         lockEdge: this._actionLockEdge,
         confirmConsequence: this._actionConfirmConsequence,
         selectConsequenceRoute: this._actionSelectConsequenceRoute,
-        refreshRunner: this._actionRefreshRunner
+        refreshRunner: this._actionRefreshRunner,
+        syncPlayers: this._actionSyncPlayers
       }
     };
 
@@ -306,6 +307,7 @@ function getAppClass() {
     async _saveOrFinish(session, options = {}) {
       const persisted = await maybePersistOutcome(this.chaseApi, session, options);
       this._session = persisted.session;
+      await this.chaseApi.sync?.publishSession?.(persisted.session, { open: true });
       if (persisted.completed) {
         await this.chat.postEvent({ title: "Verfolgungsjagd beendet", text: `Ergebnis: ${persisted.outcome.outcome}` }, { flags: { sessionId: session.id } }).catch(() => null);
       }
@@ -333,6 +335,7 @@ function getAppClass() {
         }
         session = this.chaseApi.rules.beginRound(session);
         await this.chaseApi.sessionManager.saveSession(session);
+        await this.chaseApi.sync?.publishSession?.(session, { open: true });
         this._session = session;
         return this.render({ force: true });
       } catch (error) { console.error(error); notify("error", error.message); }
@@ -349,11 +352,13 @@ function getAppClass() {
 
     static async _actionPauseSession() {
       this._session = await this.chaseApi.sessionManager.pauseSession(this.sessionId);
+      await this.chaseApi.sync?.publishSession?.(this._session, { open: true });
       return this.render({ force: true });
     }
 
     static async _actionResumeSession() {
       this._session = await this.chaseApi.sessionManager.resumeSession(this.sessionId);
+      await this.chaseApi.sync?.publishSession?.(this._session, { open: true });
       return this.render({ force: true });
     }
 
@@ -361,6 +366,7 @@ function getAppClass() {
       const ok = globalThis.confirm?.(i18n("PF2E_CHASE_FORGE.Runner.AbortConfirm", "Verfolgungsjagd wirklich abbrechen?")) ?? true;
       if (!ok) return;
       this._session = await this.chaseApi.sessionManager.abortSession(this.sessionId);
+      await this.chaseApi.sync?.publishSession?.(this._session, { open: true });
       await this.chat.postEvent({ title: "Verfolgungsjagd abgebrochen" }, { flags: { sessionId: this.sessionId } }).catch(() => null);
       return this.render({ force: true });
     }
@@ -429,6 +435,7 @@ function getAppClass() {
         const session = await this.chaseApi.sessionManager.getSession(this.sessionId);
         const result = this.chaseApi.rules.skipParticipantTurn(session, { runtimeGroupId: target.dataset.runtimeGroupId, participantId: target.dataset.participantId, allowNoObstacle: true });
         await this.chaseApi.sessionManager.saveSession(result.session);
+        await this.chaseApi.sync?.publishSession?.(result.session, { open: true });
         return this.render({ force: true });
       } catch (error) { console.error(error); notify("error", error.message); }
     }
@@ -447,6 +454,7 @@ function getAppClass() {
         const session = await this.chaseApi.sessionManager.getSession(this.sessionId);
         const next = this.chaseApi.route.unlockEdges(session, [target.dataset.edgeId]);
         await this.chaseApi.sessionManager.saveSession(next);
+        await this.chaseApi.sync?.publishSession?.(next, { open: true });
         return this.render({ force: true });
       } catch (error) { console.error(error); notify("error", error.message); }
     }
@@ -456,6 +464,7 @@ function getAppClass() {
         const session = await this.chaseApi.sessionManager.getSession(this.sessionId);
         const next = this.chaseApi.route.lockEdges(session, [target.dataset.edgeId]);
         await this.chaseApi.sessionManager.saveSession(next);
+        await this.chaseApi.sync?.publishSession?.(next, { open: true });
         return this.render({ force: true });
       } catch (error) { console.error(error); notify("error", error.message); }
     }
@@ -489,6 +498,14 @@ function getAppClass() {
     }
 
     static async _actionRefreshRunner() { return this.render({ force: true }); }
+
+    static async _actionSyncPlayers() {
+      try {
+        const session = await this.chaseApi.sessionManager.getSession(this.sessionId);
+        const result = await this.chaseApi.sync?.publishSession?.(session, { open: true });
+        notify("info", format("PF2E_CHASE_FORGE.Runner.PlayersSynced", { count: result?.sent ?? 0 }, `Spieleransichten aktualisiert: ${result?.sent ?? 0}`));
+      } catch (error) { console.error(error); notify("error", error?.message ?? String(error)); }
+    }
   };
   return runnerAppClass;
 }
@@ -509,6 +526,7 @@ export function createChaseRunnerUiService({ getApi = () => globalThis.game?.mod
         openRunnerApps.set(sessionId, app);
       }
       await app.render({ force: true });
+      await chaseApi.sync?.publishSession?.(session, { open: true });
       return app;
     },
     getOpenRunner(sessionId) { return openRunnerApps.get(sessionId) ?? null; },

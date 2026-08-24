@@ -1,0 +1,103 @@
+<div class="chase-player-shell">
+  <header class="chase-player-toolbar">
+    <div>
+      <h2><i class="fa-solid fa-person-running"></i> {{title}}</h2>
+      <div class="chase-player-meta">
+        <span class="chase-player-pill">{{statusLabel}}</span>
+        <span>{{localize "PF2E_CHASE_FORGE.Player.Round"}} {{round}}</span>
+        {{#if timeOfDay}}<span><i class="fa-regular fa-clock"></i> {{timeOfDay}}</span>{{/if}}
+        {{#if weather}}<span><i class="fa-solid fa-cloud-sun"></i> {{weather}}</span>{{/if}}
+      </div>
+    </div>
+    <button type="button" data-action="refreshPlayer" title="{{localize 'PF2E_CHASE_FORGE.Player.Refresh'}}"><i class="fa-solid fa-rotate"></i></button>
+  </header>
+
+  <div class="chase-player-scroll">
+    {{#if missing}}
+      <section class="chase-player-empty"><i class="fa-solid fa-hourglass-half"></i> {{localize "PF2E_CHASE_FORGE.Player.Waiting"}}</section>
+    {{else}}
+      {{#if pending}}<div class="chase-player-pending"><i class="fa-solid fa-spinner fa-spin"></i> {{localize "PF2E_CHASE_FORGE.Player.Pending"}}</div>{{/if}}
+
+      {{#if hasEffects}}
+        <section class="chase-player-effects">
+          <h3><i class="fa-solid fa-wand-magic-sparkles"></i> {{localize "PF2E_CHASE_FORGE.Player.Effects"}}</h3>
+          {{#each personalEffects as |effect|}}
+            <div class="chase-player-effect"><strong>{{effect.consequenceId}}</strong>{{#if effect.message}}<span>{{effect.message}}</span>{{/if}}</div>
+          {{/each}}
+        </section>
+      {{/if}}
+
+      {{#each groups as |group|}}
+        <section class="chase-player-group {{#if group.isControlled}}controlled{{/if}}">
+          <header class="chase-player-group-head">
+            <div><h3>{{group.name}}</h3><span>{{localize "PF2E_CHASE_FORGE.Player.Position"}} {{group.obstacleIndex}}</span></div>
+            {{#if group.completed}}<span class="chase-player-pill success">{{localize "PF2E_CHASE_FORGE.Player.Finished"}}</span>{{/if}}
+          </header>
+
+          {{#if group.hasObstacle}}
+            <article class="chase-player-obstacle">
+              {{#if group.obstacle.image.path}}
+                <img class="chase-player-hero" src="{{group.obstacle.image.path}}" alt="{{group.obstacle.image.alt}}">
+              {{/if}}
+              <div class="chase-player-obstacle-body">
+                <h2>{{group.obstacle.name}}</h2>
+                {{#if group.obstacle.description}}<p class="chase-player-description">{{group.obstacle.description}}</p>{{/if}}
+                <div class="chase-player-progress-row">
+                  <strong>{{localize "PF2E_CHASE_FORGE.Player.Progress"}}</strong>
+                  <span>{{group.obstacle.progress}} / {{group.obstacle.requiredPoints}}</span>
+                  <progress max="{{group.obstacle.requiredPoints}}" value="{{group.obstacle.progress}}"></progress>
+                </div>
+
+                {{#if group.hasPendingDc}}<div class="chase-player-dc-wait"><i class="fa-solid fa-hourglass-half"></i> {{localize "PF2E_CHASE_FORGE.Player.WaitingForDc"}}</div>{{/if}}
+                {{#if group.myRollActions.length}}
+                  <div class="chase-player-actions">
+                    <h4>{{localize "PF2E_CHASE_FORGE.Player.Approaches"}}</h4>
+                    {{#each group.myRollActions as |action|}}
+                      <button type="button" data-action="rollApproach" data-runtime-group-id="{{action.runtimeGroupId}}" data-participant-id="{{action.participantId}}" data-approach-id="{{action.approach.id}}" {{#if ../../pending}}disabled{{/if}}>
+                        <i class="fa-solid fa-dice-d20"></i>
+                        <span><strong>{{action.approach.label}}</strong>{{#if action.approach.description}}<small>{{action.approach.description}}</small>{{/if}}</span>
+                      </button>
+                    {{/each}}
+                  </div>
+                {{/if}}
+
+                {{#if group.canPropose}}
+                  {{#each group.participants as |participant|}}{{#if participant.controlled}}
+                    <button type="button" class="chase-player-propose" data-action="proposeAction" data-runtime-group-id="{{group.runtimeGroupId}}" data-participant-id="{{participant.id}}" {{#if ../../pending}}disabled{{/if}}><i class="fa-regular fa-lightbulb"></i> {{localize "PF2E_CHASE_FORGE.Player.OtherAction"}}</button>
+                  {{/if}}{{/each}}
+                {{/if}}
+              </div>
+            </article>
+          {{else}}
+            <div class="chase-player-node"><strong>{{group.node.label}}</strong>{{#if group.node.description}}<p>{{group.node.description}}</p>{{/if}}</div>
+          {{/if}}
+
+          <div class="chase-player-participants">
+            {{#each group.participants as |participant|}}
+              <div class="chase-player-participant {{#if participant.controlled}}mine{{/if}} {{#if participant.acted}}acted{{/if}}">
+                {{#if participant.image}}<img src="{{participant.image}}" alt="">{{/if}}
+                <span>{{participant.name}}</span>
+                {{#if participant.acted}}<i class="fa-solid fa-check" title="{{localize 'PF2E_CHASE_FORGE.Player.Acted'}}"></i>{{/if}}
+              </div>
+            {{/each}}
+          </div>
+
+          {{#if group.myRoutes.length}}
+            <div class="chase-player-routes">
+              <h3><i class="fa-solid fa-route"></i> {{localize "PF2E_CHASE_FORGE.Player.ChooseRoute"}}</h3>
+              <div class="chase-player-route-grid">
+                {{#each group.myRoutes as |route|}}
+                  <button type="button" data-action="chooseRoute" data-runtime-group-id="{{route.runtimeGroupId}}" data-edge-id="{{route.edgeId}}" {{#if ../../pending}}disabled{{/if}}>
+                    <strong>{{route.label}}</strong>{{#if route.description}}<small>{{route.description}}</small>{{/if}}
+                  </button>
+                {{/each}}
+              </div>
+            </div>
+          {{/if}}
+        </section>
+      {{/each}}
+
+      {{#if terminal}}<section class="chase-player-terminal"><i class="fa-solid fa-flag-checkered"></i> {{localize "PF2E_CHASE_FORGE.Player.Terminal"}}</section>{{/if}}
+    {{/if}}
+  </div>
+</div>

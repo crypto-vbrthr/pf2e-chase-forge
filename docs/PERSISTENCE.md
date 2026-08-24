@@ -4,7 +4,7 @@
 
 Canonical Chase Blueprint, Chase Session, and Chase Result data is stored in one internal ownership-protected `JournalEntry` flag. The world settings contain only the storage version and the opaque JournalEntry id. Full GM chase state is never stored in a client-readable world-setting payload.
 
-Non-GM clients are not allowed to read or mutate the canonical persistence service. The future Player Chase View will receive a separate `ChasePublicState` projection rather than raw `ChaseSession` data.
+Non-GM clients are not allowed to read or mutate the canonical persistence service. The Player Chase View receives only a separate `ChasePublicState` projection rather than raw `ChaseSession` data.
 
 ## Storage state
 

@@ -138,7 +138,7 @@ Completion record containing outcome, ending node, winner/loser groups, route su
 
 ## ChasePublicState
 
-Dedicated future player-facing transport contract. A raw `ChaseSession` must never be treated as player-safe state.
+Dedicated player-facing transport contract used by the synchronized Player Chase View. A raw `ChaseSession` must never be treated as player-safe state.
 
 
 ## PersistenceState v1

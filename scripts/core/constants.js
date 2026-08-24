@@ -1,6 +1,6 @@
 export const MODULE_ID = "pf2e-chase-forge";
-export const MODULE_VERSION = "0.1.0-dev.8.1";
-export const API_VERSION = 8;
+export const MODULE_VERSION = "0.1.0-dev.9.1";
+export const API_VERSION = 9;
 export const EXTENSION_CONTRACT_VERSION = 1;
 
 export const SCHEMA_VERSIONS = Object.freeze({
@@ -41,6 +41,8 @@ export const EXTENSION_CAPABILITIES = Object.freeze([
   "builder.basic",
   "integrations.weatherForge",
   "runner.gm",
+  "runner.player",
+  "sync.playerIntents",
   "presentation.chat"
 ]);
 

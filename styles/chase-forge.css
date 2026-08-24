@@ -319,6 +319,13 @@
   border: 1px dashed var(--chase-border);
   border-radius: 6px;
   margin-bottom: 8px;
+  transition: border-color 120ms ease, background-color 120ms ease, box-shadow 120ms ease;
+}
+
+.chase-builder-participant-drop.chase-drop-active {
+  border-color: var(--color-warm-2, #d5b36a);
+  background: color-mix(in srgb, var(--color-warm-2, #d5b36a) 10%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-warm-2, #d5b36a) 38%, transparent);
 }
 
 .chase-builder-participant {
@@ -806,3 +813,100 @@
 .chase-runner-route-admin-row button { width: 34px; min-width: 34px; padding: 0; }
 .chase-runner-gm-dc { display: inline-flex; align-items: center; gap: 5px; }
 .chase-runner-gm-dc input { width: 72px; }
+
+/* 0.1.0-dev.9 Player Chase View */
+.pf2e-chase-forge.chase-forge-player {
+  --chase-border: color-mix(in srgb, var(--color-border-light-2, #9a8f7a) 55%, transparent);
+  --chase-panel: color-mix(in srgb, var(--color-cool-5, #20242b) 82%, transparent);
+  --chase-panel-soft: color-mix(in srgb, var(--color-cool-4, #2b313b) 72%, transparent);
+  --chase-accent: var(--color-warm-2, #d5b36a);
+  --chase-success: var(--color-level-success, #4f9f69);
+  overflow: hidden !important;
+}
+
+.pf2e-chase-forge.chase-forge-player .window-content {
+  padding: 0;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+}
+
+.chase-player-shell { min-width: 0; }
+
+.chase-player-toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--chase-border);
+  background: var(--chase-panel);
+}
+.chase-player-toolbar h2 { margin: 0; }
+.chase-player-toolbar button { width: 36px; min-width: 36px; }
+.chase-player-meta { display: flex; flex-wrap: wrap; gap: 7px 12px; margin-top: 5px; opacity: .78; font-size: .9em; }
+.chase-player-pill { display: inline-flex; align-items: center; padding: 2px 7px; border: 1px solid var(--chase-border); border-radius: 999px; font-size: .82em; }
+.chase-player-pill.success { border-color: var(--chase-success); }
+.chase-player-scroll { padding: 12px; display: grid; gap: 12px; }
+.chase-player-pending { position: sticky; top: 64px; z-index: 4; padding: 7px 10px; border: 1px solid var(--chase-accent); border-radius: 7px; background: var(--chase-panel); }
+
+.chase-player-group,
+.chase-player-effects,
+.chase-player-terminal,
+.chase-player-empty {
+  border: 1px solid var(--chase-border);
+  border-radius: 9px;
+  background: var(--chase-panel-soft);
+  overflow: hidden;
+}
+.chase-player-group.controlled { border-color: color-mix(in srgb, var(--chase-accent) 70%, var(--chase-border)); }
+.chase-player-group-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; padding: 10px 12px; border-bottom: 1px solid var(--chase-border); background: color-mix(in srgb, var(--chase-panel) 78%, transparent); }
+.chase-player-group-head h3 { margin: 0; }
+.chase-player-group-head span { opacity: .72; font-size: .86em; }
+
+.chase-player-obstacle { display: grid; grid-template-columns: minmax(220px, 36%) minmax(0, 1fr); }
+.chase-player-hero { width: 100%; height: 100%; min-height: 260px; max-height: 430px; object-fit: cover; border: 0; border-right: 1px solid var(--chase-border); }
+.chase-player-obstacle-body { padding: 16px; }
+.chase-player-obstacle-body > h2 { margin: 0 0 7px; }
+.chase-player-description { margin: 0 0 14px; font-size: 1.02em; line-height: 1.45; white-space: pre-wrap; }
+.chase-player-progress-row { display: grid; grid-template-columns: auto auto; gap: 5px 10px; align-items: center; margin: 10px 0 14px; }
+.chase-player-progress-row > span { justify-self: end; }
+.chase-player-progress-row progress { grid-column: 1 / -1; width: 100%; height: 14px; }
+
+.chase-player-actions { display: grid; gap: 7px; margin-top: 12px; }
+.chase-player-actions h4 { margin: 0 0 2px; }
+.chase-player-actions button { width: 100%; display: flex; align-items: center; gap: 10px; text-align: left; padding: 8px 10px; }
+.chase-player-actions button > span { display: grid; gap: 2px; }
+.chase-player-actions small { opacity: .72; white-space: normal; }
+.chase-player-propose { width: auto; margin-top: 9px; }
+
+.chase-player-participants { display: flex; flex-wrap: wrap; gap: 7px; padding: 0 12px 12px; }
+.chase-player-participant { display: inline-flex; align-items: center; gap: 6px; padding: 4px 8px 4px 4px; border: 1px solid var(--chase-border); border-radius: 999px; background: color-mix(in srgb, var(--chase-panel) 64%, transparent); }
+.chase-player-participant.mine { border-color: var(--chase-accent); }
+.chase-player-participant.acted { opacity: .66; }
+.chase-player-participant img { width: 28px; height: 28px; border-radius: 50%; object-fit: cover; border: 0; }
+.chase-player-participant i { color: var(--chase-success); }
+
+.chase-player-routes { margin: 0 12px 12px; padding: 12px; border: 1px solid var(--chase-accent); border-radius: 8px; background: color-mix(in srgb, var(--chase-accent) 7%, var(--chase-panel)); }
+.chase-player-routes h3 { margin: 0 0 8px; }
+.chase-player-route-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 8px; }
+.chase-player-route-grid button { width: 100%; min-height: 62px; display: grid; gap: 3px; text-align: left; align-content: center; }
+.chase-player-route-grid small { opacity: .72; white-space: normal; }
+
+.chase-player-effects { padding: 10px 12px; }
+.chase-player-effects h3 { margin: 0 0 7px; }
+.chase-player-effect { display: flex; gap: 8px; align-items: baseline; padding: 5px 0; border-top: 1px solid var(--chase-border); }
+.chase-player-effect:first-of-type { border-top: 0; }
+.chase-player-effect span { opacity: .76; }
+.chase-player-node { padding: 16px; }
+.chase-player-node p { margin: 5px 0 0; }
+.chase-player-terminal, .chase-player-empty { padding: 18px; text-align: center; font-weight: 700; }
+
+@media (max-width: 720px) {
+  .chase-player-obstacle { grid-template-columns: 1fr; }
+  .chase-player-hero { min-height: 180px; max-height: 280px; border-right: 0; border-bottom: 1px solid var(--chase-border); }
+  .chase-player-toolbar { position: static; }
+}
+.chase-player-dc-wait { margin: 9px 0; padding: 7px 9px; border: 1px dashed var(--chase-accent); border-radius: 6px; opacity: .82; }

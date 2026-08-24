@@ -95,6 +95,40 @@ function isGm() {
   return globalThis.game?.user?.isGM === true;
 }
 
+export function resolveParticipantDropUuid(data = null) {
+  if (!data || typeof data !== "object") return null;
+  const direct = data.uuid ?? data.documentUuid ?? data.actorUuid ?? null;
+  if (typeof direct === "string" && direct.trim()) return direct.trim();
+
+  const type = String(data.type ?? data.documentName ?? "").toLowerCase();
+  const id = data.id ?? data._id ?? data.actorId ?? null;
+  if (type === "actor" && id) return `Actor.${id}`;
+
+  const sceneId = data.sceneId ?? data.scene ?? null;
+  const tokenId = data.tokenId ?? (type.includes("token") ? id : null);
+  if (tokenId && sceneId) return `Scene.${sceneId}.Token.${tokenId}`;
+  return null;
+}
+
+export function readParticipantDragData(event) {
+  try {
+    const foundryData = globalThis.TextEditor?.getDragEventData?.(event);
+    if (foundryData && typeof foundryData === "object" && Object.keys(foundryData).length) return foundryData;
+  } catch { /* Fall through to raw DataTransfer formats. */ }
+
+  const transfer = event?.dataTransfer ?? null;
+  if (!transfer?.getData) return null;
+  for (const mime of ["application/json", "text/plain", "text"]) {
+    try {
+      const raw = transfer.getData(mime);
+      if (!raw) continue;
+      const parsed = JSON.parse(raw);
+      if (parsed && typeof parsed === "object") return parsed;
+    } catch { /* Try the next data-transfer format. */ }
+  }
+  return null;
+}
+
 function layoutMetric(element, label) {
   if (!element) return { label, exists: false };
   const computed = globalThis.getComputedStyle?.(element) ?? null;
@@ -317,6 +351,7 @@ function getAppClass() {
       this._persisted = false;
       this._lastValidation = null;
       this._dropBoundElement = null;
+      this._participantDropHandlers = null;
     }
 
     get draft() { return cloneData(this._draft); }
@@ -497,12 +532,63 @@ function getAppClass() {
         logBuilderLayoutDiagnostics(this, "render+500ms");
       }, 500);
 
-      if (root === this._dropBoundElement) return;
-      this._dropBoundElement = root;
-      root.addEventListener("dragover", event => {
-        if (event.target?.closest?.("[data-participant-drop]")) event.preventDefault();
-      });
-      root.addEventListener("drop", event => this._handleDrop(event));
+      this._bindParticipantDropZones(root);
+    }
+
+    _bindParticipantDropZones(root = this.element) {
+      if (!root?.addEventListener) return;
+
+      // ApplicationV2 may re-render the part while keeping the outer application
+      // element alive. Bind a capture-phase delegated handler to that stable root
+      // and direct capture handlers to each freshly rendered drop zone. The latter
+      // makes Actor/Token drops robust against Foundry handlers which consume the
+      // bubbling phase before the Builder sees it.
+      if (root !== this._dropBoundElement) {
+        this._dropBoundElement = root;
+        const dragover = event => {
+          const zone = event.target?.closest?.("[data-participant-drop]");
+          if (!zone || !root.contains(zone)) return;
+          event.preventDefault();
+          if (event.dataTransfer) event.dataTransfer.dropEffect = "copy";
+          zone.classList?.add?.("chase-drop-active");
+        };
+        const drop = event => {
+          const zone = event.target?.closest?.("[data-participant-drop]");
+          if (!zone || !root.contains(zone)) return;
+          event.preventDefault();
+          event.stopPropagation();
+          zone.classList?.remove?.("chase-drop-active");
+          void this._handleDrop(event, zone);
+        };
+        root.addEventListener("dragenter", dragover, true);
+        root.addEventListener("dragover", dragover, true);
+        root.addEventListener("drop", drop, true);
+        this._participantDropHandlers = { root, dragover, drop };
+      }
+
+      for (const zone of root.querySelectorAll?.("[data-participant-drop]") ?? []) {
+        if (zone.dataset.chaseDropBound === "true") continue;
+        zone.dataset.chaseDropBound = "true";
+        const dragover = event => {
+          event.preventDefault();
+          if (event.dataTransfer) event.dataTransfer.dropEffect = "copy";
+          zone.classList?.add?.("chase-drop-active");
+        };
+        const dragleave = event => {
+          const next = event.relatedTarget;
+          if (!next || !zone.contains?.(next)) zone.classList?.remove?.("chase-drop-active");
+        };
+        const drop = event => {
+          event.preventDefault();
+          event.stopPropagation();
+          zone.classList?.remove?.("chase-drop-active");
+          void this._handleDrop(event, zone);
+        };
+        zone.addEventListener("dragenter", dragover, true);
+        zone.addEventListener("dragover", dragover, true);
+        zone.addEventListener("dragleave", dragleave, true);
+        zone.addEventListener("drop", drop, true);
+      }
     }
 
     debugLayout(reason = "manual") {
@@ -634,15 +720,12 @@ function getAppClass() {
       return globalThis.confirm?.(i18n("PF2E_CHASE_FORGE.Builder.DeleteConfirm", "Diese vorbereitete Verfolgungsjagd wirklich löschen?")) ?? false;
     }
 
-    async _handleDrop(event) {
-      const zone = event.target?.closest?.("[data-participant-drop]");
+    async _handleDrop(event, explicitZone = null) {
+      const zone = explicitZone ?? event.target?.closest?.("[data-participant-drop]");
       if (!zone || !isBasicLinearBlueprint(this._draft)) return;
       event.preventDefault();
-      let data = null;
-      try {
-        data = globalThis.TextEditor?.getDragEventData?.(event) ?? JSON.parse(event.dataTransfer?.getData("text/plain") || "null");
-      } catch { data = null; }
-      const uuid = data?.uuid ?? data?.documentUuid ?? null;
+      const data = readParticipantDragData(event);
+      const uuid = resolveParticipantDropUuid(data);
       if (!uuid || typeof globalThis.fromUuid !== "function") {
         notify("warn", i18n("PF2E_CHASE_FORGE.Builder.DropUnsupported", "Bitte einen Actor oder Token aus Foundry hierher ziehen."));
         return;

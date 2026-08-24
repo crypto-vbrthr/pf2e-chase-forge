@@ -2,7 +2,7 @@
 
 ## Baseline
 
-Version `0.1.0-dev.7.4.2` adds the first GM-facing Basic Chase Builder while keeping UI, persistence, route traversal, PF2e rules, consequences, and integrations as separate layers.
+Version `0.1.0-dev.9` adds synchronized GM and Player runtime surfaces while keeping UI, transport, persistence, route traversal, PF2e rules, consequences, and integrations as separate layers.
 
 ```text
 External Chase Add-ons
@@ -39,10 +39,16 @@ Extension Contract / Registries
         +--------+---------+
         |                  |
         v                  v
- Basic Chase Builder   Future GM Runner
-        |                  |
-        v                  v
- Prepared Blueprint    Future Player View
+ Basic Chase Builder      GM Chase Runner
+        |                     |
+        v                     v
+ Prepared Blueprint      ChaseSession
+                              |
+                       Public State Projector
+                              |
+                       Session Sync / Socket
+                              |
+                       Player Chase View
 ```
 
 ## Basic Builder boundary
@@ -80,7 +86,7 @@ The Effect Forge bridge never compiles PF2e Rule Elements itself. Critical Forge
 
 Canonical GM state is stored in the protected persistence vault. Player clients must never receive raw `ChaseSession` or Blueprint GM notes.
 
-The later Player Chase View will be driven by `ChasePublicState` projections and player intents. dev.7 does not add any player-facing transport.
+`0.1.0-dev.9` drives the Player Chase View exclusively through `ChasePublicState` projections and player intents. The GM is authoritative: player clients never read the protected persistence vault and never mutate `ChaseSession` directly. Module-socket payloads contain player-safe presentation state or player intentions only.
 
 ## Protected persistence
 

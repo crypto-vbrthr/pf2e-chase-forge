@@ -175,3 +175,23 @@ test("new Builder window prefills current Weather Forge values when integration 
     if (previousUi === undefined) delete globalThis.ui; else globalThis.ui = previousUi;
   }
 });
+
+
+test("Builder participant drag-and-drop uses capture-phase handlers and robust drag payload parsing", async () => {
+  const source = await readFile(new URL("../scripts/app/chase-builder-app.js", import.meta.url), "utf8");
+  assert.match(source, /_bindParticipantDropZones/);
+  assert.match(source, /addEventListener\("dragover", dragover, true\)/);
+  assert.match(source, /addEventListener\("drop", drop, true\)/);
+  assert.match(source, /readParticipantDragData\(event\)/);
+  assert.match(source, /resolveParticipantDropUuid\(data\)/);
+  assert.match(source, /dropEffect = "copy"/);
+});
+
+test("participant drop UUID resolver supports Actor and Scene Token payloads", async () => {
+  const { resolveParticipantDropUuid } = await import("../scripts/app/chase-builder-app.js");
+  assert.equal(resolveParticipantDropUuid({ uuid: "Actor.abc" }), "Actor.abc");
+  assert.equal(resolveParticipantDropUuid({ type: "Actor", id: "abc" }), "Actor.abc");
+  assert.equal(resolveParticipantDropUuid({ type: "Token", sceneId: "scene1", tokenId: "token1" }), "Scene.scene1.Token.token1");
+  assert.equal(resolveParticipantDropUuid({ type: "TokenDocument", scene: "scene1", id: "token1" }), "Scene.scene1.Token.token1");
+  assert.equal(resolveParticipantDropUuid(null), null);
+});

@@ -14,6 +14,7 @@
       {{#if canEndRound}}<button type="button" data-action="endRound"><i class="fa-solid fa-forward-step"></i> {{localize "PF2E_CHASE_FORGE.Runner.EndRound"}}</button>{{/if}}
       {{#if canPause}}<button type="button" data-action="pauseSession"><i class="fa-solid fa-pause"></i> {{localize "PF2E_CHASE_FORGE.Runner.Pause"}}</button>{{/if}}
       {{#if canResume}}<button type="button" data-action="resumeSession"><i class="fa-solid fa-play"></i> {{localize "PF2E_CHASE_FORGE.Runner.Resume"}}</button>{{/if}}
+      <button type="button" data-action="syncPlayers" title="{{localize 'PF2E_CHASE_FORGE.Runner.SyncPlayers'}}"><i class="fa-solid fa-users-viewfinder"></i> {{localize "PF2E_CHASE_FORGE.Runner.SyncPlayers"}}</button>
       <button type="button" data-action="refreshRunner"><i class="fa-solid fa-rotate"></i></button>
       {{#unless terminal}}<button type="button" class="danger" data-action="abortSession"><i class="fa-solid fa-stop"></i> {{localize "PF2E_CHASE_FORGE.Runner.Abort"}}</button>{{/unless}}
     </div>

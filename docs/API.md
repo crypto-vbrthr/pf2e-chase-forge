@@ -1,4 +1,4 @@
-# PF2E Chase Forge Public API - dev.8
+# PF2E Chase Forge Public API - dev.9
 
 ## Access
 
@@ -6,20 +6,23 @@
 const forge = game.modules.get("pf2e-chase-forge")?.api;
 ```
 
-Current public API version: `8`  
+Current public API version: `9`  
 Extension Contract version: `1`  
 Basic Builder Contract version: `1`
 
-## New dev.8 capabilities
+## New dev.9 capabilities
 
 ```text
 basicBuilder
 builderUi
 gmRunner
+playerView
+sessionSync
+playerIntents
 chatWorkflow
 ```
 
-`gmRunner` is true in normal Foundry initialization when the GM ApplicationV2 Runner service is wired into the public API. `chatWorkflow` is provided by the system-neutral Chat presenter. Player View and Campaign Forge integration remain false.
+`gmRunner` and `playerView` are true in normal Foundry initialization. `sessionSync` and `playerIntents` expose the module-socket bridge that keeps player-safe projections synchronized while the GM remains authoritative. Campaign Forge integration remains false.
 
 ## Basic Builder
 
@@ -70,6 +73,33 @@ await forge.ui.closeAllRunners();
 
 The Runner is GM-only and always mutates the persisted `ChaseSession` through the Rules, Consequence, Route, and Persistence services. Starting a Blueprint in the Basic Builder automatically opens its new Runner.
 
+## Player View and public-state projection
+
+```js
+await forge.ui.openPlayerView({ sessionId });
+forge.ui.getOpenPlayerView(sessionId);
+forge.ui.getOpenPlayerViews();
+forge.ui.getPlayerState(sessionId);
+
+const publicState = await forge.player.projectState(session, { user });
+```
+
+`ChasePublicState` is deliberately not a raw Session clone. It contains only current public presentation data and action identifiers the addressed user may currently use. Exact DCs, GM notes, undiscovered routes, and future card data are not projected.
+
+## Session synchronization
+
+```js
+forge.sync.channel;
+forge.sync.authorityGmId();
+forge.sync.start();
+await forge.sync.publishSession(session);       // GM
+await forge.sync.publishActiveSessions();       // GM
+await forge.sync.sendIntent("route", { sessionId, payload }); // player
+await forge.sync.requestState(sessionId);       // player
+```
+
+The module socket is transport only. Player intents cannot mutate Session state directly; the selected authority GM reloads the canonical Session, validates participant ownership and current rules state, applies the rules, persists the result, and republishes a new player-safe projection.
+
 ## Chat presentation
 
 ```js
@@ -86,7 +116,7 @@ Public obstacle messages exclude GM notes and exact DCs by contract.
 
 ## Schemas
 
-No core schema versions changed in dev.8:
+No core schema versions changed in dev.9:
 
 ```text
 forge.schemas.blueprint === 2
