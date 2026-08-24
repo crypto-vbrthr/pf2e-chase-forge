@@ -1,5 +1,27 @@
 # Changelog
 
+## 0.1.0-dev.8.1 – Localization Namespace Hotfix
+
+- Fixes a Foundry localization namespace collision introduced in dev.8 by a nested `PF2E_CHASE_FORGE` object used only for `Runner.ChatStarted`.
+- Restores all Builder and Runner translation keys in both German and English instead of rendering raw `PF2E_CHASE_FORGE.*` keys.
+- Keeps `PF2E_CHASE_FORGE.Runner.ChatStarted` as a normal dotted localization key, matching the rest of the module locale files.
+- Adds regression coverage that forbids a nested top-level `PF2E_CHASE_FORGE` object and verifies DE/EN locale key parity.
+
+## 0.1.0-dev.8 – GM Chase Runner & Chat Workflow
+
+- Adds the first playable GM-only Chase Runner backed directly by persisted `ChaseSession` state.
+- Adds round begin/end controls, pause/resume/abort lifecycle controls, and automatic persistent outcome/result handling.
+- Displays every runtime group, current route node, current obstacle, Chase Point progress, PF2e approaches, exact GM DCs, participant acted/skipped state, and steady/rolled pace.
+- Adds PF2e Actor/Token check buttons through the existing `Pf2eChaseAdapter`; returned totals and natural d20 results are resolved by the Chase Rules Engine rather than duplicated in UI code.
+- Adds GM manual degree-of-success resolution, automatic +1 contributions, and explicit skipped-turn handling.
+- Adds legal branch selection after cleared obstacles/choice nodes and a GM route-administration panel for unlocking or locking outgoing shortcut/route edges.
+- Adds persistent consequence review with GM confirmation and route-selection controls; Effect Forge consequences continue through the existing optional bridge.
+- Adds a dedicated Chat presentation layer for player-safe obstacle cards, roll summaries, chase events, and completion messages. Exact DCs, GM notes, future obstacles, and hidden route data are deliberately excluded from public obstacle messages.
+- Starting a Blueprint now opens its Runner automatically. Draft/active/paused Sessions are also listed in the Builder sidebar so a restarted world can reopen an existing chase.
+- Starting a Blueprint also posts a lightweight Chase-start event to Chat so the session log has a clear beginning marker.
+- Adds `forge.ui.openRunner(...)`, Runner lifecycle helpers, and `forge.presentation.chat`; public API version is raised to `8` while core data schemas remain unchanged.
+- Adds GM Runner Contract v1 documentation and regression coverage for UI wiring, Chat privacy, presenter flags, and API capability advertisement.
+
 ## 0.1.0-dev.7.5.1 – Weather Forge Read Hardening
 
 - Weather Forge API read failures are now contained by the optional bridge instead of bubbling into the Chase Builder.

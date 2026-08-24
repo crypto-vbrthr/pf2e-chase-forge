@@ -1,13 +1,46 @@
 # PF2E Chase Forge
 
-**Version:** 0.1.0-dev.7.5.1  
+**Version:** 0.1.0-dev.8.1  
 **Foundry VTT:** 14  
 **System:** Pathfinder 2e
 
-PF2E Chase Forge is a modular Pathfinder 2e chase framework for Foundry VTT. `0.1.0-dev.7.5.1` hardens the **Basic Chase Builder** with optional Weather Forge prefill while retaining the graph, rules, consequence, persistence, registry, and Builder architecture introduced in earlier development builds.
+PF2E Chase Forge is a modular Pathfinder 2e chase framework for Foundry VTT. `0.1.0-dev.8.1` adds the first **GM Chase Runner and Chat workflow**, turning persisted Blueprints and Sessions into a playable chase surface while retaining the graph, PF2e rules, consequence, persistence, registry, Builder, Effect Forge, and Weather Forge architecture from earlier builds.
 
 The underlying dev.1-dev.6 architecture remains intact: DAG route graphs, add-on registries, PF2e chase rules, consequence orchestration, optional Critical Forge / Effect Forge integration, and protected restart-safe Blueprint/Session persistence.
 
+
+## dev.8 GM Chase Runner
+
+Starting a prepared Blueprint now creates a persistent Session and immediately opens the GM-only Chase Runner. Open draft/active/paused Sessions are also listed in the Builder sidebar for restart-safe recovery.
+
+The Runner currently provides:
+
+- round begin/end plus pause, resume, and abort controls;
+- one panel per runtime group with current route position and pace mode;
+- current obstacle image, description, GM notes, Chase Point progress, and exact GM DCs;
+- PF2e roll buttons for linked Actors/Tokens;
+- manual degree-of-success resolution, automatic +1 contributions, and skipped turns;
+- legal route choices plus GM route unlock/lock administration;
+- pending consequence confirmation and consequence-driven route selection;
+- automatic persistent result creation when a chase ending is reached;
+- public Chat obstacle cards and roll summaries.
+
+Chat obstacle cards intentionally omit exact DCs, GM notes, future obstacles, and hidden route information. The full Player Chase View remains a later milestone.
+
+Open a Runner directly:
+
+```js
+const forge = game.modules.get("pf2e-chase-forge")?.api;
+await forge.ui.openRunner({ sessionId: "session-id" });
+```
+
+Chat presentation is also exposed:
+
+```js
+forge.presentation.chat.postObstacle(...);
+forge.presentation.chat.postRollResult(...);
+forge.presentation.chat.postEvent(...);
+```
 
 ## dev.7.5 Weather Forge prefill
 
@@ -145,13 +178,14 @@ Critical Forge / Effect Forge remains optional. When present, Chase Forge can ap
 const forge = game.modules.get("pf2e-chase-forge")?.api;
 ```
 
-Current API version: `7`.
+Current API version: `8`.
 
 Important surfaces:
 
 ```text
 forge.builder
 forge.ui
+forge.presentation.chat
 forge.persistence
 forge.sessionManager
 forge.route
@@ -173,6 +207,7 @@ See:
 - `docs/DATA_MODEL.md`
 - `docs/API.md`
 - `docs/BASIC_BUILDER.md`
+- `docs/GM_RUNNER.md`
 - `docs/ROUTE_ENGINE.md`
 - `docs/RULES_ENGINE.md`
 - `docs/CONSEQUENCE_ENGINE.md`
@@ -183,7 +218,6 @@ See:
 
 ## Deliberately not implemented yet
 
-- GM Chase Runner and Chat workflow;
 - Player Chase View and session synchronization;
 - visual branch/merge Route Builder;
 - generator and large Core Card library;
@@ -197,7 +231,7 @@ See:
 npm test
 ```
 
-The dev.7 suite covers the full dev.1-dev.6 baseline plus Basic Builder graph construction, local card snapshots, card overrides, approach editing, participant handling, group-role resets, public Builder API, Scene Control wiring, UI service lifecycle, localization/template packaging, and existing persistence/rules hardening.
+The dev.8 suite covers the full dev.1-dev.7.5.1 baseline plus GM Runner UI wiring, Chat privacy/presenter behavior, Runner API capability advertisement, and the Builder-to-Runner handoff.
 
 ## Builder layout diagnostics (dev.7.4.1)
 

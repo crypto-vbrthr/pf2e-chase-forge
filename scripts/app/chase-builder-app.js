@@ -295,7 +295,8 @@ function getAppClass() {
         addSelectedTokens: this._actionAddSelectedTokens,
         removeParticipant: this._actionRemoveParticipant,
         resetGroups: this._actionResetGroups,
-        applyWeatherForge: this._actionApplyWeatherForge
+        applyWeatherForge: this._actionApplyWeatherForge,
+        openSessionRunner: this._actionOpenSessionRunner
       }
     };
 
@@ -401,6 +402,17 @@ function getAppClass() {
       const builderMeta = this._draft.metadata?.builder ?? {};
       const persisted = blueprints.some(item => item.id === this._draft.id);
       this._persisted = persisted;
+      const sessions = await this.chaseApi.persistence.sessions.list();
+      const openableSessions = sessions
+        .filter(session => ["draft", "active", "paused"].includes(session.status))
+        .sort((a, b) => String(b.updatedAt).localeCompare(String(a.updatedAt)))
+        .map(session => ({
+          id: session.id,
+          status: session.status,
+          round: session.round,
+          name: session.blueprintSnapshot?.name ?? session.id,
+          statusLabel: i18n(`PF2E_CHASE_FORGE.SessionStatus.${session.status}`, session.status)
+        }));
       const weatherForgeStatus = this.chaseApi.integrations?.weatherForge?.inspect?.() ?? { available: false, compatible: false };
       const weatherFromWeatherForge = this._draft.settings.weather?.source?.moduleId === "pf2e-weather-forge";
 
@@ -435,6 +447,8 @@ function getAppClass() {
           roleOptions: optionList(GROUP_ROLE_VALUES, group.role, "PF2E_CHASE_FORGE.GroupRole")
         })),
         blueprints: summaries,
+        openableSessions,
+        hasOpenableSessions: openableSessions.length > 0,
         registeredCards: registeredCards.map(card => ({ id: card.id, name: card.name, type: card.type, source: card.source?.moduleId ?? "" })),
         hasRegisteredCards: registeredCards.length > 0,
         validation,
@@ -709,6 +723,10 @@ function getAppClass() {
       const draftSession = await this.chaseApi.sessionManager.createSession(saved.id);
       const session = await this.chaseApi.sessionManager.startSession(draftSession.id);
       notify("info", format("PF2E_CHASE_FORGE.Builder.SessionStarted", { id: session.id }, `Session ${session.id} gestartet.`));
+      await this.chaseApi.presentation?.chat?.postEvent?.({
+        title: format("PF2E_CHASE_FORGE.Runner.ChatStarted", { name: saved.name }, `Verfolgungsjagd gestartet: ${saved.name}`)
+      }, { flags: { sessionId: session.id } }).catch(() => null);
+      await this.chaseApi.ui?.openRunner?.({ sessionId: session.id });
       return this.render({ force: true });
     }
 
@@ -800,6 +818,12 @@ function getAppClass() {
       this._syncDraftFromForm();
       await this._applyWeatherForgePrefill({ onlyUnset: false, notifyUser: true });
       return this.render({ force: true });
+    }
+
+    static async _actionOpenSessionRunner(_event, target) {
+      const sessionId = target.dataset.sessionId;
+      if (!sessionId) return null;
+      return this.chaseApi.ui?.openRunner?.({ sessionId });
     }
   };
 

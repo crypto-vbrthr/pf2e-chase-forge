@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { createPublicApi } from "../scripts/api/public-api.js";
 import { sampleBlueprint } from "./helpers.js";
 
-test("dev.7 public API advertises builder, persistence, route, rules, and consequence capabilities", () => {
+test("dev.8 public API advertises builder, persistence, route, rules, and consequence capabilities", () => {
   const api = createPublicApi();
   const caps = api.getCapabilities();
   assert.equal(caps.coreDataModel, true);
@@ -35,6 +35,7 @@ test("dev.7 public API advertises builder, persistence, route, rules, and conseq
   assert.equal(caps.basicBuilder, true);
   assert.equal(caps.builderUi, false);
   assert.equal(caps.gmRunner, false);
+  assert.equal(caps.chatWorkflow, true);
   assert.equal(caps.playerView, false);
   assert.equal(caps.consequenceEngine, true);
   assert.equal(caps.effectForgeBridge, true);
@@ -84,6 +85,8 @@ test("public API containers are frozen", () => {
   assert.equal(Object.isFrozen(api.integrations.effectForge), true);
   assert.equal(Object.isFrozen(api.integrations.weatherForge), true);
   assert.equal(Object.isFrozen(api.builder), true);
+  assert.equal(Object.isFrozen(api.presentation), true);
+  assert.equal(Object.isFrozen(api.presentation.chat), true);
   assert.equal(Object.isFrozen(api.ui), true);
   assert.equal(Object.isFrozen(api.persistence), true);
   assert.equal(Object.isFrozen(api.persistence.blueprints), true);

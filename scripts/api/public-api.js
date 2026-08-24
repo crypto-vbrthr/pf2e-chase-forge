@@ -42,6 +42,8 @@ import { createChasePersistenceService } from "../persistence/persistence-servic
 import { createMemoryChaseStore } from "../persistence/memory-store.js";
 import { createChaseSessionManager } from "../persistence/session-manager.js";
 import { validatePersistenceState } from "../persistence/state.js";
+import { CHASE_CHAT_PRESENTER_CONTRACT_VERSION, createChaseChatPresenter } from "../presentation/chat-presenter.js";
+import { GM_RUNNER_CONTRACT_VERSION } from "../app/chase-runner-app.js";
 import {
   BASIC_BUILDER_CONTRACT_VERSION,
   addApproachToBasicCard,
@@ -104,6 +106,7 @@ export function createPublicApi({ registries = createRegistryService(), persiste
   const consequences = createConsequenceEngine({ routeEngine: route, effectForgeBridge });
   const persistence = createChasePersistenceService({ store: persistenceStore, routeEngine: route, rulesEngine: rules, registries });
   const sessionManager = createChaseSessionManager(persistence);
+  const chatPresenter = createChaseChatPresenter();
 
   return Object.freeze({
     version: API_VERSION,
@@ -129,7 +132,9 @@ export function createPublicApi({ registries = createRegistryService(), persiste
       protectedPersistence: 1,
       blueprintTransfer: 1,
       chaseReference: 1,
-      basicBuilder: BASIC_BUILDER_CONTRACT_VERSION
+      basicBuilder: BASIC_BUILDER_CONTRACT_VERSION,
+      gmRunner: GM_RUNNER_CONTRACT_VERSION,
+      chatPresenter: CHASE_CHAT_PRESENTER_CONTRACT_VERSION
     }),
     getCapabilities: () => Object.freeze({
       coreDataModel: true,
@@ -162,7 +167,8 @@ export function createPublicApi({ registries = createRegistryService(), persiste
       sessionLifecycle: true,
       basicBuilder: true,
       builderUi: Boolean(ui?.openBuilder),
-      gmRunner: false,
+      gmRunner: Boolean(ui?.openRunner),
+      chatWorkflow: true,
       playerView: false,
       consequenceEngine: true,
       effectForgeBridge: true,
@@ -291,8 +297,14 @@ export function createPublicApi({ registries = createRegistryService(), persiste
       openBuilder: options => ui?.openBuilder?.(options) ?? null,
       closeBuilder: () => ui?.closeBuilder?.() ?? false,
       getOpenBuilder: () => ui?.getOpenBuilder?.() ?? null,
-      debugBuilderLayout: options => ui?.debugLayout?.(options) ?? null
+      debugBuilderLayout: options => ui?.debugLayout?.(options) ?? null,
+      openRunner: options => ui?.openRunner?.(options) ?? null,
+      closeRunner: sessionId => ui?.closeRunner?.(sessionId) ?? false,
+      closeAllRunners: () => ui?.closeAllRunners?.() ?? false,
+      getOpenRunner: sessionId => ui?.getOpenRunner?.(sessionId) ?? null,
+      getOpenRunners: () => ui?.getOpenRunners?.() ?? []
     }),
+    presentation: Object.freeze({ chat: chatPresenter }),
     persistence,
     sessionManager,
     cards: content.cards,

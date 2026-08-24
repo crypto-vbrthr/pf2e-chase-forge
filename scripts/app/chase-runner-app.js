@@ -1,0 +1,531 @@
+import { MODULE_ID } from "../core/constants.js";
+import { cloneData } from "../data/utils.js";
+import { createChaseChatPresenter } from "../presentation/chat-presenter.js";
+
+export const GM_RUNNER_CONTRACT_VERSION = 1;
+
+let runnerAppClass = null;
+let openRunnerApps = new Map();
+
+function i18n(key, fallback = null) {
+  const translated = globalThis.game?.i18n?.localize?.(key);
+  return translated && translated !== key ? translated : (fallback ?? key);
+}
+
+function format(key, data = {}, fallback = null) {
+  const translated = globalThis.game?.i18n?.format?.(key, data);
+  return translated && translated !== key ? translated : (fallback ?? key);
+}
+
+function notify(kind, message) {
+  const fn = globalThis.ui?.notifications?.[kind] ?? globalThis.ui?.notifications?.info;
+  fn?.call(globalThis.ui?.notifications, message);
+}
+
+function isGm() { return globalThis.game?.user?.isGM === true; }
+
+function optionLabel(value) {
+  const map = {
+    quarry: "Flüchtige", pursuer: "Verfolger", competitor: "Wettläufer", participant: "Beteiligte",
+    active: "Aktiv", paused: "Pausiert", draft: "Entwurf", completed: "Beendet", aborted: "Abgebrochen",
+    criticalSuccess: "Kritischer Erfolg", success: "Erfolg", failure: "Fehlschlag", criticalFailure: "Kritischer Fehlschlag",
+    pendingConfirmation: "Bestätigung ausstehend", pendingSelection: "Auswahl ausstehend", manualFallback: "Manuell anwenden",
+    blocked: "Blockiert", failed: "Fehlgeschlagen", applied: "Angewendet", skipped: "Übersprungen"
+  };
+  const fallback = map[value] ?? value ?? "";
+  return i18n(`PF2E_CHASE_FORGE.Runner.Label.${value}`, fallback);
+}
+
+function resolveBlueprintGroup(session, runtimeGroup) {
+  return session?.blueprintSnapshot?.groups?.find(group => group.id === runtimeGroup?.groupId) ?? null;
+}
+
+function resolveParticipant(session, participantId) {
+  for (const group of session?.blueprintSnapshot?.groups ?? []) {
+    const participant = group.participants?.find(candidate => candidate.id === participantId);
+    if (participant) return participant;
+  }
+  return null;
+}
+
+function resolveCard(api, session, cardRef) {
+  const snapshot = session?.blueprintSnapshot?.contentSnapshots?.cards?.find(record => record.ref === cardRef)?.data ?? null;
+  if (session?.blueprintSnapshot?.contentSnapshots?.mode === "snapshot" && snapshot) return cloneData(snapshot);
+  return api?.cards?.get?.(cardRef, { includeDisabled: true }) ?? (snapshot ? cloneData(snapshot) : null);
+}
+
+function resolveCardById(api, session, cardId) {
+  const snapshot = session?.blueprintSnapshot?.contentSnapshots?.cards?.find(record => record?.data?.id === cardId || record?.ref === cardId)?.data ?? null;
+  return snapshot ? cloneData(snapshot) : (api?.cards?.get?.(cardId, { includeDisabled: true }) ?? null);
+}
+
+function reconstructOccurrence(api, session, record) {
+  const card = resolveCardById(api, session, record.cardId);
+  const approach = card?.approaches?.find(item => item.id === record.approachId) ?? null;
+  const candidates = [
+    ...(approach?.outcomes?.[record.degree] ?? []),
+    ...(card?.outcomes?.[record.degree] ?? [])
+  ];
+  const consequence = candidates.find(item => item.id === record.consequenceId) ?? null;
+  if (!consequence) return null;
+  return api.consequences.createOccurrence(consequence, {
+    occurrenceId: record.occurrenceId,
+    sourceEventId: record.sourceEventId,
+    runtimeGroupId: record.runtimeGroupId,
+    participantId: record.participantId,
+    nodeId: record.nodeId,
+    cardId: record.cardId,
+    approachId: record.approachId,
+    degree: record.degree
+  });
+}
+
+function rollNatural(roll) {
+  const direct = Number(roll?.dieResult ?? roll?.natural ?? NaN);
+  if (Number.isFinite(direct)) return direct;
+  const dice = roll?.dice ?? roll?.roll?.dice ?? [];
+  for (const die of dice) {
+    if (Number(die?.faces) !== 20) continue;
+    const result = (die.results ?? []).find(item => item?.active !== false && item?.discarded !== true)?.result;
+    if (Number.isFinite(Number(result))) return Number(result);
+  }
+  return null;
+}
+
+function rollTotal(roll) {
+  for (const value of [roll?.total, roll?.roll?.total, roll?._total]) {
+    if (Number.isFinite(Number(value))) return Number(value);
+  }
+  return null;
+}
+
+
+function storedGmDc(session, cardId, approachId) {
+  const value = session?.metadata?.runner?.gmDcs?.[cardId]?.[approachId];
+  return Number.isFinite(Number(value)) ? Number(value) : null;
+}
+
+function setStoredGmDc(api, session, cardId, approachId, value) {
+  if (!Number.isFinite(Number(value))) return session;
+  const next = cloneData(session);
+  next.metadata ??= {};
+  next.metadata.runner ??= {};
+  next.metadata.runner.gmDcs ??= {};
+  next.metadata.runner.gmDcs[cardId] ??= {};
+  next.metadata.runner.gmDcs[cardId][approachId] = Number(value);
+  return api.factories.session(next);
+}
+
+function degreeOptions(selected = "success") {
+  return ["criticalSuccess", "success", "failure", "criticalFailure"].map(value => ({ value, selected: value === selected, label: optionLabel(value) }));
+}
+
+function groupCurrentNode(session, runtimeGroup) {
+  return session?.blueprintSnapshot?.graph?.nodes?.find(node => node.id === runtimeGroup?.position?.nodeId) ?? null;
+}
+
+function routeLabel(session, edge) {
+  const node = session.blueprintSnapshot.graph.nodes.find(item => item.id === edge.to);
+  return edge.label || node?.label || node?.description || edge.to;
+}
+
+async function maybePersistOutcome(api, session, { phase = "immediate" } = {}) {
+  const evaluation = api.rules.evaluateOutcome(session, { phase });
+  if (!evaluation.ended) {
+    const saved = await api.sessionManager.saveSession(session);
+    return { session: saved, outcome: evaluation, completed: null };
+  }
+  await api.sessionManager.saveSession(session);
+  const completed = await api.sessionManager.finishSession(session.id, evaluation);
+  return { session: completed.session, outcome: evaluation, completed };
+}
+
+function getAppClass() {
+  if (runnerAppClass) return runnerAppClass;
+  const api = globalThis.foundry?.applications?.api;
+  const ApplicationV2 = api?.ApplicationV2;
+  const HandlebarsApplicationMixin = api?.HandlebarsApplicationMixin;
+  if (!ApplicationV2 || !HandlebarsApplicationMixin) throw new Error("Foundry ApplicationV2 API is unavailable.");
+
+  runnerAppClass = class ChaseForgeRunnerApp extends HandlebarsApplicationMixin(ApplicationV2) {
+    static DEFAULT_OPTIONS = {
+      id: "pf2e-chase-forge-runner-{id}",
+      classes: ["pf2e-chase-forge", "chase-forge-runner"],
+      tag: "section",
+      position: { width: 1180, height: 820 },
+      window: { title: "PF2E Chase Forge · GM Runner", resizable: true },
+      actions: {
+        beginRound: this._actionBeginRound,
+        endRound: this._actionEndRound,
+        pauseSession: this._actionPauseSession,
+        resumeSession: this._actionResumeSession,
+        abortSession: this._actionAbortSession,
+        postObstacle: this._actionPostObstacle,
+        rollApproach: this._actionRollApproach,
+        applyManualDegree: this._actionApplyManualDegree,
+        automaticContribution: this._actionAutomaticContribution,
+        skipParticipant: this._actionSkipParticipant,
+        chooseRoute: this._actionChooseRoute,
+        unlockEdge: this._actionUnlockEdge,
+        lockEdge: this._actionLockEdge,
+        confirmConsequence: this._actionConfirmConsequence,
+        selectConsequenceRoute: this._actionSelectConsequenceRoute,
+        refreshRunner: this._actionRefreshRunner
+      }
+    };
+
+    static PARTS = { main: { template: `modules/${MODULE_ID}/templates/chase-runner.hbs`, scrollable: [".chase-runner-scroll"] } };
+
+    constructor(chaseApi, sessionId, options = {}) {
+      super(options);
+      this.chaseApi = chaseApi;
+      this.sessionId = sessionId;
+      this._session = null;
+      this.chat = createChaseChatPresenter();
+    }
+
+    get session() { return this._session; }
+
+    async _load() {
+      this._session = await this.chaseApi.sessionManager.getSession(this.sessionId);
+      if (!this._session) throw new Error(`Chase Session '${this.sessionId}' does not exist.`);
+      return this._session;
+    }
+
+    async _prepareContext() {
+      const session = await this._load();
+      const activeRound = session.roundState?.phase === "active";
+      const groups = [];
+      for (const runtimeGroup of session.groups) {
+        const definition = resolveBlueprintGroup(session, runtimeGroup);
+        const node = groupCurrentNode(session, runtimeGroup);
+        let obstacle = null;
+        if (node?.type === "card") {
+          try { obstacle = this.chaseApi.rules.currentObstacle(session, runtimeGroup.id); }
+          catch { obstacle = null; }
+        }
+        const approaches = (obstacle?.card?.approaches ?? []).map(approach => {
+          const savedGmDc = storedGmDc(session, obstacle?.card?.id, approach.id);
+          let dc = null;
+          try {
+            dc = this.chaseApi.pf2e.dc.resolveApproach(approach, { partyLevel: session.blueprintSnapshot.settings.partyLevel, gmDc: savedGmDc });
+          } catch { dc = null; }
+          return {
+            ...cloneData(approach),
+            dcResolved: dc?.value ?? savedGmDc ?? null,
+            dcMode: dc?.mode ?? approach.dc?.mode ?? null,
+            storedGmDc: savedGmDc,
+            needsGmDc: (approach.dc?.mode ?? "gm") === "gm"
+          };
+        });
+        const participants = runtimeGroup.participantIds.map(participantId => {
+          const participant = resolveParticipant(session, participantId) ?? { id: participantId, name: participantId, uuid: null, image: null };
+          return {
+            ...cloneData(participant),
+            acted: session.roundState.actedParticipantIds.includes(participantId),
+            skipped: session.roundState.skippedParticipantIds.includes(participantId),
+            canAct: activeRound && runtimeGroup.rules.paceMode === "roll" && !runtimeGroup.completed && !session.roundState.actedParticipantIds.includes(participantId),
+            degreeOptions: degreeOptions("success"),
+            manualApproaches: approaches.map(approach => ({ value: approach.id, label: approach.label || approach.statistic || approach.id }))
+          };
+        });
+        let transitions = [];
+        try { transitions = this.chaseApi.route.availableTransitions(session, runtimeGroup.id).map(item => ({ edgeId: item.edge.id, label: routeLabel(session, item.edge), type: item.edge.type, visibility: item.edge.visibility })); }
+        catch { transitions = []; }
+        const cardCleared = node?.type === "card" && session.nodeState?.[node.id]?.groups?.[runtimeGroup.id]?.cleared === true;
+        const routeChoiceAvailable = (node?.type === "choice" || cardCleared) && transitions.length > 0;
+        const availableEdgeIds = new Set(transitions.map(item => item.edgeId));
+        const outgoingEdges = (session.blueprintSnapshot?.graph?.edges ?? []).filter(edge => edge.from === node?.id).map(edge => ({
+          edgeId: edge.id,
+          label: routeLabel(session, edge),
+          type: edge.type,
+          visibility: edge.visibility,
+          available: availableEdgeIds.has(edge.id),
+          explicitlyUnlocked: session.unlockedEdgeIds.includes(edge.id),
+          explicitlyLocked: session.lockedEdgeIds.includes(edge.id)
+        }));
+        let obstacleIndex = null;
+        try { obstacleIndex = this.chaseApi.rules.getObstacleIndex(session, runtimeGroup.id); } catch { obstacleIndex = null; }
+        groups.push({
+          runtime: cloneData(runtimeGroup), definition: cloneData(definition ?? { id: runtimeGroup.groupId, name: runtimeGroup.groupId, role: "participant" }),
+          roleLabel: optionLabel(definition?.role), node: cloneData(node), obstacle: obstacle ? cloneData(obstacle) : null,
+          approaches, participants, transitions, outgoingEdges,
+          hasOutgoingEdges: outgoingEdges.length > 0,
+          obstacleIndex,
+          routeChoiceAvailable,
+          paceLabel: runtimeGroup.rules.paceMode === "steady" ? "Konstantes Tempo" : "Proben",
+          statusLabel: runtimeGroup.completed ? "Am Ziel" : (node?.type === "card" ? "Am Hindernis" : (node?.type === "choice" ? "Wegentscheidung" : node?.type ?? "Unterwegs"))
+        });
+      }
+      const consequenceRecords = (session.consequenceState?.records ?? []).filter(record => ["pendingConfirmation", "pendingSelection", "manualFallback", "blocked", "failed"].includes(record.status)).map(record => {
+        const edgeIds = record.result?.edgeIds ?? [];
+        const occurrence = reconstructOccurrence(this.chaseApi, session, record);
+        return {
+          ...cloneData(record), consequenceLabel: occurrence?.consequence?.label || record.consequenceId, statusLabel: optionLabel(record.status),
+          canConfirm: record.status === "pendingConfirmation",
+          needsRouteSelection: record.status === "pendingSelection",
+          routeChoices: edgeIds.map(edgeId => {
+            const edge = session.blueprintSnapshot.graph.edges.find(item => item.id === edgeId);
+            return { edgeId, label: edge ? routeLabel(session, edge) : edgeId };
+          })
+        };
+      });
+      return {
+        session: cloneData(session),
+        title: session.blueprintSnapshot?.name ?? session.id,
+        statusLabel: optionLabel(session.status),
+        groups,
+        activeRound,
+        canBeginRound: session.status === "active" && session.roundState.phase !== "active",
+        canEndRound: session.status === "active" && activeRound,
+        canPause: session.status === "active",
+        canResume: session.status === "paused",
+        terminal: ["completed", "aborted"].includes(session.status),
+        consequenceRecords,
+        hasConsequences: consequenceRecords.length > 0,
+        weather: session.blueprintSnapshot?.settings?.weather?.label ?? session.blueprintSnapshot?.settings?.weather ?? null,
+        timeOfDay: session.blueprintSnapshot?.settings?.timeOfDay ?? null
+      };
+    }
+
+    async close(options = {}) {
+      const result = await super.close(options);
+      if (openRunnerApps.get(this.sessionId) === this) openRunnerApps.delete(this.sessionId);
+      return result;
+    }
+
+    async _onRender(context, options) {
+      await super._onRender?.(context, options);
+      const content = this.element?.querySelector?.(".window-content");
+      if (content?.style?.setProperty) {
+        content.style.setProperty("overflow-y", "auto", "important");
+        content.style.setProperty("overflow-x", "hidden", "important");
+      }
+    }
+
+    async _saveOrFinish(session, options = {}) {
+      const persisted = await maybePersistOutcome(this.chaseApi, session, options);
+      this._session = persisted.session;
+      if (persisted.completed) {
+        await this.chat.postEvent({ title: "Verfolgungsjagd beendet", text: `Ergebnis: ${persisted.outcome.outcome}` }, { flags: { sessionId: session.id } }).catch(() => null);
+      }
+      return persisted;
+    }
+
+    async _applyRulesResult(result, { participantName = "", approachLabel = "" } = {}) {
+      let consequenceResult = null;
+      if ((result.consequenceOccurrences ?? []).length > 0) {
+        consequenceResult = await this.chaseApi.consequences.executeRulesResult(result, { autoConfirm: false });
+      }
+      const session = consequenceResult?.session ?? result.session;
+      await this._saveOrFinish(session);
+      await this.chat.postRollResult({ sessionId: session.id, participantName, approachLabel, result }).catch(error => console.warn(`${MODULE_ID} | Failed to post chase roll result.`, error));
+      return this.render({ force: true });
+    }
+
+    static async _actionBeginRound() {
+      try {
+        let session = await this.chaseApi.sessionManager.getSession(this.sessionId);
+        const immediate = this.chaseApi.rules.evaluateOutcome(session, { phase: "startOfRound" });
+        if (immediate.ended) {
+          await this._saveOrFinish(session, { phase: "startOfRound" });
+          return this.render({ force: true });
+        }
+        session = this.chaseApi.rules.beginRound(session);
+        await this.chaseApi.sessionManager.saveSession(session);
+        this._session = session;
+        return this.render({ force: true });
+      } catch (error) { console.error(error); notify("error", error.message); }
+    }
+
+    static async _actionEndRound() {
+      try {
+        const session = await this.chaseApi.sessionManager.getSession(this.sessionId);
+        const result = this.chaseApi.rules.endRound(session, { completeOnOutcome: false });
+        await this._saveOrFinish(result.session, { phase: "endOfRound" });
+        return this.render({ force: true });
+      } catch (error) { console.error(error); notify("error", error.message); }
+    }
+
+    static async _actionPauseSession() {
+      this._session = await this.chaseApi.sessionManager.pauseSession(this.sessionId);
+      return this.render({ force: true });
+    }
+
+    static async _actionResumeSession() {
+      this._session = await this.chaseApi.sessionManager.resumeSession(this.sessionId);
+      return this.render({ force: true });
+    }
+
+    static async _actionAbortSession() {
+      const ok = globalThis.confirm?.(i18n("PF2E_CHASE_FORGE.Runner.AbortConfirm", "Verfolgungsjagd wirklich abbrechen?")) ?? true;
+      if (!ok) return;
+      this._session = await this.chaseApi.sessionManager.abortSession(this.sessionId);
+      await this.chat.postEvent({ title: "Verfolgungsjagd abgebrochen" }, { flags: { sessionId: this.sessionId } }).catch(() => null);
+      return this.render({ force: true });
+    }
+
+    static async _actionPostObstacle(_event, target) {
+      try {
+        const session = await this.chaseApi.sessionManager.getSession(this.sessionId);
+        const runtimeGroup = session.groups.find(group => group.id === target.dataset.runtimeGroupId);
+        const groupDefinition = resolveBlueprintGroup(session, runtimeGroup);
+        const obstacle = this.chaseApi.rules.currentObstacle(session, runtimeGroup.id);
+        await this.chat.postObstacle({ session, runtimeGroup, groupDefinition, obstacle });
+        notify("info", i18n("PF2E_CHASE_FORGE.Runner.Posted", "Hindernis in den Chat gesendet."));
+      } catch (error) { console.error(error); notify("error", error.message); }
+    }
+
+    static async _actionRollApproach(_event, target) {
+      try {
+        let session = await this.chaseApi.sessionManager.getSession(this.sessionId);
+        const runtimeGroupId = target.dataset.runtimeGroupId;
+        const participantId = target.dataset.participantId;
+        const approachId = target.dataset.approachId;
+        const participant = resolveParticipant(session, participantId);
+        if (!participant?.uuid) throw new Error("Für diesen Beteiligten ist kein Actor/Token verknüpft.");
+        const obstacle = this.chaseApi.rules.currentObstacle(session, runtimeGroupId);
+        const approach = obstacle.card.approaches.find(item => item.id === approachId);
+        if (!approach?.statistic) throw new Error("Diese Vorgehensweise besitzt keine würfelbare PF2e-Fertigkeit.");
+        const groupElement = target.closest?.(".chase-runner-group");
+        const gmDcRaw = groupElement?.querySelector?.(`[data-gm-dc][data-approach-id="${approachId}"]`)?.value ?? null;
+        const gmDc = gmDcRaw === null || gmDcRaw === "" ? storedGmDc(session, obstacle.card.id, approachId) : Number(gmDcRaw);
+        if (Number.isFinite(Number(gmDc)) && approach.dc?.mode === "gm") session = setStoredGmDc(this.chaseApi, session, obstacle.card.id, approachId, gmDc);
+        const dc = this.chaseApi.pf2e.dc.resolveApproach(approach, { partyLevel: session.blueprintSnapshot.settings.partyLevel, gmDc });
+        if (!Number.isFinite(Number(dc.value))) throw new Error("Für diese Probe ist noch kein SG festgelegt.");
+        const roll = await this.chaseApi.pf2e.adapter.rollStatistic({ actorUuid: participant.uuid, statistic: approach.statistic, dc: dc.value, label: approach.label || obstacle.card.name });
+        const total = rollTotal(roll);
+        if (!Number.isFinite(total)) throw new Error("Das PF2e-Wurfergebnis konnte nicht ausgewertet werden.");
+        const result = this.chaseApi.rules.resolveCheck(session, { runtimeGroupId, participantId, approachId, total, natural: rollNatural(roll), gmDc });
+        return this._applyRulesResult(result, { participantName: participant.name, approachLabel: approach.label });
+      } catch (error) { console.error(`${MODULE_ID} | Chase roll failed.`, error); notify("error", error.message); }
+    }
+
+    static async _actionApplyManualDegree(_event, target) {
+      try {
+        const row = target.closest?.("[data-runner-participant]");
+        const degree = row?.querySelector?.('[data-runner-field="manualDegree"]')?.value ?? "success";
+        const approachId = row?.querySelector?.('[data-runner-field="manualApproach"]')?.value ?? target.dataset.approachId;
+        const session = await this.chaseApi.sessionManager.getSession(this.sessionId);
+        const participant = resolveParticipant(session, target.dataset.participantId);
+        const obstacle = this.chaseApi.rules.currentObstacle(session, target.dataset.runtimeGroupId);
+        const approach = obstacle.card.approaches.find(item => item.id === approachId) ?? null;
+        const result = this.chaseApi.rules.applyDegree(session, { runtimeGroupId: target.dataset.runtimeGroupId, participantId: target.dataset.participantId, approachId, degree });
+        return this._applyRulesResult(result, { participantName: participant?.name, approachLabel: approach?.label });
+      } catch (error) { console.error(error); notify("error", error.message); }
+    }
+
+    static async _actionAutomaticContribution(_event, target) {
+      try {
+        const session = await this.chaseApi.sessionManager.getSession(this.sessionId);
+        const result = this.chaseApi.rules.applyAutomaticContribution(session, { runtimeGroupId: target.dataset.runtimeGroupId, participantId: target.dataset.participantId, points: 1, label: "GM automatic contribution" });
+        await this._saveOrFinish(result.session);
+        return this.render({ force: true });
+      } catch (error) { console.error(error); notify("error", error.message); }
+    }
+
+    static async _actionSkipParticipant(_event, target) {
+      try {
+        const session = await this.chaseApi.sessionManager.getSession(this.sessionId);
+        const result = this.chaseApi.rules.skipParticipantTurn(session, { runtimeGroupId: target.dataset.runtimeGroupId, participantId: target.dataset.participantId, allowNoObstacle: true });
+        await this.chaseApi.sessionManager.saveSession(result.session);
+        return this.render({ force: true });
+      } catch (error) { console.error(error); notify("error", error.message); }
+    }
+
+    static async _actionChooseRoute(_event, target) {
+      try {
+        const session = await this.chaseApi.sessionManager.getSession(this.sessionId);
+        const result = this.chaseApi.rules.chooseRoute(session, target.dataset.runtimeGroupId, target.dataset.edgeId);
+        await this._saveOrFinish(result.session);
+        return this.render({ force: true });
+      } catch (error) { console.error(error); notify("error", error.message); }
+    }
+
+    static async _actionUnlockEdge(_event, target) {
+      try {
+        const session = await this.chaseApi.sessionManager.getSession(this.sessionId);
+        const next = this.chaseApi.route.unlockEdges(session, [target.dataset.edgeId]);
+        await this.chaseApi.sessionManager.saveSession(next);
+        return this.render({ force: true });
+      } catch (error) { console.error(error); notify("error", error.message); }
+    }
+
+    static async _actionLockEdge(_event, target) {
+      try {
+        const session = await this.chaseApi.sessionManager.getSession(this.sessionId);
+        const next = this.chaseApi.route.lockEdges(session, [target.dataset.edgeId]);
+        await this.chaseApi.sessionManager.saveSession(next);
+        return this.render({ force: true });
+      } catch (error) { console.error(error); notify("error", error.message); }
+    }
+
+    static async _actionConfirmConsequence(_event, target) {
+      try {
+        const session = await this.chaseApi.sessionManager.getSession(this.sessionId);
+        const record = session.consequenceState.records.find(item => item.occurrenceId === target.dataset.occurrenceId);
+        const occurrence = record ? reconstructOccurrence(this.chaseApi, session, record) : null;
+        if (!occurrence) throw new Error("Die Konsequenzdefinition konnte nicht wiederhergestellt werden.");
+        const result = await this.chaseApi.consequences.execute(session, occurrence, { confirmedOccurrenceIds: [occurrence.occurrenceId], retryFallback: true, retryFailed: true, retryBlocked: true });
+        await this._saveOrFinish(result.session);
+        return this.render({ force: true });
+      } catch (error) { console.error(error); notify("error", error.message); }
+    }
+
+    static async _actionSelectConsequenceRoute(_event, target) {
+      try {
+        const session = await this.chaseApi.sessionManager.getSession(this.sessionId);
+        const record = session.consequenceState.records.find(item => item.occurrenceId === target.dataset.occurrenceId);
+        const occurrence = record ? reconstructOccurrence(this.chaseApi, session, record) : null;
+        if (!occurrence) throw new Error("Die Konsequenzdefinition konnte nicht wiederhergestellt werden.");
+        const result = await this.chaseApi.consequences.execute(session, occurrence, {
+          confirmedOccurrenceIds: [occurrence.occurrenceId],
+          routeSelections: { [occurrence.occurrenceId]: target.dataset.edgeId },
+          retrySkipped: true, retryFallback: true, retryFailed: true, retryBlocked: true
+        });
+        await this._saveOrFinish(result.session);
+        return this.render({ force: true });
+      } catch (error) { console.error(error); notify("error", error.message); }
+    }
+
+    static async _actionRefreshRunner() { return this.render({ force: true }); }
+  };
+  return runnerAppClass;
+}
+
+export function createChaseRunnerUiService({ getApi = () => globalThis.game?.modules?.get?.(MODULE_ID)?.api ?? null } = {}) {
+  return Object.freeze({
+    contractVersion: GM_RUNNER_CONTRACT_VERSION,
+    async openRunner({ sessionId } = {}) {
+      if (!isGm()) { notify("warn", i18n("PF2E_CHASE_FORGE.Runner.GmOnly", "Der Chase Runner ist nur für die Spielleitung verfügbar.")); return null; }
+      if (!sessionId) throw new Error("openRunner requires a sessionId.");
+      const chaseApi = getApi();
+      const session = await chaseApi.sessionManager.getSession(sessionId);
+      if (!session) throw new Error(`Chase Session '${sessionId}' does not exist.`);
+      let app = openRunnerApps.get(sessionId) ?? null;
+      if (!app) {
+        const App = getAppClass();
+        app = new App(chaseApi, sessionId, { id: `pf2e-chase-forge-runner-${sessionId}` });
+        openRunnerApps.set(sessionId, app);
+      }
+      await app.render({ force: true });
+      return app;
+    },
+    getOpenRunner(sessionId) { return openRunnerApps.get(sessionId) ?? null; },
+    getOpenRunners() { return [...openRunnerApps.values()]; },
+    async closeRunner(sessionId) {
+      const app = openRunnerApps.get(sessionId);
+      if (!app) return false;
+      await app.close();
+      openRunnerApps.delete(sessionId);
+      return true;
+    },
+    async closeAllRunners() {
+      for (const [sessionId, app] of [...openRunnerApps]) {
+        await app.close();
+        openRunnerApps.delete(sessionId);
+      }
+      return true;
+    }
+  });
+}

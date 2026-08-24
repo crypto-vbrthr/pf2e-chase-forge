@@ -26,8 +26,8 @@ test("manifest targets Foundry 14 and PF2e", () => {
   assert.ok(moduleJson.styles.includes("styles/chase-forge.css"));
 });
 
-test("dev.7 contract versions are explicit", () => {
-  assert.equal(API_VERSION, 7);
+test("dev.8 contract versions are explicit", () => {
+  assert.equal(API_VERSION, 8);
   assert.equal(EXTENSION_CONTRACT_VERSION, 1);
   assert.deepEqual(SCHEMA_VERSIONS, {
     card: 1,
@@ -40,4 +40,18 @@ test("dev.7 contract versions are explicit", () => {
     pack: 1,
     persistence: 1
   });
+});
+
+
+test("localization files keep the PF2E_CHASE_FORGE namespace flat and in parity", async () => {
+  const de = JSON.parse(await readFile(new URL("../lang/de.json", import.meta.url), "utf8"));
+  const en = JSON.parse(await readFile(new URL("../lang/en.json", import.meta.url), "utf8"));
+
+  assert.equal(Object.hasOwn(de, "PF2E_CHASE_FORGE"), false);
+  assert.equal(Object.hasOwn(en, "PF2E_CHASE_FORGE"), false);
+  assert.equal(de["PF2E_CHASE_FORGE.Runner.ChatStarted"], "Verfolgungsjagd gestartet: {name}");
+  assert.equal(en["PF2E_CHASE_FORGE.Runner.ChatStarted"], "Chase started: {name}");
+  assert.deepEqual(Object.keys(de).sort(), Object.keys(en).sort());
+  assert.ok(Object.values(de).every((value) => typeof value === "string"));
+  assert.ok(Object.values(en).every((value) => typeof value === "string"));
 });

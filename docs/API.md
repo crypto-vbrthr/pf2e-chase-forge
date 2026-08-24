@@ -1,4 +1,4 @@
-# PF2E Chase Forge Public API - dev.7
+# PF2E Chase Forge Public API - dev.8
 
 ## Access
 
@@ -6,20 +6,20 @@
 const forge = game.modules.get("pf2e-chase-forge")?.api;
 ```
 
-Current public API version: `7`  
+Current public API version: `8`  
 Extension Contract version: `1`  
 Basic Builder Contract version: `1`
 
-## New dev.7 capabilities
+## New dev.8 capabilities
 
 ```text
 basicBuilder
 builderUi
+gmRunner
+chatWorkflow
 ```
 
-`basicBuilder` is always true for dev.7. `builderUi` is true in normal Foundry initialization when the GM ApplicationV2 service is wired into the public API.
-
-GM Runner, Player View, and Campaign Forge integration remain false.
+`gmRunner` is true in normal Foundry initialization when the GM ApplicationV2 Runner service is wired into the public API. `chatWorkflow` is provided by the system-neutral Chat presenter. Player View and Campaign Forge integration remain false.
 
 ## Basic Builder
 
@@ -57,9 +57,36 @@ await forge.ui.closeBuilder();
 
 The UI is GM-only. The Builder writes through the protected Blueprint persistence API.
 
+
+## GM Runner UI
+
+```js
+await forge.ui.openRunner({ sessionId });
+forge.ui.getOpenRunner(sessionId);
+forge.ui.getOpenRunners();
+await forge.ui.closeRunner(sessionId);
+await forge.ui.closeAllRunners();
+```
+
+The Runner is GM-only and always mutates the persisted `ChaseSession` through the Rules, Consequence, Route, and Persistence services. Starting a Blueprint in the Basic Builder automatically opens its new Runner.
+
+## Chat presentation
+
+```js
+forge.presentation.chat.contractVersion;
+forge.presentation.chat.obstacleHtml(context);
+forge.presentation.chat.rollResultHtml(context);
+forge.presentation.chat.eventHtml(context);
+await forge.presentation.chat.postObstacle(context, options);
+await forge.presentation.chat.postRollResult(context, options);
+await forge.presentation.chat.postEvent(context, options);
+```
+
+Public obstacle messages exclude GM notes and exact DCs by contract.
+
 ## Schemas
 
-No core schema versions changed in dev.7:
+No core schema versions changed in dev.8:
 
 ```text
 forge.schemas.blueprint === 2

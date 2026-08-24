@@ -1,0 +1,147 @@
+<div class="chase-runner-shell">
+  <header class="chase-runner-toolbar">
+    <div>
+      <h2><i class="fa-solid fa-person-running"></i> {{title}}</h2>
+      <div class="chase-runner-meta">
+        <span class="chase-runner-pill">{{statusLabel}}</span>
+        <span>{{localize "PF2E_CHASE_FORGE.Runner.Round"}} {{session.round}}</span>
+        {{#if timeOfDay}}<span><i class="fa-regular fa-clock"></i> {{timeOfDay}}</span>{{/if}}
+        {{#if weather}}<span><i class="fa-solid fa-cloud-sun"></i> {{weather}}</span>{{/if}}
+      </div>
+    </div>
+    <div class="chase-runner-toolbar-actions">
+      {{#if canBeginRound}}<button type="button" data-action="beginRound"><i class="fa-solid fa-play"></i> {{localize "PF2E_CHASE_FORGE.Runner.BeginRound"}}</button>{{/if}}
+      {{#if canEndRound}}<button type="button" data-action="endRound"><i class="fa-solid fa-forward-step"></i> {{localize "PF2E_CHASE_FORGE.Runner.EndRound"}}</button>{{/if}}
+      {{#if canPause}}<button type="button" data-action="pauseSession"><i class="fa-solid fa-pause"></i> {{localize "PF2E_CHASE_FORGE.Runner.Pause"}}</button>{{/if}}
+      {{#if canResume}}<button type="button" data-action="resumeSession"><i class="fa-solid fa-play"></i> {{localize "PF2E_CHASE_FORGE.Runner.Resume"}}</button>{{/if}}
+      <button type="button" data-action="refreshRunner"><i class="fa-solid fa-rotate"></i></button>
+      {{#unless terminal}}<button type="button" class="danger" data-action="abortSession"><i class="fa-solid fa-stop"></i> {{localize "PF2E_CHASE_FORGE.Runner.Abort"}}</button>{{/unless}}
+    </div>
+  </header>
+
+  <div class="chase-runner-scroll">
+    {{#if hasConsequences}}
+      <section class="chase-runner-consequences">
+        <h3><i class="fa-solid fa-triangle-exclamation"></i> {{localize "PF2E_CHASE_FORGE.Runner.OpenConsequences"}}</h3>
+        {{#each consequenceRecords as |record|}}
+          <article class="chase-runner-consequence {{record.status}}">
+            <div class="grow">
+              <strong>{{record.consequenceLabel}}</strong>
+              <span class="chase-runner-pill">{{record.statusLabel}}</span>
+              {{#if record.message}}<p>{{record.message}}</p>{{/if}}
+            </div>
+            {{#if record.canConfirm}}
+              <button type="button" data-action="confirmConsequence" data-occurrence-id="{{record.occurrenceId}}"><i class="fa-solid fa-check"></i> {{localize "PF2E_CHASE_FORGE.Runner.Apply"}}</button>
+            {{/if}}
+            {{#if record.needsRouteSelection}}
+              <div class="chase-runner-route-buttons">
+                {{#each record.routeChoices as |route|}}
+                  <button type="button" data-action="selectConsequenceRoute" data-occurrence-id="{{record.occurrenceId}}" data-edge-id="{{route.edgeId}}">{{route.label}}</button>
+                {{/each}}
+              </div>
+            {{/if}}
+          </article>
+        {{/each}}
+      </section>
+    {{/if}}
+
+    <div class="chase-runner-groups">
+      {{#each groups as |group|}}
+        <section class="chase-runner-group">
+          <header class="chase-runner-group-head">
+            <div>
+              <h3>{{group.definition.name}}</h3>
+              <div class="chase-runner-meta"><span>{{group.roleLabel}}</span><span>{{group.paceLabel}}</span><span>{{group.statusLabel}}</span>{{#if group.obstacleIndex}}<span>{{localize "PF2E_CHASE_FORGE.Runner.Position"}} {{group.obstacleIndex}}</span>{{/if}}</div>
+            </div>
+            {{#if group.obstacle}}
+              <button type="button" data-action="postObstacle" data-runtime-group-id="{{group.runtime.id}}"><i class="fa-solid fa-message"></i> {{localize "PF2E_CHASE_FORGE.Runner.PostChat"}}</button>
+            {{/if}}
+          </header>
+
+          {{#if group.obstacle}}
+            <div class="chase-runner-obstacle">
+              {{#if group.obstacle.card.image.path}}
+                <img class="chase-runner-obstacle-image" src="{{group.obstacle.card.image.path}}" alt="{{group.obstacle.card.image.alt}}">
+              {{/if}}
+              <div class="chase-runner-obstacle-body">
+                <h4>{{group.obstacle.card.name}}</h4>
+                {{#if group.obstacle.card.description}}<p>{{group.obstacle.card.description}}</p>{{/if}}
+                <div class="chase-runner-progress-line">
+                  <strong>{{group.obstacle.progress}} / {{group.obstacle.requiredPoints}} {{localize "PF2E_CHASE_FORGE.Runner.ChasePoints"}}</strong>
+                  <progress max="{{group.obstacle.requiredPoints}}" value="{{group.obstacle.progress}}"></progress>
+                </div>
+                {{#if group.obstacle.card.gmNotes}}<details><summary>{{localize "PF2E_CHASE_FORGE.Runner.GmNotes"}}</summary><p>{{group.obstacle.card.gmNotes}}</p></details>{{/if}}
+              </div>
+            </div>
+
+            {{#if group.approaches.length}}
+              <div class="chase-runner-approaches">
+                <h4>{{localize "PF2E_CHASE_FORGE.Runner.Approaches"}}</h4>
+                {{#each group.approaches as |approach|}}
+                  <div class="chase-runner-approach"><strong>{{approach.label}}</strong><span>{{approach.statistic}}</span>{{#if approach.needsGmDc}}<label class="chase-runner-gm-dc"><span>{{localize "PF2E_CHASE_FORGE.Runner.DC"}}</span><input type="number" data-gm-dc data-approach-id="{{approach.id}}" min="0" max="99" value="{{approach.storedGmDc}}" placeholder="{{localize 'PF2E_CHASE_FORGE.Runner.DC'}}"></label>{{else}}<span>{{localize "PF2E_CHASE_FORGE.Runner.DC"}} {{approach.dcResolved}}</span>{{/if}}{{#if approach.description}}<span class="grow">{{approach.description}}</span>{{/if}}</div>
+                {{/each}}
+              </div>
+            {{/if}}
+
+            <div class="chase-runner-participants">
+              {{#each group.participants as |participant|}}
+                <article class="chase-runner-participant" data-runner-participant>
+                  <div class="chase-runner-participant-name">
+                    {{#if participant.image}}<img src="{{participant.image}}" alt="">{{/if}}
+                    <div><strong>{{participant.name}}</strong>{{#if participant.acted}}<small>{{localize "PF2E_CHASE_FORGE.Runner.Acted"}}{{#if participant.skipped}} · {{localize "PF2E_CHASE_FORGE.Runner.Skipped"}}{{/if}}</small>{{else}}<small>{{localize "PF2E_CHASE_FORGE.Runner.NotActed"}}</small>{{/if}}</div>
+                  </div>
+                  {{#if participant.canAct}}
+                    <div class="chase-runner-participant-actions">
+                      {{#each group.approaches as |approach|}}
+                        {{#if approach.statistic}}
+                          <button type="button" data-action="rollApproach" data-runtime-group-id="{{group.runtime.id}}" data-participant-id="{{participant.id}}" data-approach-id="{{approach.id}}"><i class="fa-solid fa-dice-d20"></i> {{approach.label}}</button>
+                        {{/if}}
+                      {{/each}}
+                      {{#if group.approaches.length}}
+                        <div class="chase-runner-manual">
+                          <select data-runner-field="manualApproach">{{#each participant.manualApproaches as |option|}}<option value="{{option.value}}">{{option.label}}</option>{{/each}}</select>
+                          <select data-runner-field="manualDegree">{{#each participant.degreeOptions as |option|}}<option value="{{option.value}}" {{#if option.selected}}selected{{/if}}>{{option.label}}</option>{{/each}}</select>
+                          <button type="button" data-action="applyManualDegree" data-runtime-group-id="{{group.runtime.id}}" data-participant-id="{{participant.id}}">{{localize "PF2E_CHASE_FORGE.Runner.Manual"}}</button>
+                        </div>
+                      {{/if}}
+                      <button type="button" data-action="automaticContribution" data-runtime-group-id="{{group.runtime.id}}" data-participant-id="{{participant.id}}">{{localize "PF2E_CHASE_FORGE.Runner.AutomaticOne"}}</button>
+                      <button type="button" data-action="skipParticipant" data-runtime-group-id="{{group.runtime.id}}" data-participant-id="{{participant.id}}">{{localize "PF2E_CHASE_FORGE.Runner.Skip"}}</button>
+                    </div>
+                  {{/if}}
+                </article>
+              {{/each}}
+            </div>
+          {{else}}
+            <div class="chase-runner-node"><strong>{{group.node.label}}</strong><span>{{group.node.type}}</span></div>
+          {{/if}}
+
+
+          {{#if group.hasOutgoingEdges}}
+            <details class="chase-runner-route-admin">
+              <summary><i class="fa-solid fa-screwdriver-wrench"></i> {{localize "PF2E_CHASE_FORGE.Runner.RouteAdmin"}}</summary>
+              <div class="chase-runner-route-admin-list">
+                {{#each group.outgoingEdges as |edge|}}
+                  <div class="chase-runner-route-admin-row">
+                    <span><strong>{{edge.label}}</strong> · {{edge.type}} · {{edge.visibility}}</span>
+                    <span class="chase-runner-pill">{{#if edge.available}}{{localize "PF2E_CHASE_FORGE.Runner.RouteAvailable"}}{{else}}{{localize "PF2E_CHASE_FORGE.Runner.RouteUnavailable"}}{{/if}}</span>
+                    <button type="button" data-action="unlockEdge" data-edge-id="{{edge.edgeId}}"><i class="fa-solid fa-lock-open"></i></button>
+                    <button type="button" data-action="lockEdge" data-edge-id="{{edge.edgeId}}"><i class="fa-solid fa-lock"></i></button>
+                  </div>
+                {{/each}}
+              </div>
+            </details>
+          {{/if}}
+
+          {{#if group.routeChoiceAvailable}}
+            <div class="chase-runner-route-choice">
+              <strong>{{localize "PF2E_CHASE_FORGE.Runner.ChooseRoute"}}</strong>
+              <div class="chase-runner-route-buttons">
+                {{#each group.transitions as |route|}}<button type="button" data-action="chooseRoute" data-runtime-group-id="{{group.runtime.id}}" data-edge-id="{{route.edgeId}}"><i class="fa-solid fa-route"></i> {{route.label}}</button>{{/each}}
+              </div>
+            </div>
+          {{/if}}
+        </section>
+      {{/each}}
+    </div>
+  </div>
+</div>

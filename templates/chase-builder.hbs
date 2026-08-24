@@ -25,6 +25,18 @@
         <div class="chase-builder-empty">{{localize "PF2E_CHASE_FORGE.Builder.NoBlueprints"}}</div>
       {{/each}}
     </div>
+
+    {{#if hasOpenableSessions}}
+      <div class="chase-builder-session-list">
+        <h3><i class="fa-solid fa-person-running"></i> {{localize "PF2E_CHASE_FORGE.Runner.SessionList"}}</h3>
+        {{#each openableSessions as |session|}}
+          <button type="button" class="chase-builder-session-row" data-action="openSessionRunner" data-session-id="{{session.id}}">
+            <span>{{session.name}}</span>
+            <small>{{session.statusLabel}} · {{localize "PF2E_CHASE_FORGE.Runner.Round"}} {{session.round}}</small>
+          </button>
+        {{/each}}
+      </div>
+    {{/if}}
   </aside>
 
   <main class="chase-builder-main">
