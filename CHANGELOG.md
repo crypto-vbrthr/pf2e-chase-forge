@@ -1,5 +1,22 @@
 # Changelog
 
+## 0.1.0-dev.12 – Core Card Library
+
+- Adds the first built-in `core:cards` Chase Pack with **72 reusable Chase Cards**: twelve each for City, Wilderness, Dungeon, Coast, Mountain, and Social/Urban routes.
+- Gives every Core Card localized DE/EN names and descriptions, two or three PF2e skill approaches, level-based DCs, scalable obstacle points, semantic tags, and automatic image-provider hooks.
+- Localizes Core Cards lazily at display/copy time so Foundry's early `init` phase cannot freeze English fallback text, matching the dev.11.1 template-localization hardening.
+- Uses localized PF2e/Chase Forge skill names for Core Card approach labels.
+- Integrates the Core Library directly into seeded generation, eliminating placeholder fallback for normal Core environment generation.
+- Recognizes common German environment aliases (`Stadt`, `Wildnis`, `Gewölbe`, `Küste`, `Gebirge`, `Sozial`) when scoring generator candidates.
+- Scales generated reusable cards to the largest current participant group using the existing `max(1, group size - 1)` obstacle-point convention.
+- Makes generator difficulty profiles operational for selected cards via PF2e DC adjustments: easy `-2`, moderate `0`, hard `+2`, extreme `+5`.
+- Applies the same scalable obstacle-point convention when a registered card is inserted manually from the Builder after participants are assigned.
+- Groups the Builder's registered-card selector by source pack and card category so the expanded library remains navigable.
+- Keeps Core Cards immutable as registry source content; Builder/generator uses remain independent editable Blueprint snapshots with source provenance.
+- Adds `docs/CORE_CARD_LIBRARY.md` and automated coverage for category completeness, localization, German tag aliases, point scaling, difficulty adjustment, and Foundry init registration.
+- Persisted schema versions and public API version remain unchanged.
+- Expands automated coverage to 302 passing tests.
+
 ## 0.1.0-dev.11.1 – Generator Localization Hotfix
 
 - Core generator template names and descriptions are now localized lazily at display/use time instead of being frozen during Foundry's `init` hook.

@@ -297,3 +297,16 @@ forge.images
 forge.extensions
 forge.registries
 ```
+
+
+## Core Card Library
+
+The existing card registry API now exposes the built-in `core:cards` content pack after Foundry initialization:
+
+```js
+forge.cards.list();
+forge.cards.get("core:city-crowded-market");
+forge.packs.get("core:cards");
+```
+
+The API contract version is unchanged in dev.12 because this uses the existing card/pack registry interfaces.

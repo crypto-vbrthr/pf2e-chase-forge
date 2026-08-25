@@ -274,6 +274,16 @@ test("Builder exposes a permanent New Chase action and separates world Chases fr
   assert.equal(de["PF2E_CHASE_FORGE.Builder.CopyFromLibrary"], "Als eigene Chase übernehmen");
 });
 
+test("Builder groups registered Chase Cards by source/category for the Core Card Library", async () => {
+  const template = await readFile(new URL("../templates/chase-builder.hbs", import.meta.url), "utf8");
+  const source = await readFile(new URL("../scripts/app/chase-builder-app.js", import.meta.url), "utf8");
+  assert.match(template, /registeredCardGroups/);
+  assert.match(template, /<optgroup label="\{\{label\}\}">/);
+  assert.match(source, /localizeChaseCard/);
+  assert.match(source, /registeredCardGroupMap/);
+  assert.match(source, /card\.obstacle\.requiredPoints = Math\.max\(1, largestGroup - 1\)/);
+});
+
 test("Builder exposes template generation and seeded reroll controls", async () => {
   const template = await readFile(new URL("../templates/chase-builder.hbs", import.meta.url), "utf8");
   const source = await readFile(new URL("../scripts/app/chase-builder-app.js", import.meta.url), "utf8");

@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { createCoreTemplatePack } from "../scripts/content/core-templates.js";
+import { createCoreCardPack } from "../scripts/content/core-cards.js";
 import { MODULE_ID } from "../scripts/core/constants.js";
 import { createChaseCard, createChaseTemplate } from "../scripts/data/factories.js";
 import { buildGraphIndex } from "../scripts/data/graph.js";
@@ -41,16 +42,60 @@ function pathCardCounts(blueprint) {
   return counts;
 }
 
-test("Core template pack registers structural generator templates without shipping the Core Card library", () => {
+test("Core content registers five generator templates and the 72-card Core library", () => {
   const registries = createRegistryService();
-  registries.registerPack(MODULE_ID, createCoreTemplatePack());
-  assert.equal(registries.listCards().length, 0);
+  registries.registerPacks(MODULE_ID, [createCoreTemplatePack(), createCoreCardPack()]);
+  assert.equal(registries.listCards().length, 72);
   assert.equal(registries.listTemplates().length, 5);
   assert.ok(registries.getTemplate("core:classic-pursuit"));
   assert.ok(registries.getTemplate("core:branching-pursuit"));
   assert.ok(registries.getTemplate("core:escape"));
   assert.ok(registries.getTemplate("core:against-clock"));
   assert.ok(registries.getTemplate("core:race"));
+});
+
+test("Core Card library covers every supported initial environment with enough unique cards for a branching medium chase", () => {
+  const cards = createCoreCardPack().cards;
+  for (const category of ["city", "wilderness", "dungeon", "coast", "mountain", "social"]) {
+    const matching = cards.filter(card => card.metadata?.category === category);
+    assert.equal(matching.length, 12, category);
+    assert.ok(matching.every(card => card.approaches.length >= 2), category);
+    assert.ok(matching.every(card => card.image.mode === "automatic"), category);
+    assert.ok(matching.every(card => card.obstacle.scalable === true), category);
+  }
+});
+
+test("Core Card generation localizes card text, recognizes German environment aliases, scales obstacle points, and applies difficulty", () => {
+  const previousGame = globalThis.game;
+  globalThis.game = { i18n: { localize: key => ({
+    "PF2E_CHASE_FORGE.CoreCards.city-crowded-market.Name": "Gedrängter Markt",
+    "PF2E_CHASE_FORGE.CoreCards.city-crowded-market.Description": "Lokalisierter Markt.",
+    "PF2E_CHASE_FORGE.Skill.acrobatics": "Akrobatik",
+    "PF2E_CHASE_FORGE.Skill.athletics": "Athletik",
+    "PF2E_CHASE_FORGE.Skill.diplomacy": "Diplomatie"
+  })[key] ?? key } };
+  try {
+    const registries = createRegistryService();
+    registries.registerPacks(MODULE_ID, [createCoreTemplatePack(), createCoreCardPack()]);
+    const generator = createChaseGenerator({ templates: registries.templates, cards: registries.cards });
+    const inspected = generator.inspect("core:classic-pursuit", { partyLevel: 5, environmentTags: ["Stadt"] });
+    assert.ok(inspected.eligible.some(item => item.card.id === "core:city-crowded-market"));
+    const market = inspected.eligible.find(item => item.card.id === "core:city-crowded-market").card;
+    assert.equal(market.name, "Gedrängter Markt");
+    assert.equal(market.approaches[0].label, "Akrobatik");
+
+    const source = createBasicBuilderDraft({ name: "Hard City Chase" });
+    source.groups[0].participants = [
+      { id: "p1", kind: "abstract", name: "1" }, { id: "p2", kind: "abstract", name: "2" },
+      { id: "p3", kind: "abstract", name: "3" }, { id: "p4", kind: "abstract", name: "4" }
+    ];
+    const generated = generator.generate("core:classic-pursuit", { seed: "core-city", sourceBlueprint: source, partyLevel: 5, environmentTags: ["Stadt"], difficulty: "hard" });
+    assert.equal(generated.report.fallbackCards, 0);
+    assert.ok(generated.blueprint.contentSnapshots.cards.every(record => record.data.obstacle.requiredPoints === 3));
+    assert.ok(generated.blueprint.contentSnapshots.cards.every(record => record.data.approaches.every(approach => approach.dc.difficultyAdjustment === 2)));
+  } finally {
+    if (previousGame === undefined) delete globalThis.game; else globalThis.game = previousGame;
+  }
 });
 
 test("candidate inspection respects level, required/excluded tags, and environmental preference scoring", () => {

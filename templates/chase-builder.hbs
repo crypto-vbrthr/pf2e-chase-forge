@@ -375,7 +375,11 @@
               <button type="button" data-action="addManualCard"><i class="fa-solid fa-plus"></i> {{localize "PF2E_CHASE_FORGE.Builder.AddManualCard"}}</button>
               {{#if hasRegisteredCards}}
                 <select name="registeredCard">
-                  {{#each registeredCards}}<option value="{{id}}">{{name}} · {{source}}</option>{{/each}}
+                  {{#each registeredCardGroups}}
+                    <optgroup label="{{label}}">
+                      {{#each cards}}<option value="{{id}}">{{name}}</option>{{/each}}
+                    </optgroup>
+                  {{/each}}
                 </select>
                 <button type="button" data-action="addRegisteredCard"><i class="fa-solid fa-layer-group"></i> {{localize "PF2E_CHASE_FORGE.Builder.AddRegisteredCard"}}</button>
               {{/if}}

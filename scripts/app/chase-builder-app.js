@@ -33,6 +33,7 @@ import {
   validateBranchingBuilderBlueprint
 } from "../builder/branching-builder-model.js";
 import { cloneData, createId, nowIso } from "../data/utils.js";
+import { localizeChaseCard, localizeSkillLabel } from "../content/content-localization.js";
 
 let builderAppClass = null;
 let openBuilderApp = null;
@@ -92,19 +93,7 @@ const SKILLS = [
 ];
 
 export function skillLabel(slug) {
-  const entry = globalThis.CONFIG?.PF2E?.skills?.[slug] ?? globalThis.CONFIG?.PF2E?.skillList?.[slug] ?? null;
-  const configuredKey = typeof entry === "string" ? entry : (entry?.label ?? entry?.name ?? null);
-  const candidates = [
-    configuredKey,
-    `PF2E_CHASE_FORGE.Skill.${slug}`,
-    `PF2E.Skill.${slug.charAt(0).toUpperCase()}${slug.slice(1)}`,
-    `PF2E.Skill.${slug}`
-  ].filter(Boolean);
-  for (const key of candidates) {
-    const translated = i18n(key, "");
-    if (translated && translated !== key) return translated;
-  }
-  return slug.charAt(0).toUpperCase() + slug.slice(1);
+  return localizeSkillLabel(slug);
 }
 
 function packLabel(pack, fallback = "") {
@@ -612,7 +601,7 @@ function getAppClass() {
       const editable = builderSupported && !librarySelected;
       const cards = builderSupported ? listEditableCards(this._draft) : [];
       const branchGroups = branchingEditable ? listBranchGroups(this._draft) : [];
-      const registeredCards = this.chaseApi.cards.list({ includeDisabled: false }) ?? [];
+      const registeredCards = (this.chaseApi.cards.list({ includeDisabled: false }) ?? []).map(localizeChaseCard);
       const generatorTemplates = this.chaseApi.generator?.listTemplates?.({ includeDisabled: false }) ?? [];
       if (!this._generatorTemplateId || !generatorTemplates.some(template => template.id === this._generatorTemplateId)) {
         this._generatorTemplateId = this._draft.metadata?.generator?.templateId ?? generatorTemplates[0]?.id ?? null;
@@ -641,6 +630,27 @@ function getAppClass() {
         generatorTemplateGroupMap.get(template.sourcePackId).templates.push(template);
       }
       const generatorTemplateGroups = [...generatorTemplateGroupMap.values()].sort((a, b) => String(a.label).localeCompare(String(b.label)));
+      const registeredCardViews = registeredCards.map(card => {
+        const pack = card.source?.packId ? this.chaseApi.packs?.get?.(card.source.packId) : null;
+        const source = packLabel(pack, card.source?.moduleId ?? "");
+        const category = card.metadata?.i18n?.category
+          ? i18n(card.metadata.i18n.category, card.metadata?.category ?? "")
+          : (card.metadata?.category ?? "");
+        return { id: card.id, name: card.name, type: card.type, source, category, sourcePackId: card.source?.packId ?? card.source?.moduleId ?? "cards" };
+      }).sort((a, b) => String(a.source).localeCompare(String(b.source)) || String(a.category).localeCompare(String(b.category)) || String(a.name).localeCompare(String(b.name)));
+      const registeredCardGroupMap = new Map();
+      for (const card of registeredCardViews) {
+        const groupId = `${card.sourcePackId}:${card.category || "general"}`;
+        if (!registeredCardGroupMap.has(groupId)) {
+          registeredCardGroupMap.set(groupId, {
+            id: groupId,
+            label: card.category ? `${card.source} · ${card.category}` : card.source,
+            cards: []
+          });
+        }
+        registeredCardGroupMap.get(groupId).cards.push(card);
+      }
+      const registeredCardGroups = [...registeredCardGroupMap.values()];
       const generationMeta = this._draft.metadata?.generator ?? null;
       const validation = linearEditable
         ? validateBasicBuilderBlueprint(this._draft)
@@ -776,7 +786,8 @@ function getAppClass() {
         hasLibraryBlueprints: librarySummaries.length > 0,
         openableSessions,
         hasOpenableSessions: openableSessions.length > 0,
-        registeredCards: registeredCards.map(card => ({ id: card.id, name: card.name, type: card.type, source: card.source?.moduleId ?? "" })),
+        registeredCards: registeredCardViews,
+        registeredCardGroups,
         hasRegisteredCards: registeredCards.length > 0,
         generatorTemplateGroups,
         hasGeneratorTemplates: generatorTemplateViews.length > 0,
@@ -1335,14 +1346,19 @@ function getAppClass() {
       const select = this.element?.querySelector?.('[name="registeredCard"]');
       const cardId = select?.value;
       if (!cardId) return;
-      const card = this.chaseApi.cards.get(cardId, { includeDisabled: false });
-      if (!card) {
+      const rawCard = this.chaseApi.cards.get(cardId, { includeDisabled: false });
+      if (!rawCard) {
         notify("warn", i18n("PF2E_CHASE_FORGE.Builder.CardUnavailable", "Diese Karte ist nicht mehr verfügbar."));
         return;
       }
+      const card = localizeChaseCard(rawCard);
+      if (card.obstacle?.scalable !== false) {
+        const largestGroup = Math.max(1, ...(this._draft.groups ?? []).map(group => group.participants?.length ?? 0));
+        card.obstacle.requiredPoints = Math.max(1, largestGroup - 1);
+      }
       const result = isBranchingBuilderBlueprint(this._draft)
-        ? appendMainlineCard(this._draft, card, { originCardRef: card.id })
-        : addCardToBasicBlueprint(this._draft, card, { originCardRef: card.id });
+        ? appendMainlineCard(this._draft, card, { originCardRef: rawCard.id })
+        : addCardToBasicBlueprint(this._draft, card, { originCardRef: rawCard.id });
       this._draft = result.blueprint;
       this._selectedInspector = result.ref ? { type: "card", id: result.ref } : this._selectedInspector;
       return this.render({ force: true });

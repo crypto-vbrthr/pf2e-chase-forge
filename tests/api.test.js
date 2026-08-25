@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { createPublicApi } from "../scripts/api/public-api.js";
 import { sampleBlueprint } from "./helpers.js";
 
-test("dev.11 public API advertises builder, persistence, route, rules, consequence, branching, and library capabilities", () => {
+test("dev.12 public API advertises builder, persistence, route, rules, consequence, branching, and library capabilities", () => {
   const api = createPublicApi();
   const caps = api.getCapabilities();
   assert.equal(caps.coreDataModel, true);
@@ -184,7 +184,7 @@ test("Weather Forge availability capability is detected dynamically from its pub
   }
 });
 
-test("dev.11 advertises Player View, synchronization and branching Builder support", () => {
+test("dev.12 advertises Player View, synchronization and branching Builder support", () => {
   const ui = { openPlayerView() {}, getOpenPlayerViews() { return []; } };
   const sync = { sendIntent() {}, publishSession() {} };
   const api = createPublicApi({ ui, sync });

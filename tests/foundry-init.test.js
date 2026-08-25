@@ -69,6 +69,7 @@ test("Foundry init registers Core generator templates, protected persistence, an
     assert.equal(moduleRecord.api.getCapabilities().basicBuilder, true);
     assert.equal(moduleRecord.api.getCapabilities().generatorTemplates, true);
     assert.equal(moduleRecord.api.generator.listTemplates().length, 5);
+    assert.equal(moduleRecord.api.cards.list().length, 72);
     assert.equal(moduleRecord.api.getCapabilities().builderUi, true);
     assert.equal(typeof moduleRecord.api.ui.openBuilder, "function");
     assert.equal(typeof moduleRecord.api.ui.debugBuilderLayout, "function");

@@ -1,21 +1,34 @@
 # PF2E Chase Forge
 
-**Version:** 0.1.0-dev.11.1  
+**Version:** 0.1.0-dev.12  
 **Foundry VTT:** 14  
 **System:** Pathfinder 2e
 
-PF2E Chase Forge is a modular Pathfinder 2e chase framework for Foundry VTT. `0.1.0-dev.11.1` adds a seeded **Generator & Templates** layer that can build editable linear or managed split/merge Chase routes from registered templates and card pools, with safe placeholder fallback when no content library is available yet.
+PF2E Chase Forge is a modular Pathfinder 2e chase framework for Foundry VTT. `0.1.0-dev.12` adds the first built-in **Core Card Library** with 72 reusable, localized, level-scaled Chase obstacles across six environment families. The Generator can now build normal Core chases without relying on placeholder cards.
 
 The underlying architecture remains intact: DAG route graphs, synchronized GM/Player runtime views, add-on registries, PF2e chase rules, consequence orchestration, optional Critical Forge / Effect Forge integration, Weather Forge prefill, and protected restart-safe Blueprint/Session persistence.
 
 
+## dev.12 Core Card Library
+
+The module now registers a normal `core:cards` content pack containing **72 reusable Chase Cards**. There are twelve cards each for City, Wilderness, Dungeon, Coast, Mountain, and Social/Urban chases. Each card includes a localized DE/EN name and description, two or three appropriate PF2e skill approaches, level-based DCs, scalable obstacle points, semantic tags, and automatic image-provider hooks.
+
+The Generator localizes copied Core Cards at runtime, scales their required Chase Points to the largest participant group, and applies the selected generation difficulty as a PF2e difficulty adjustment (`easy -2`, `moderate 0`, `hard +2`, `extreme +5`). Common German environment terms such as `Stadt`, `Wildnis`, `Gewölbe`, `Küste`, `Gebirge`, and `Sozial` are recognized as aliases for the canonical generator tags.
+
+The Builder's registered-card selector is grouped by source pack and category, so the new library remains manageable instead of becoming a 72-entry slab of text. Core Cards are still immutable source content: once inserted into a world Blueprint, they become independent editable snapshot occurrences.
+
+The Core Library contains no bundled scene art yet. Cards use `image.mode = automatic`, allowing later Core image packs or add-on image providers to supply matching thumbnails and Player View art from the existing tag context.
+
+See `docs/CORE_CARD_LIBRARY.md` for the content contract and scaling details.
+
+
 ## dev.11 Generator & Templates
 
-The Builder now includes a **Generator & Templates** panel. Chase templates are registered content, so Chase Forge Core and add-ons can contribute structural presets without hard-coding them into the UI. The module ships five structural Core templates: Classic Pursuit, Branching Pursuit, Escape, Against the Clock, and Race. These are intentionally templates only; the large Core Card library remains a separate later content block.
+The Builder now includes a **Generator & Templates** panel. Chase templates are registered content, so Chase Forge Core and add-ons can contribute structural presets without hard-coding them into the UI. The module ships five structural Core templates: Classic Pursuit, Branching Pursuit, Escape, Against the Clock, and Race. The structural templates remain a separate pack; dev.12 now supplies the first built-in Core Card Library as an independent `core:cards` pack.
 
 Generation is deterministic when a seed is supplied and records its provenance in `metadata.generator`. The generator combines the selected template with the current Builder context, including party level, environment tags, tone tags, movement modes, time of day, and weather. Registered Chase Cards are filtered by level/type/tags and scored for contextual matches. Cards are selected without duplicates by default.
 
-If the active card packs do not contain enough suitable cards, generation still succeeds by creating editable **placeholder obstacles**. This makes the structural generator usable before the Core Card Library lands and also prevents a narrowly filtered add-on template from failing mysteriously. The Builder displays how many registered cards and placeholders were used.
+If the active card packs do not contain enough suitable cards, generation still succeeds by creating editable **placeholder obstacles**. With the dev.12 Core Card Library enabled, normal Core environment generation should no longer need those placeholders; the fallback remains useful for very narrow add-on filters. The Builder displays how many registered cards and placeholders were used.
 
 Managed branching templates create the same split → branch lanes → merge structures used by the visual Builder. The requested chase length describes the number of obstacles encountered on a path, not the total number of unique nodes in the graph, so a medium 8-obstacle branching chase still contains eight obstacles along either route.
 

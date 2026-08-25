@@ -6,6 +6,7 @@ import {
   ROUTE_COMPLEXITIES
 } from "../core/constants.js";
 import { createChaseBlueprint, createChaseCard, createChaseTemplate } from "../data/factories.js";
+import { localizeChaseCard, localizeRuntime } from "../content/content-localization.js";
 import { cloneData, createId, nowIso, uniqueStrings } from "../data/utils.js";
 import {
   addCardToBasicBlueprint,
@@ -23,12 +24,6 @@ import {
 } from "../builder/branching-builder-model.js";
 
 export const CHASE_GENERATOR_CONTRACT_VERSION = 1;
-function localizeRuntime(key, fallback = "") {
-  if (!key) return fallback;
-  const translated = globalThis.game?.i18n?.localize?.(key);
-  return translated && translated !== key ? translated : fallback;
-}
-
 export function localizeChaseTemplate(templateInput) {
   const template = createChaseTemplate(templateInput);
   const keys = template.metadata?.i18n ?? {};
@@ -49,6 +44,40 @@ const DEFAULT_SEED_PREFIX = "chase";
 
 function asArray(value) {
   return Array.isArray(value) ? value : [];
+}
+
+const CONTEXT_TAG_ALIASES = Object.freeze({
+  stadt: "city", urban: "city", city: "city",
+  wildnis: "wilderness", wilderness: "wilderness", forest: "wilderness", wald: "wilderness",
+  gewölbe: "dungeon", gewoelbe: "dungeon", dungeon: "dungeon", ruine: "dungeon",
+  küste: "coast", kueste: "coast", coast: "coast", hafen: "coast", harbor: "coast", harbour: "coast",
+  gebirge: "mountain", berg: "mountain", berge: "mountain", mountain: "mountain",
+  sozial: "social", social: "social"
+});
+
+function canonicalContextTags(values) {
+  return uniqueStrings(values).map(value => {
+    const normalized = String(value).trim().toLocaleLowerCase().replace(/\s+/g, "-");
+    return CONTEXT_TAG_ALIASES[normalized] ?? normalized;
+  });
+}
+
+const GENERATOR_DIFFICULTY_ADJUSTMENTS = Object.freeze({ easy: -2, moderate: 0, hard: 2, extreme: 5, custom: 0 });
+
+function prepareSelectedCard(cardInput, { templateId, requiredPoints, difficulty = "moderate" } = {}) {
+  const localized = localizeChaseCard(cardInput);
+  const next = cloneData(localized);
+  if (next.obstacle?.scalable !== false && Number.isFinite(Number(requiredPoints))) {
+    next.obstacle.requiredPoints = Math.max(1, Math.trunc(Number(requiredPoints)));
+  }
+  const profileAdjustment = GENERATOR_DIFFICULTY_ADJUSTMENTS[difficulty] ?? 0;
+  if (profileAdjustment) {
+    next.approaches = (next.approaches ?? []).map(approach => ({
+      ...approach,
+      dc: { ...approach.dc, difficultyAdjustment: Number(approach.dc?.difficultyAdjustment ?? 0) + profileAdjustment }
+    }));
+  }
+  return attachGeneratorOrigin(createChaseCard(next), templateId);
 }
 
 function normalizeSeed(seed) {
@@ -92,8 +121,8 @@ function mergeSettings(template, options = {}) {
   if (options.difficulty && DIFFICULTY_PROFILES.includes(options.difficulty)) settings.difficulty = options.difficulty;
   if (options.routeComplexity && ROUTE_COMPLEXITIES.includes(options.routeComplexity)) settings.routeComplexity = options.routeComplexity;
   if (options.partyLevel !== undefined) settings.partyLevel = Number(options.partyLevel);
-  if (options.environmentTags) settings.environmentTags = uniqueStrings(options.environmentTags);
-  if (options.toneTags) settings.toneTags = uniqueStrings(options.toneTags);
+  if (options.environmentTags) settings.environmentTags = canonicalContextTags(options.environmentTags);
+  if (options.toneTags) settings.toneTags = canonicalContextTags(options.toneTags);
   if (options.movementModes) settings.movementModes = uniqueStrings(options.movementModes);
   if (options.timeOfDay !== undefined) settings.timeOfDay = options.timeOfDay || null;
   if (options.weather !== undefined) settings.weather = options.weather ? cloneData(options.weather) : null;
@@ -189,7 +218,7 @@ export function inspectGenerationCandidates(templateInput, cards = [], options =
   const eligible = [];
   const rejected = [];
   for (const raw of cards ?? []) {
-    const card = createChaseCard(raw);
+    const card = localizeChaseCard(raw);
     const score = scoreCard(card, context, filter);
     if (score === null) rejected.push(card.id);
     else eligible.push({ card, score });
@@ -292,7 +321,7 @@ export function generateChaseFromTemplate(templateInput, cards = [], options = {
   let fallbackCount = 0;
   const takeCard = index => {
     const card = selectedQueue.shift();
-    if (card) return attachGeneratorOrigin(card, template.id);
+    if (card) return prepareSelectedCard(card, { templateId: template.id, requiredPoints, difficulty: settings.difficulty });
     fallbackCount += 1;
     return createChaseCard({
       ...generationFallbackCard(index, requiredPoints, template.generator?.fallbackNamePrefix ?? "Generated Obstacle"),

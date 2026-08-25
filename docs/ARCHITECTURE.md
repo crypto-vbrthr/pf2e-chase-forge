@@ -2,7 +2,7 @@
 
 ## Baseline
 
-Version `0.1.0-dev.11.1` adds template-driven generation as a separate content-selection layer above the existing Builder/data model. UI, transport, persistence, route traversal, PF2e rules, consequences, and integrations remain separate layers. The synchronized GM/Player runtime surfaces from dev.9 remain authoritative and are reused for interactive route choices.
+Version `0.1.0-dev.12` adds a built-in reusable Core Card content layer on top of the dev.11 template-driven generator while keeping source content separate from editable world snapshots. UI, transport, persistence, route traversal, PF2e rules, consequences, and integrations remain separate layers. The synchronized GM/Player runtime surfaces from dev.9 remain authoritative and are reused for interactive route choices.
 
 ```text
 External Chase Add-ons
@@ -117,3 +117,8 @@ ChaseResult.*
 Critical Forge remains optional and is discovered through its public Effect API. Missing optional effects degrade to manual fallback.
 
 Campaign Forge and Journal embedding remain later milestones.
+
+
+## Core Card content layer
+
+The `core:cards` pack is registered through the same registry service used by add-ons. Registered cards are immutable source resources. Builder and Generator workflows copy them into Blueprint content snapshots before editing or runtime use. Localization is resolved lazily at display/copy time, and automatic image mode delegates art resolution to registered image providers.

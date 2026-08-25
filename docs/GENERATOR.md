@@ -111,4 +111,11 @@ Chase Forge registers a small built-in `core:templates` pack containing structur
 - Against the Clock
 - Race
 
-The Core Card Library is deliberately separate and not part of dev.11.
+dev.12 adds the independent `core:cards` pack with 72 built-in reusable cards. The generator consumes those cards through the same public registry path used by add-ons; placeholder fallback remains available when filters exhaust the active card pool.
+
+
+## dev.12 Core Card integration
+
+With `core:cards` enabled, the generator has twelve built-in cards for each initial Core environment: `city`, `wilderness`, `dungeon`, `coast`, `mountain`, and `social`. Common German environment labels are normalized to those tags before candidate scoring.
+
+Scalable selected cards inherit a route-specific required-point value based on the largest participant group. The selected generation difficulty is then added to each approach's existing PF2e `difficultyAdjustment` without changing the registered source card.

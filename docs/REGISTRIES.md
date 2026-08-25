@@ -128,3 +128,8 @@ Specific providers may be requested with `providerIds`.
 A pack can register complete `ChaseBlueprint` definitions in `blueprints`. Chase Forge namespaces them to the owning module, stamps authoritative source metadata, and marks `metadata.library.readOnly = true`. They follow the same pack activation and transactional rollback rules as cards/templates.
 
 Library Blueprints are source content, not world persistence records. The GM Builder may preview/start them, but source definitions are never edited. Copying one into **My Chases** creates a new world-owned Blueprint; starting one directly creates a Session from a snapshot.
+
+
+## Built-in Core Card pack
+
+`0.1.0-dev.12` registers `core:cards` as a normal Chase Pack owned by `pf2e-chase-forge`. It contains 72 cards and can be inspected/disabled through the same pack APIs as third-party content. No special mutation path exists for Core Cards; world use always happens through copied Blueprint snapshots.
