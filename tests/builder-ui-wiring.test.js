@@ -63,9 +63,10 @@ test("Builder template and localization resources are packaged", async () => {
   assert.doesNotMatch(template, /\(concat\s/);
   assert.match(css, /\.chase-builder-shell/);
   assert.match(css, /\.pf2e-chase-forge\.chase-forge-builder\s*\{[^}]*display:\s*flex !important;[^}]*overflow:\s*hidden !important;/s);
-  assert.match(css, /\.pf2e-chase-forge\.chase-forge-builder \.window-content\s*\{[^}]*flex:\s*1 1 auto !important;[^}]*overflow-y:\s*scroll !important;[^}]*overflow-x:\s*hidden !important;/s);
-  assert.match(css, /\.pf2e-chase-forge\.chase-forge-builder \.chase-builder-shell\s*\{[^}]*display:\s*grid !important;[^}]*height:\s*auto !important;[^}]*overflow:\s*visible !important;/s);
-  assert.match(css, /\.pf2e-chase-forge\.chase-forge-builder \.chase-builder-main\s*\{[^}]*display:\s*flex !important;[^}]*height:\s*auto !important;[^}]*overflow:\s*visible !important;/s);
+  assert.match(css, /\.pf2e-chase-forge\.chase-forge-builder \.window-content\s*\{[^}]*flex:\s*1 1 auto !important;[^}]*overflow:\s*hidden !important;/s);
+  assert.match(css, /\.pf2e-chase-forge\.chase-forge-builder \.chase-builder-shell\s*\{[^}]*display:\s*grid !important;[^}]*height:\s*100% !important;[^}]*overflow:\s*hidden !important;/s);
+  assert.match(css, /\.pf2e-chase-forge\.chase-forge-builder \.chase-builder-main\s*\{[^}]*display:\s*flex !important;[^}]*height:\s*100% !important;[^}]*overflow-y:\s*auto !important;[^}]*overflow-x:\s*hidden !important;/s);
+  assert.match(css, /\.pf2e-chase-forge\.chase-forge-builder \.chase-builder-sidebar\s*\{[^}]*height:\s*100% !important;[^}]*overflow-y:\s*auto !important;[^}]*overflow-x:\s*hidden !important;/s);
   assert.match(css, /\.pf2e-chase-forge\.chase-forge-builder \.chase-builder-editor-scroll\s*\{[^}]*flex:\s*0 0 auto !important;[^}]*height:\s*auto !important;[^}]*overflow:\s*visible !important;/s);
   assert.match(css, /\.chase-builder-toolbar\s*\{[^}]*position:\s*sticky !important;[^}]*top:\s*0 !important;[^}]*z-index:\s*20;/s);
   assert.match(css, /\.chase-builder-branch-routes/);
@@ -77,7 +78,7 @@ test("Builder template and localization resources are packaged", async () => {
   assert.match(css, /\.chase-route-card-node/);
   assert.match(css, /\.chase-route-decision-node/);
   assert.match(css, /\.pf2e-chase-journal-link/);
-  assert.match(css, /\.chase-builder-editor-scroll::\-webkit-scrollbar,[^}]*\.chase-builder-sidebar::\-webkit-scrollbar\s*\{[^}]*width:\s*12px;/s);
+  assert.match(css, /\.chase-builder-main::\-webkit-scrollbar,[^}]*\.chase-builder-sidebar::\-webkit-scrollbar\s*\{[^}]*width:\s*12px;/s);
   assert.equal(de["PF2E_CHASE_FORGE.Builder.Title"].length > 0, true);
   assert.equal(en["PF2E_CHASE_FORGE.Builder.Title"].length > 0, true);
   assert.equal(de["PF2E_CHASE_FORGE.Builder.WeatherForgeApply"].length > 0, true);
@@ -130,7 +131,9 @@ test("Builder layout diagnostics do not structured-clone Foundry application pos
 test("builder applies runtime layout enforcement for Foundry ApplicationV2", async () => {
   const source = await readFile(new URL("../scripts/app/chase-builder-app.js", import.meta.url), "utf8");
   assert.match(source, /function applyBuilderRuntimeLayout/);
-  assert.match(source, /setImportantStyle\(windowContent, "overflow-y", "scroll"\)/);
+  assert.match(source, /setImportantStyle\(windowContent, "overflow", "hidden"\)/);
+  assert.match(source, /setImportantStyle\(main, "overflow-y", "auto"\)/);
+  assert.match(source, /setImportantStyle\(sidebar, "overflow-y", "auto"\)/);
   assert.match(source, /setImportantStyle\(shell, "display", "grid"\)/);
   assert.match(source, /setImportantStyle\(toolbar, "position", "sticky"\)/);
   assert.match(source, /setImportantStyle\(toolbar, "top", "0"\)/);
@@ -228,11 +231,12 @@ test("manual card action keeps the Builder draft as a ChaseBlueprint in linear a
 });
 
 
-test("visual route selection preserves the Builder window scroll position while opening the inspector", async () => {
+test("visual route selection preserves both Builder pane scroll positions while opening the inspector", async () => {
   const source = await readFile(new URL("../scripts/app/chase-builder-app.js", import.meta.url), "utf8");
   assert.match(source, /_captureScrollPosition\(\)/);
   assert.match(source, /_restoreCapturedScrollPosition\(\)/);
-  assert.match(source, /scroller\.scrollTop = top/);
+  assert.match(source, /main\.scrollTop = pending\.main/);
+  assert.match(source, /sidebar\.scrollTop = pending\.sidebar/);
   assert.match(source, /this\._captureScrollPosition\(\);\n\s*return this\.render\(\{ force: true \}\);/);
 });
 
@@ -317,4 +321,35 @@ test("Builder skill labels use PF2e/local module localization instead of English
     if (previousGame === undefined) delete globalThis.game; else globalThis.game = previousGame;
     if (previousConfig === undefined) delete globalThis.CONFIG; else globalThis.CONFIG = previousConfig;
   }
+});
+
+test("Runner and player sync pass branch route selection using the rules-engine object contract", async () => {
+  const runner = await readFile(new URL("../scripts/app/chase-runner-app.js", import.meta.url), "utf8");
+  const sync = await readFile(new URL("../scripts/sync/chase-session-sync.js", import.meta.url), "utf8");
+  assert.match(runner, /chooseRoute\(session, \{ runtimeGroupId: target\.dataset\.runtimeGroupId, edgeId: target\.dataset\.edgeId \}\)/);
+  assert.match(sync, /chooseRoute\(session, \{ runtimeGroupId, edgeId \}\)/);
+});
+
+test("Runner and Player View expose full-resolution obstacle image popouts", async () => {
+  const runnerTemplate = await readFile(new URL("../templates/chase-runner.hbs", import.meta.url), "utf8");
+  const playerTemplate = await readFile(new URL("../templates/chase-player.hbs", import.meta.url), "utf8");
+  const runner = await readFile(new URL("../scripts/app/chase-runner-app.js", import.meta.url), "utf8");
+  const player = await readFile(new URL("../scripts/app/chase-player-app.js", import.meta.url), "utf8");
+  const popout = await readFile(new URL("../scripts/images/image-popout.js", import.meta.url), "utf8");
+  assert.match(runnerTemplate, /data-action="openImage"/);
+  assert.match(playerTemplate, /data-action="openImage"/);
+  assert.match(runner, /openChaseImage/);
+  assert.match(player, /openChaseImage/);
+  assert.match(popout, /foundry\?\.applications\?\.apps\?\.ImagePopout/);
+  assert.match(popout, /new ImagePopoutV2\(\{\s*src: path,/s);
+});
+
+test("GM Runner presents the acting participant's current-round outcome", async () => {
+  const runner = await readFile(new URL("../scripts/app/chase-runner-app.js", import.meta.url), "utf8");
+  const template = await readFile(new URL("../templates/chase-runner.hbs", import.meta.url), "utf8");
+  assert.match(runner, /function lastParticipantResult/);
+  assert.match(runner, /checkResolved/);
+  assert.match(runner, /chasePointDelta/);
+  assert.match(template, /participant\.lastResult/);
+  assert.match(template, /chase-runner-participant-result/);
 });

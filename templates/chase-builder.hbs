@@ -328,6 +328,45 @@
         </div>
       </section>
 
+      {{#if hasEndings}}
+      <section class="chase-builder-section chase-builder-endings-section">
+        <div class="chase-builder-section-heading">
+          <div>
+            <h3><i class="fa-solid fa-flag-checkered"></i> {{localize "PF2E_CHASE_FORGE.Builder.Endings"}}</h3>
+            <p>{{localize "PF2E_CHASE_FORGE.Builder.EndingsHint"}}</p>
+          </div>
+        </div>
+        <div class="chase-builder-endings">
+          {{#each endings as |ending|}}
+            <article class="chase-builder-ending" data-end-node data-node-id="{{ending.id}}">
+              {{#if ending.imagePath}}<img class="chase-builder-ending-preview" src="{{ending.imagePath}}" alt="{{ending.imageAlt}}">{{/if}}
+              <div class="chase-builder-grid two">
+                <label>
+                  <span>{{localize "PF2E_CHASE_FORGE.Builder.EndingName"}}</span>
+                  <input type="text" data-end-field="label" value="{{ending.label}}" {{#unless ../editable}}disabled{{/unless}}>
+                </label>
+                <label>
+                  <span>{{localize "PF2E_CHASE_FORGE.Builder.EndingImage"}}</span>
+                  <div class="chase-visual-path-row">
+                    <input type="text" data-end-field="imagePath" value="{{ending.image.path}}" {{#unless ../editable}}disabled{{/unless}}>
+                    {{#if ../editable}}<button type="button" class="icon" data-action="browseEndingImage" data-node-id="{{ending.id}}" title="{{localize 'PF2E_CHASE_FORGE.Visual.BrowseImage'}}"><i class="fa-solid fa-folder-open"></i></button>{{/if}}
+                  </div>
+                </label>
+                <label class="wide">
+                  <span>{{localize "PF2E_CHASE_FORGE.Builder.EndingDescription"}}</span>
+                  <textarea data-end-field="description" rows="3" {{#unless ../editable}}disabled{{/unless}}>{{ending.description}}</textarea>
+                </label>
+                <label class="wide">
+                  <span>{{localize "PF2E_CHASE_FORGE.Builder.ImageAlt"}}</span>
+                  <input type="text" data-end-field="imageAlt" value="{{ending.image.alt}}" {{#unless ../editable}}disabled{{/unless}}>
+                </label>
+              </div>
+            </article>
+          {{/each}}
+        </div>
+      </section>
+      {{/if}}
+
       <section class="chase-builder-section">
         <div class="chase-builder-section-heading">
           <div>
@@ -349,6 +388,16 @@
                   <select data-group-field="role" {{#unless ../editable}}disabled{{/unless}}>
                     {{#each roleOptions}}<option value="{{value}}" {{#if selected}}selected{{/if}}>{{label}}</option>{{/each}}
                   </select>
+                </label>
+                <label>
+                  <span>{{localize "PF2E_CHASE_FORGE.Builder.GroupPace"}}</span>
+                  <select data-group-field="paceMode" {{#unless ../editable}}disabled{{/unless}}>
+                    {{#each paceOptions}}<option value="{{value}}" {{#if selected}}selected{{/if}}>{{label}}</option>{{/each}}
+                  </select>
+                </label>
+                <label>
+                  <span>{{localize "PF2E_CHASE_FORGE.Builder.ObstaclesPerRound"}}</span>
+                  <input type="number" data-group-field="obstaclesPerRound" min="0" step="0.25" value="{{obstaclesPerRound}}" {{#unless ../editable}}disabled{{/unless}}>
                 </label>
                 <label class="chase-builder-checkbox">
                   <input type="checkbox" data-group-field="public" {{#if public}}checked{{/if}} {{#unless ../editable}}disabled{{/unless}}>

@@ -80,6 +80,7 @@ const LENGTH_VALUES = ["short", "medium", "long", "custom"];
 const DIFFICULTY_VALUES = ["easy", "moderate", "hard", "extreme", "custom"];
 const IMAGE_MODE_VALUES = ["none", "manual", "predefined", "provider", "automatic"];
 const GROUP_ROLE_VALUES = ["quarry", "pursuer", "competitor", "participant"];
+const GROUP_PACE_VALUES = ["roll", "steady"];
 const CARD_TYPE_VALUES = ["obstacle", "complication", "opportunity", "finale"];
 const DC_MODE_VALUES = ["level", "fixed", "simple", "gm", "none"];
 const PROFICIENCY_VALUES = ["untrained", "trained", "expert", "master", "legendary"];
@@ -365,33 +366,30 @@ function applyBuilderRuntimeLayout(app, reason = "runtime") {
   const editor = root.querySelector?.(".chase-builder-editor-scroll") ?? null;
   const sidebar = root.querySelector?.(".chase-builder-sidebar") ?? null;
 
-  // The diagnostics prove that .window-content is the bounded viewport:
-  // it has the window height while its scrollHeight contains the full Builder.
-  setImportantStyle(windowContent, "overflow-y", "scroll");
-  setImportantStyle(windowContent, "overflow-x", "hidden");
+  // .window-content is the bounded outer viewport. Keep it fixed and give the
+  // sidebar and editor pane independent scroll positions.
+  setImportantStyle(windowContent, "overflow", "hidden");
   setImportantStyle(windowContent, "min-height", "0");
-  windowContent?.style?.setProperty?.("scrollbar-gutter", "stable");
 
-  // Foundry has been observed computing these as display:block/overflow:visible
-  // despite the module stylesheet. Inline !important makes the intended layout
-  // unambiguous and also gives diagnostics a reliable signal that the fix ran.
+  // Foundry can retain old display/overflow values after ApplicationV2 renders.
+  // Reassert the two-pane layout directly on the live elements.
   setImportantStyle(shell, "display", "grid");
   setImportantStyle(shell, "grid-template-columns", "280px minmax(0, 1fr)");
   setImportantStyle(shell, "width", "100%");
-  setImportantStyle(shell, "height", "auto");
-  setImportantStyle(shell, "min-height", "100%");
-  setImportantStyle(shell, "overflow", "visible");
+  setImportantStyle(shell, "height", "100%");
+  setImportantStyle(shell, "min-height", "0");
+  setImportantStyle(shell, "overflow", "hidden");
 
   setImportantStyle(main, "display", "flex");
   setImportantStyle(main, "flex-direction", "column");
   setImportantStyle(main, "min-width", "0");
-  setImportantStyle(main, "height", "auto");
-  setImportantStyle(main, "overflow", "visible");
+  setImportantStyle(main, "height", "100%");
+  setImportantStyle(main, "min-height", "0");
+  setImportantStyle(main, "overflow-y", "auto");
+  setImportantStyle(main, "overflow-x", "hidden");
+  main?.style?.setProperty?.("scrollbar-gutter", "stable");
 
-  // Keep the Builder command bar visible while Foundry's bounded window-content
-  // viewport scrolls the long form below it. Runtime enforcement mirrors the
-  // CSS because ApplicationV2/core styles have overridden module layout rules
-  // in this window on some Foundry builds.
+  // Keep the Builder command bar visible while only the right-hand pane scrolls.
   setImportantStyle(toolbar, "position", "sticky");
   setImportantStyle(toolbar, "top", "0");
   setImportantStyle(toolbar, "z-index", "20");
@@ -399,8 +397,11 @@ function applyBuilderRuntimeLayout(app, reason = "runtime") {
   setImportantStyle(editor, "height", "auto");
   setImportantStyle(editor, "overflow", "visible");
 
-  setImportantStyle(sidebar, "height", "auto");
-  setImportantStyle(sidebar, "overflow", "visible");
+  setImportantStyle(sidebar, "height", "100%");
+  setImportantStyle(sidebar, "min-height", "0");
+  setImportantStyle(sidebar, "overflow-y", "auto");
+  setImportantStyle(sidebar, "overflow-x", "hidden");
+  sidebar?.style?.setProperty?.("scrollbar-gutter", "stable");
 
   root.dataset.chaseRuntimeLayout = reason;
   return { root, windowContent, shell, main, toolbar, editor, sidebar };
@@ -459,6 +460,7 @@ function getAppClass() {
         generateFromTemplate: this._actionGenerateFromTemplate,
         rerollGeneratedRoute: this._actionRerollGeneratedRoute,
         browseBlueprintImage: this._actionBrowseBlueprintImage,
+        browseEndingImage: this._actionBrowseEndingImage,
         browseCardImage: this._actionBrowseCardImage,
         refreshCardImages: this._actionRefreshCardImages,
         selectCardImageCandidate: this._actionSelectCardImageCandidate,
@@ -831,10 +833,22 @@ function getAppClass() {
         selectedCard,
         selectedBranch,
         hasInspector: Boolean(selectedCard || selectedBranch),
+        endings: (this._draft.graph?.endNodeIds ?? []).map(endId => {
+          const node = this._draft.graph?.nodes?.find(candidate => candidate.id === endId) ?? null;
+          return node ? {
+            ...cloneData(node),
+            imagePath: node.image?.path ?? null,
+            imageAlt: node.image?.alt || node.label || this._draft.name || ""
+          } : null;
+        }).filter(Boolean),
+        hasEndings: (this._draft.graph?.endNodeIds?.length ?? 0) > 0,
         hasBranchGroups: branchGroups.length > 0,
         groups: this._draft.groups.map(group => ({
           ...group,
-          roleOptions: optionList(GROUP_ROLE_VALUES, group.role, "PF2E_CHASE_FORGE.GroupRole")
+          paceMode: group.metadata?.paceMode ?? "roll",
+          obstaclesPerRound: Number.isFinite(Number(group.metadata?.obstaclesPerRound)) ? Number(group.metadata.obstaclesPerRound) : 1,
+          roleOptions: optionList(GROUP_ROLE_VALUES, group.role, "PF2E_CHASE_FORGE.GroupRole"),
+          paceOptions: optionList(GROUP_PACE_VALUES, group.metadata?.paceMode ?? "roll", "PF2E_CHASE_FORGE.GroupPace")
         })),
         blueprints: summaries,
         libraryBlueprints: librarySummaries,
@@ -885,18 +899,24 @@ function getAppClass() {
     }
 
     _captureScrollPosition() {
-      const scroller = this.element?.querySelector?.(":scope > .window-content") ?? this.element?.querySelector?.(".window-content") ?? null;
-      this._pendingScrollTop = scroller ? Number(scroller.scrollTop ?? 0) : null;
-      return this._pendingScrollTop;
+      const main = this.element?.querySelector?.(".chase-builder-main") ?? null;
+      const sidebar = this.element?.querySelector?.(".chase-builder-sidebar") ?? null;
+      this._pendingScrollPosition = {
+        main: main ? Number(main.scrollTop ?? 0) : null,
+        sidebar: sidebar ? Number(sidebar.scrollTop ?? 0) : null
+      };
+      return this._pendingScrollPosition;
     }
 
     _restoreCapturedScrollPosition() {
-      if (!Number.isFinite(this._pendingScrollTop)) return;
-      const top = this._pendingScrollTop;
-      this._pendingScrollTop = null;
+      const pending = this._pendingScrollPosition;
+      if (!pending) return;
+      this._pendingScrollPosition = null;
       const restore = () => {
-        const scroller = this.element?.querySelector?.(":scope > .window-content") ?? this.element?.querySelector?.(".window-content") ?? null;
-        if (scroller) scroller.scrollTop = top;
+        const main = this.element?.querySelector?.(".chase-builder-main") ?? null;
+        const sidebar = this.element?.querySelector?.(".chase-builder-sidebar") ?? null;
+        if (main && Number.isFinite(pending.main)) main.scrollTop = pending.main;
+        if (sidebar && Number.isFinite(pending.sidebar)) sidebar.scrollTop = pending.sidebar;
       };
       restore();
       globalThis.requestAnimationFrame?.(restore);
@@ -1053,6 +1073,22 @@ function getAppClass() {
         group.name = groupElement.querySelector('[data-group-field="name"]')?.value?.trim() || group.name;
         group.role = groupElement.querySelector('[data-group-field="role"]')?.value || group.role;
         group.public = groupElement.querySelector('[data-group-field="public"]')?.checked !== false;
+        group.metadata ??= {};
+        group.metadata.paceMode = groupElement.querySelector('[data-group-field="paceMode"]')?.value || group.metadata.paceMode || "roll";
+        group.metadata.obstaclesPerRound = Math.max(0, Number(groupElement.querySelector('[data-group-field="obstaclesPerRound"]')?.value ?? group.metadata.obstaclesPerRound ?? 1) || 0);
+      }
+
+      for (const endElement of root.querySelectorAll("[data-end-node]")) {
+        const nodeId = endElement.dataset.nodeId ?? null;
+        const node = next.graph?.nodes?.find(candidate => candidate.id === nodeId);
+        if (!node || node.type !== "end") continue;
+        node.label = endElement.querySelector('[data-end-field="label"]')?.value?.trim() || node.label || "Ziel";
+        node.description = endElement.querySelector('[data-end-field="description"]')?.value ?? "";
+        node.image ??= {};
+        node.image.path = endElement.querySelector('[data-end-field="imagePath"]')?.value?.trim() || null;
+        node.image.alt = endElement.querySelector('[data-end-field="imageAlt"]')?.value ?? "";
+        node.image.mode = node.image.path ? "manual" : "none";
+        if (!node.image.path) { node.image.providerId = null; node.image.imageId = null; }
       }
 
       const records = next.contentSnapshots?.cards ?? [];
@@ -1338,8 +1374,8 @@ function getAppClass() {
       await this.chaseApi.presentation?.chat?.postEvent?.({
         title: format("PF2E_CHASE_FORGE.Runner.ChatStarted", { name: saved.name }, `Verfolgungsjagd gestartet: ${saved.name}`)
       }, { flags: { sessionId: session.id } }).catch(() => null);
-      await this.chaseApi.ui?.openRunner?.({ sessionId: session.id });
-      return this.render({ force: true });
+      await this.render({ force: true });
+      return this.chaseApi.ui?.openRunner?.({ sessionId: session.id });
     }
 
     static async _actionRefreshBuilder() { return this.render({ force: true }); }
@@ -1464,6 +1500,31 @@ function getAppClass() {
           this._draft.image.path = String(path);
           this._draft.image.imageId = null;
           this._draft.image.providerId = null;
+          this.chaseApi.images?.clearCache?.();
+          await this.render({ force: true });
+        }
+      });
+      if (!opened) notify("warn", i18n("PF2E_CHASE_FORGE.Visual.FilePickerUnavailable", "Die Foundry-Dateiauswahl ist nicht verfügbar."));
+      return opened;
+    }
+
+    static async _actionBrowseEndingImage(_event, target) {
+      if (this._libraryBlueprintId) return null;
+      this._syncDraftFromForm();
+      const nodeId = target?.dataset?.nodeId ?? null;
+      const node = this._draft.graph?.nodes?.find(candidate => candidate.id === nodeId && candidate.type === "end") ?? null;
+      if (!node) return null;
+      const field = this.element?.querySelector?.(`[data-end-node][data-node-id="${nodeId}"] [data-end-field="imagePath"]`) ?? null;
+      const opened = await openFoundryImagePicker({
+        current: node.image?.path ?? "",
+        field,
+        callback: async path => {
+          if (!path) return;
+          node.image ??= {};
+          node.image.mode = "manual";
+          node.image.path = String(path);
+          node.image.imageId = null;
+          node.image.providerId = null;
           this.chaseApi.images?.clearCache?.();
           await this.render({ force: true });
         }

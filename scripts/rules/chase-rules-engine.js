@@ -69,9 +69,47 @@ function assertActiveRound(session) {
   if (session.roundState?.phase !== "active") throw rulesError("ROUND_NOT_ACTIVE", "A chase contribution requires an active round.", { phase: session.roundState?.phase ?? null });
 }
 
+function steadyTurnEvent(session, runtimeGroupId) {
+  return [...(session.events ?? [])].reverse().find(item =>
+    item?.type === "steadyPaceTurn"
+    && item?.round === session.round
+    && item?.runtimeGroupId === runtimeGroupId
+  ) ?? null;
+}
+
+function groupFinishedRoundTurn(session, group) {
+  if (!group || group.completed) return true;
+  if (group.rules?.paceMode === "steady") {
+    const turn = steadyTurnEvent(session, group.id);
+    if (!turn) return false;
+    if (!turn.routeChoiceRequired) return true;
+    const node = currentNode(session, group);
+    if (!node) return true;
+    if (node.type === "choice") return false;
+    if (node.type === "card" && isNodeCleared(session, node.id, group.id)) return false;
+    return true;
+  }
+  const participants = group.participantIds ?? [];
+  if (participants.length === 0) return true;
+  return participants.every(participantId => session.roundState.actedParticipantIds.includes(participantId));
+}
+
+function runtimeGroupCanAct(session, runtimeGroupId) {
+  if (session.roundState?.phase !== "active") return false;
+  const group = getRuntimeGroup(session, runtimeGroupId);
+  if (!group || group.completed) return false;
+  const type = session.blueprintSnapshot?.settings?.chaseType;
+  if (!["pursuit", "escape"].includes(type)) return true;
+  if (groupRole(session, group) === "quarry") return true;
+  return roleGroups(session, "quarry").every(quarry => groupFinishedRoundTurn(session, quarry));
+}
+
 function assertParticipantTurn(session, group, participantId) {
   if (!participantId || !group.participantIds.includes(participantId)) {
     throw rulesError("PARTICIPANT_NOT_IN_GROUP", `Participant '${participantId ?? ""}' is not part of runtime group '${group.id}'.`, { runtimeGroupId: group.id, participantId });
+  }
+  if (!runtimeGroupCanAct(session, group.id)) {
+    throw rulesError("GROUP_TURN_BLOCKED", `Runtime group '${group.id}' must wait until the quarry has acted this round.`, { runtimeGroupId: group.id, round: session.round });
   }
   if (session.roundState.actedParticipantIds.includes(participantId)) {
     throw rulesError("PARTICIPANT_ALREADY_ACTED", `Participant '${participantId}' already acted this round.`, { participantId, round: session.round });
@@ -455,7 +493,20 @@ export function createChaseRulesEngine({ registries = null, cardResolver = null,
     if (!initiativeOrder) next.roundState.initiativeOrder = getTurnPolicy(createChaseSession(next)).suggestedOrder;
     next.events = [...(next.events ?? []), event("roundStarted", next, { round: next.round, initiativeOrder: next.roundState.initiativeOrder })];
     next.updatedAt = nowIso();
-    return createChaseSession(next);
+    let started = createChaseSession(next);
+
+    // PF2e chase order: the quarry acts first in pursuit/escape rounds.
+    // A steady-pace quarry therefore takes its abstract movement immediately
+    // when the round begins, before pursuers can contribute.
+    const policy = getTurnPolicy(started);
+    if (policy.quarryFirst) {
+      for (const quarry of roleGroups(started, "quarry")) {
+        const current = getRuntimeGroup(started, quarry.id);
+        if (!current || current.completed || current.rules.paceMode !== "steady") continue;
+        started = applySteadyPaceTurn(started, current.id).session;
+      }
+    }
+    return started;
   }
 
   function currentObstacle(session, runtimeGroupId) {
@@ -776,6 +827,41 @@ export function createChaseRulesEngine({ registries = null, cardResolver = null,
     return Object.freeze({ session: createChaseSession(copy), advancedObstacles, traversedEdgeIds, routeChoiceRequired });
   }
 
+  function applySteadyPaceTurn(session, runtimeGroupId, { edgeId = null, context = {} } = {}) {
+    assertSession(session);
+    let next = cloneData(session);
+    let group = getRuntimeGroup(next, runtimeGroupId);
+    if (!group) throw rulesError("UNKNOWN_RUNTIME_GROUP", `Unknown runtime group '${runtimeGroupId}'.`);
+    if (group.rules.paceMode !== "steady") throw rulesError("GROUP_USES_ROLL_PACE", `Runtime group '${runtimeGroupId}' does not use steady pace.`);
+
+    group.rules.steadyProgress += group.rules.obstaclesPerRound;
+    next = createChaseSession(next);
+    let advancedObstacles = 0;
+    let routeChoiceRequired = false;
+    const traversedEdgeIds = [];
+
+    while (getRuntimeGroup(next, runtimeGroupId).rules.steadyProgress >= 1 && !getRuntimeGroup(next, runtimeGroupId).completed) {
+      const advanced = advanceSteadyGroup(next, runtimeGroupId, { obstacles: 1, edgeId, context });
+      traversedEdgeIds.push(...advanced.traversedEdgeIds);
+      if (advanced.advancedObstacles === 0) {
+        routeChoiceRequired = advanced.routeChoiceRequired;
+        break;
+      }
+      const copy = cloneData(advanced.session);
+      getRuntimeGroup(copy, runtimeGroupId).rules.steadyProgress = Math.max(0, getRuntimeGroup(copy, runtimeGroupId).rules.steadyProgress - 1);
+      next = createChaseSession(copy);
+      advancedObstacles += advanced.advancedObstacles;
+      routeChoiceRequired = advanced.routeChoiceRequired;
+      edgeId = null;
+      if (routeChoiceRequired) break;
+    }
+
+    const copy = cloneData(next);
+    copy.events = [...(copy.events ?? []), event("steadyPaceTurn", copy, { runtimeGroupId, advancedObstacles, traversedEdgeIds, routeChoiceRequired })];
+    copy.updatedAt = nowIso();
+    return Object.freeze({ session: createChaseSession(copy), advancedObstacles, traversedEdgeIds, routeChoiceRequired });
+  }
+
   function endRound(session, { autoSkipUnacted = true, advanceSteady = true, routeChoices = {}, context = {}, completeOnOutcome = true } = {}) {
     assertSession(session);
     assertActiveRound(session);
@@ -797,26 +883,16 @@ export function createChaseRulesEngine({ registries = null, cardResolver = null,
     }
 
     if (advanceSteady) {
+      const quarryFirst = getTurnPolicy(next).quarryFirst;
       for (const runtimeGroup of [...next.groups]) {
-        let current = getRuntimeGroup(next, runtimeGroup.id);
+        const current = getRuntimeGroup(next, runtimeGroup.id);
         if (!current || current.completed || current.rules.paceMode !== "steady") continue;
-        const copy = cloneData(next);
-        current = getRuntimeGroup(copy, runtimeGroup.id);
-        current.rules.steadyProgress += current.rules.obstaclesPerRound;
-        next = createChaseSession(copy);
-        while (getRuntimeGroup(next, runtimeGroup.id).rules.steadyProgress >= 1 && !getRuntimeGroup(next, runtimeGroup.id).completed) {
-          const choice = routeChoices[runtimeGroup.id] ?? routeChoices[runtimeGroup.groupId] ?? null;
-          const advanced = advanceSteadyGroup(next, runtimeGroup.id, { obstacles: 1, edgeId: choice, context });
-          if (advanced.advancedObstacles === 0) {
-            steadyAdvances.push({ runtimeGroupId: runtimeGroup.id, advancedObstacles: 0, routeChoiceRequired: advanced.routeChoiceRequired });
-            break;
-          }
-          const advancedCopy = cloneData(advanced.session);
-          getRuntimeGroup(advancedCopy, runtimeGroup.id).rules.steadyProgress = Math.max(0, getRuntimeGroup(advancedCopy, runtimeGroup.id).rules.steadyProgress - 1);
-          next = createChaseSession(advancedCopy);
-          steadyAdvances.push({ runtimeGroupId: runtimeGroup.id, advancedObstacles: advanced.advancedObstacles, routeChoiceRequired: advanced.routeChoiceRequired });
-          if (advanced.routeChoiceRequired) break;
-        }
+        // Quarry steady pace is already resolved at round start in pursuit/escape chases.
+        if (quarryFirst && groupRole(next, current) === "quarry") continue;
+        const choice = routeChoices[runtimeGroup.id] ?? routeChoices[runtimeGroup.groupId] ?? null;
+        const advanced = applySteadyPaceTurn(next, runtimeGroup.id, { edgeId: choice, context });
+        next = advanced.session;
+        steadyAdvances.push({ runtimeGroupId: runtimeGroup.id, advancedObstacles: advanced.advancedObstacles, routeChoiceRequired: advanced.routeChoiceRequired });
       }
     }
 
@@ -950,6 +1026,7 @@ export function createChaseRulesEngine({ registries = null, cardResolver = null,
     initializeSession,
     configureGroupPace,
     beginRound,
+    canGroupAct: runtimeGroupCanAct,
     endRound,
     currentObstacle,
     resolveCheck,
@@ -958,6 +1035,7 @@ export function createChaseRulesEngine({ registries = null, cardResolver = null,
     skipParticipantTurn,
     chooseRoute,
     advanceSteadyGroup,
+    applySteadyPaceTurn,
     pendingCheckBonus,
     consumePendingCheckBonus,
     getTurnPolicy,

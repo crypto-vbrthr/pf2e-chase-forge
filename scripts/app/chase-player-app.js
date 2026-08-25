@@ -1,5 +1,6 @@
 import { MODULE_ID } from "../core/constants.js";
 import { cloneData } from "../data/utils.js";
+import { openChaseImage } from "../images/image-popout.js";
 
 export const PLAYER_CHASE_VIEW_CONTRACT_VERSION = 1;
 
@@ -73,7 +74,8 @@ function getAppClass() {
         rollApproach: this._actionRollApproach,
         chooseRoute: this._actionChooseRoute,
         proposeAction: this._actionProposeAction,
-        refreshPlayer: this._actionRefreshPlayer
+        refreshPlayer: this._actionRefreshPlayer,
+        openImage: this._actionOpenImage
       }
     };
 
@@ -121,6 +123,9 @@ function getAppClass() {
         groups,
         hasEffects: (state.personalEffects?.length ?? 0) > 0,
         personalEffects: cloneData(state.personalEffects ?? []),
+        chaseImage: cloneData(state.metadata?.chaseImage ?? null),
+        terminalSummary: cloneData(state.metadata?.terminalSummary ?? null),
+        terminalOutcomeLabel: state.metadata?.terminalSummary?.outcome ? i18n(`PF2E_CHASE_FORGE.Outcome.${state.metadata.terminalSummary.outcome}`, state.metadata.terminalSummary.outcome) : null,
         terminal: ["completed", "aborted"].includes(state.status),
         pending: this._pending
       };
@@ -194,6 +199,15 @@ function getAppClass() {
         if (!text) return;
         return this._sendIntent("propose", { runtimeGroupId: target.dataset.runtimeGroupId, participantId: target.dataset.participantId, text });
       } catch (error) { console.error(error); notify("error", error?.message ?? String(error)); }
+    }
+
+    static async _actionOpenImage(_event, target) {
+      try {
+        return await openChaseImage(target.dataset.imageSrc, { title: target.dataset.imageTitle || "" });
+      } catch (error) {
+        console.error(`${MODULE_ID} | Player Chase image popout failed.`, error);
+        notify("error", error?.message ?? String(error));
+      }
     }
 
     static async _actionRefreshPlayer() {

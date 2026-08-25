@@ -219,6 +219,7 @@ export function normalizeChaseNode(input = {}) {
     label: asString(node.label),
     description: asString(node.description),
     cardRef: type === "card" && node.cardRef ? asString(node.cardRef) : null,
+    image: normalizeImage(node.image),
     public: node.public !== false,
     metadata: isPlainObject(node.metadata) ? cloneData(node.metadata) : {}
   };

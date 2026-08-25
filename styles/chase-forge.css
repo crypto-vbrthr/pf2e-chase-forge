@@ -13,50 +13,42 @@
 }
 
 /*
- * ApplicationV2 gives .window-content a real, bounded viewport height.
- * The runtime diagnostics from dev.7.4.1 confirmed that this element was
- * 782px high while its scrollHeight was 2037px. Make this bounded Foundry
- * element the authoritative scroller instead of trying to force nested
- * template nodes to inherit a height that Foundry core styles can override.
+ * Split the Builder into two independently scrollable panes. Foundry's bounded
+ * .window-content remains the outer viewport, while the selection sidebar and
+ * the editor each own their vertical scroll position.
  */
 .pf2e-chase-forge.chase-forge-builder .window-content {
   padding: 0;
   flex: 1 1 auto !important;
   min-height: 0 !important;
-  overflow-y: scroll !important;
-  overflow-x: hidden !important;
-  scrollbar-gutter: stable;
-  scrollbar-width: auto;
+  overflow: hidden !important;
 }
 
-/*
- * Foundry can apply part/root display rules with greater specificity than the
- * module's unscoped classes. Scope and force the Builder layout so the sidebar
- * and editor remain side by side, while .window-content owns vertical scroll.
- */
 .pf2e-chase-forge.chase-forge-builder .window-content > [data-application-part],
 .pf2e-chase-forge.chase-forge-builder .window-content > .chase-builder-shell {
   width: 100% !important;
-  height: auto !important;
-  min-height: 100% !important;
-  overflow: visible !important;
+  height: 100% !important;
+  min-height: 0 !important;
+  overflow: hidden !important;
 }
 
 .pf2e-chase-forge.chase-forge-builder .chase-builder-shell {
   display: grid !important;
   grid-template-columns: 280px minmax(0, 1fr) !important;
   width: 100% !important;
-  height: auto !important;
-  min-height: 100% !important;
-  overflow: visible !important;
-  align-items: start;
+  height: 100% !important;
+  min-height: 0 !important;
+  overflow: hidden !important;
+  align-items: stretch;
 }
 
 .pf2e-chase-forge.chase-forge-builder .chase-builder-sidebar {
   min-width: 0;
-  height: auto !important;
-  min-height: 100%;
-  overflow: visible !important;
+  height: 100% !important;
+  min-height: 0 !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  scrollbar-gutter: stable;
   border-right: 1px solid var(--chase-border);
   background: var(--chase-panel);
   padding: 14px;
@@ -134,10 +126,12 @@
   display: flex !important;
   flex-direction: column !important;
   width: 100%;
-  height: auto !important;
+  height: 100% !important;
   min-width: 0;
-  min-height: 0;
-  overflow: visible !important;
+  min-height: 0 !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  scrollbar-gutter: stable;
 }
 
 .chase-builder-toolbar {
@@ -554,42 +548,26 @@
   .chase-builder-approach { grid-template-columns: repeat(2, minmax(110px, 1fr)); }
 }
 
-.pf2e-chase-forge.chase-forge-builder .chase-builder-editor-scroll::-webkit-scrollbar,
+.pf2e-chase-forge.chase-forge-builder .chase-builder-main::-webkit-scrollbar,
 .pf2e-chase-forge.chase-forge-builder .chase-builder-sidebar::-webkit-scrollbar {
   width: 12px;
 }
 
-.pf2e-chase-forge.chase-forge-builder .chase-builder-editor-scroll::-webkit-scrollbar-track,
+.pf2e-chase-forge.chase-forge-builder .chase-builder-main::-webkit-scrollbar-track,
 .pf2e-chase-forge.chase-forge-builder .chase-builder-sidebar::-webkit-scrollbar-track {
   background: var(--chase-panel);
 }
 
-.pf2e-chase-forge.chase-forge-builder .chase-builder-editor-scroll::-webkit-scrollbar-thumb,
+.pf2e-chase-forge.chase-forge-builder .chase-builder-main::-webkit-scrollbar-thumb,
 .pf2e-chase-forge.chase-forge-builder .chase-builder-sidebar::-webkit-scrollbar-thumb {
   background: color-mix(in srgb, var(--chase-accent) 58%, var(--chase-panel));
   border: 2px solid var(--chase-panel);
   border-radius: 999px;
 }
 
-.pf2e-chase-forge.chase-forge-builder .chase-builder-editor-scroll::-webkit-scrollbar-thumb:hover,
+.pf2e-chase-forge.chase-forge-builder .chase-builder-main::-webkit-scrollbar-thumb:hover,
 .pf2e-chase-forge.chase-forge-builder .chase-builder-sidebar::-webkit-scrollbar-thumb:hover {
   background: color-mix(in srgb, var(--chase-accent) 78%, var(--chase-panel));
-}
-
-/* dev.7.4.2: the Foundry window-content element is the verified scroll viewport. */
-.pf2e-chase-forge.chase-forge-builder .window-content::-webkit-scrollbar {
-  width: 12px;
-}
-
-.pf2e-chase-forge.chase-forge-builder .window-content::-webkit-scrollbar-track {
-  background: color-mix(in srgb, var(--chase-panel) 60%, transparent);
-}
-
-.pf2e-chase-forge.chase-forge-builder .window-content::-webkit-scrollbar-thumb {
-  background: color-mix(in srgb, var(--chase-accent) 55%, var(--chase-panel));
-  border-radius: 999px;
-  border: 2px solid transparent;
-  background-clip: padding-box;
 }
 
 /* Weather Forge optional prefill integration */
@@ -769,6 +747,42 @@
   border-radius: 7px;
 }
 
+.chase-image-popout-button {
+  position: relative;
+  display: block;
+  width: 100%;
+  min-width: 0;
+  height: auto;
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 7px;
+  overflow: hidden;
+  background: transparent;
+  cursor: zoom-in;
+}
+
+.chase-image-popout-button:hover,
+.chase-image-popout-button:focus-visible {
+  outline: 2px solid var(--chase-accent, var(--color-warm-2, #d5b36a));
+  outline-offset: 2px;
+  box-shadow: none;
+}
+
+.chase-image-popout-hint {
+  position: absolute;
+  right: 8px;
+  bottom: 8px;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, .72);
+  color: white;
+  pointer-events: none;
+}
+
 .chase-runner-obstacle-body p { margin: 6px 0; }
 .chase-runner-progress-line { display: grid; gap: 5px; margin-top: 10px; }
 .chase-runner-progress-line progress { width: 100%; height: 13px; }
@@ -803,6 +817,16 @@
 .chase-runner-participant-name { display: flex; gap: 8px; align-items: center; }
 .chase-runner-participant-name img { width: 38px; height: 38px; object-fit: cover; border-radius: 50%; border: 1px solid var(--chase-border); }
 .chase-runner-participant-name small { display: block; opacity: .7; }
+.chase-runner-participant-result {
+  margin-top: 2px;
+  opacity: 1 !important;
+  font-weight: 700;
+}
+.chase-runner-participant-result.criticalSuccess,
+.chase-runner-participant-result.success,
+.chase-runner-participant-result.automatic { color: var(--chase-success); }
+.chase-runner-participant-result.criticalFailure,
+.chase-runner-participant-result.skipped { color: var(--chase-danger); }
 .chase-runner-participant-actions { justify-content: flex-end; }
 .chase-runner-participant-actions button { width: auto; }
 .chase-runner-manual select { min-width: 120px; }
@@ -1434,6 +1458,10 @@
 .chase-route-inspector-title h4 {
   margin: 2px 0 0;
   font-size: 1.08rem;
+  /* PF2e decorative heading fonts can replace ß/umlauts with fallback glyphs. */
+  font-family: inherit !important;
+  text-transform: none !important;
+  letter-spacing: normal;
 }
 
 .chase-route-inspector-title small {
@@ -1751,3 +1779,28 @@
 .pf2e-chase-journal-readonly {
   cursor: default;
 }
+
+/* dev.16.1 full-resolution runtime image controls */
+.chase-player-image-button {
+  height: 100%;
+  border-radius: 0;
+}
+.chase-player-image-button .chase-player-hero {
+  display: block;
+}
+
+
+/* dev.16.2: chase/ending visuals, pacing controls and terminal summaries */
+.chase-builder-group-head { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
+.chase-builder-endings { display: grid; gap: 0.75rem; }
+.chase-builder-ending { border: 1px solid var(--color-border-light-2, #7776); border-radius: 8px; padding: 0.75rem; background: rgba(0,0,0,0.08); }
+.chase-builder-ending-preview { width: 100%; max-height: 220px; object-fit: cover; border-radius: 6px; margin-bottom: 0.65rem; }
+.chase-runner-chase-image, .chase-player-chase-image { width: 100%; max-height: 260px; margin-bottom: 0.75rem; border-radius: 8px; overflow: hidden; }
+.chase-runner-chase-image img, .chase-player-chase-image img { width: 100%; max-height: 260px; object-fit: cover; display: block; }
+.chase-runner-completion, .chase-player-terminal.detailed { display: grid; grid-template-columns: minmax(180px, 38%) 1fr; gap: 1rem; align-items: center; padding: 1rem; border: 1px solid var(--color-border-highlight, #b79b62); border-radius: 10px; margin-bottom: 1rem; background: rgba(127, 96, 32, 0.12); }
+.chase-runner-ending-image, .chase-player-ending-image { width: 100%; max-height: 280px; border-radius: 8px; overflow: hidden; }
+.chase-runner-ending-image img, .chase-player-ending-image img { width: 100%; max-height: 280px; object-fit: cover; display: block; }
+.chase-completion-dialog-image { width: 100%; max-height: 360px; object-fit: contain; margin-bottom: 0.75rem; border-radius: 8px; }
+@media (max-width: 760px) { .chase-runner-completion, .chase-player-terminal.detailed { grid-template-columns: 1fr; } }
+
+.chase-runner-pill.turn-wait { opacity: .85; }

@@ -1,12 +1,29 @@
 # PF2E Chase Forge
 
-**Version:** 0.1.0-dev.15  
+**Version:** 0.1.0-dev.16  
 **Foundry VTT:** 14  
 **System:** Pathfinder 2e
 
-PF2E Chase Forge is a modular Pathfinder 2e chase framework for Foundry VTT. `0.1.0-dev.15` adds **Campaign Forge Integration Contract v1**, allowing Campaign Forge entries to reference, open, create, and directly start prepared Chase Blueprints or read-only Library chases without taking ownership of Chase data.
+PF2E Chase Forge is a modular Pathfinder 2e chase framework for Foundry VTT. `0.1.0-dev.16` hardens the Campaign Forge runtime workflow so linked chases remain traceable across start, completion, abort, relinking, and missing-target cases without transferring ownership of Chase data.
 
 The underlying architecture remains intact: DAG route graphs, synchronized GM/Player runtime views, add-on registries, template-based generation, the 72-card Core Library, the shared Visual System, PF2e chase rules, consequence orchestration, optional Critical Forge / Effect Forge integration, Weather Forge prefill, and protected restart-safe Blueprint/Session persistence.
+
+
+## dev.16 Campaign Forge Runtime & Lifecycle Hardening
+
+Campaign-started chases now expose a live `getLatestRun()` summary in addition to completed `ChaseResult` lookup. The run summary can distinguish active, paused, completed, and aborted attempts and is filtered by Campaign entry and external-link provenance, preventing an old result from a removed/recreated link from masquerading as the current attempt.
+
+World and Library starts remain independent Session snapshots. Repeated starts create distinct Sessions, Library definitions stay immutable, and a GM Runner rendering failure no longer rolls back or hides an already-started Chase. Missing or disabled targets continue to fail explicitly before any Session is created.
+
+Session Lifecycle Contract v1 remains stable and now includes additive top-level `outcome` and `terminal` fields. Aborted Campaign runs therefore report `outcome: "aborted"` immediately through the existing lifecycle hook channel.
+
+```js
+const forge = game.modules.get("pf2e-chase-forge")?.api;
+const latest = await forge.integrations.campaignForge.getLatestRun("blueprint", "blueprint-id", {
+  entryId: "quest-1",
+  linkId: "external-1"
+});
+```
 
 ## dev.15 Campaign Forge Integration
 

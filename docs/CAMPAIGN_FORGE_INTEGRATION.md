@@ -83,10 +83,15 @@ Consumers can retrieve results without copying them into their own domain storag
 
 ```js
 await chase.integrations.campaignForge.getResult(sessionId);
-await chase.integrations.campaignForge.getLatestResult(kind, targetId, { entryId });
+await chase.integrations.campaignForge.getLatestResult(kind, targetId, { entryId, linkId });
+await chase.integrations.campaignForge.getLatestRun(kind, targetId, { entryId, linkId });
 ```
 
 Chase Forge does not automatically complete quests, change Campaign entry status, or execute Campaign transitions. Campaign Forge remains authoritative for campaign progression.
+
+`getLatestRun()` is run-aware rather than result-only. It returns the newest Campaign-started Session matching the target and optional entry/link provenance, with `status`, `outcome`, terminal timestamps, and the completed ChaseResult when one exists. An aborted Session reports `outcome: "aborted"` even though Chase Forge does not fabricate a persisted ChaseResult for aborts.
+
+Passing `linkId` is recommended for Campaign entry UI. If a link is removed and later recreated for the same Chase target, the new link does not inherit the old link's displayed result.
 
 ## Session Lifecycle Hook Contract v1
 
@@ -118,6 +123,8 @@ Payload schema:
   sessionReference,
   blueprintId,
   status,
+  outcome,  // additive: completed outcome or "aborted"
+  terminal, // additive terminal-state hint
   chaseName,
   campaign,
   session, // compact lifecycle summary

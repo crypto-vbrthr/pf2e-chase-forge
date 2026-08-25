@@ -118,6 +118,40 @@ function publicEvent(event) {
   };
 }
 
+async function resolveBlueprintImage(api, session) {
+  try {
+    const image = await api?.images?.resolveBlueprint?.(session?.blueprintSnapshot);
+    if (image?.path) return { path: image.path, alt: image.alt || session?.blueprintSnapshot?.image?.alt || session?.blueprintSnapshot?.name || "" };
+  } catch { /* manual fallback */ }
+  const image = session?.blueprintSnapshot?.image ?? {};
+  return image?.path ? { path: image.path, alt: image.alt || session?.blueprintSnapshot?.name || "" } : null;
+}
+
+function terminalPublicSummary(session, visibleGroups, chaseImage = null) {
+  if (!["completed", "aborted"].includes(session?.status)) return null;
+  const completed = [...(session?.events ?? [])].reverse().find(item => item?.type === "chaseCompleted") ?? null;
+  const aborted = [...(session?.events ?? [])].reverse().find(item => item?.type === "sessionAborted") ?? null;
+  const outcome = completed?.outcome ?? (aborted ? "aborted" : null);
+  const winnerIds = completed?.winnerGroupIds ?? [];
+  const loserIds = completed?.loserGroupIds ?? [];
+  const endingNodeId = session?.groups?.find(group => winnerIds.includes(group.id))?.position?.nodeId
+    ?? session?.groups?.find(group => loserIds.includes(group.id))?.position?.nodeId
+    ?? null;
+  const endingNode = session?.blueprintSnapshot?.graph?.nodes?.find(node => node.id === endingNodeId) ?? null;
+  const endingImage = endingNode?.image?.path ? { path: endingNode.image.path, alt: endingNode.image.alt || endingNode.label || session?.blueprintSnapshot?.name || "" } : chaseImage;
+  const byRuntimeId = new Map(visibleGroups.map(group => [group.runtimeGroupId, group]));
+  return {
+    outcome,
+    reason: completed?.reason ?? (aborted ? "aborted" : null),
+    winnerNames: winnerIds.map(id => byRuntimeId.get(id)?.name).filter(Boolean),
+    loserNames: loserIds.map(id => byRuntimeId.get(id)?.name).filter(Boolean),
+    endingNodeId,
+    endingLabel: endingNode?.label || "",
+    endingDescription: endingNode?.description || "",
+    image: endingImage
+  };
+}
+
 export async function projectChasePublicState(api, session, {
   user = globalThis.game?.user ?? null,
   fromUuid = globalThis.fromUuid
@@ -131,6 +165,7 @@ export async function projectChasePublicState(api, session, {
 
   for (const runtimeGroup of session.groups ?? []) {
     const definition = resolveBlueprintGroup(session, runtimeGroup);
+    const groupTurnAllowed = api?.rules?.canGroupAct?.(session, runtimeGroup.id) ?? true;
     if (definition?.public === false) continue;
     const node = currentNode(session, runtimeGroup);
     let card = null;
@@ -158,7 +193,7 @@ export async function projectChasePublicState(api, session, {
         skipped: session.roundState?.skippedParticipantIds?.includes?.(participantId) === true,
         controlled: owned
       });
-      if (owned && activeRound && runtimeGroup.rules?.paceMode === "roll" && !runtimeGroup.completed && !acted && card && !cleared) {
+      if (owned && activeRound && groupTurnAllowed && runtimeGroup.rules?.paceMode === "roll" && !runtimeGroup.completed && !acted && card && !cleared) {
         for (const approach of card.approaches ?? []) {
           if (!approach.statistic || approach.type !== "check") continue;
           const ready = (approach.dc?.mode ?? "gm") !== "gm" || storedGmDc(session, card.id, approach.id) !== null;
@@ -213,6 +248,7 @@ export async function projectChasePublicState(api, session, {
       } : null,
       participants,
       routeChoiceAvailable,
+      turnBlocked: activeRound && runtimeGroup.rules?.paceMode === "roll" && !runtimeGroup.completed && !groupTurnAllowed,
       routes: groupControlled ? safeTransitions : []
     });
   }
@@ -228,6 +264,9 @@ export async function projectChasePublicState(api, session, {
 
   const log = (session.events ?? []).slice(-12).map(publicEvent).filter(Boolean);
   const firstOwnedGroup = groups.find(group => group.participants.some(participant => participant.controlled)) ?? groups[0] ?? null;
+
+  const chaseImage = await resolveBlueprintImage(api, session);
+  const terminalSummary = terminalPublicSummary(session, groups, chaseImage);
 
   return createChasePublicState({
     sessionId: session.id,
@@ -248,6 +287,8 @@ export async function projectChasePublicState(api, session, {
       roundPhase: session.roundState?.phase ?? "idle",
       timeOfDay: session.blueprintSnapshot?.settings?.timeOfDay ?? null,
       weather: cloneData(session.blueprintSnapshot?.settings?.weather ?? null),
+      chaseImage: cloneData(chaseImage),
+      terminalSummary: cloneData(terminalSummary),
       projectedForUserId: user?.id ?? null
     }
   });

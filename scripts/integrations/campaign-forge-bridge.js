@@ -56,6 +56,47 @@ function graphSummary(blueprint) {
   };
 }
 
+function activityTimestamp(value) {
+  return String(value?.endedAt ?? value?.updatedAt ?? value?.startedAt ?? value?.createdAt ?? "");
+}
+
+function latestActivity(values = []) {
+  return values
+    .map((value, index) => ({ value, index }))
+    .sort((a, b) => activityTimestamp(b.value).localeCompare(activityTimestamp(a.value)) || b.index - a.index)[0]?.value ?? null;
+}
+
+function campaignMatches(campaign, { kind, targetId, entryId = null, linkId = null } = {}) {
+  if (!campaign || typeof campaign !== "object") return false;
+  if (campaign.provider && campaign.provider !== CHASE_CAMPAIGN_PROVIDER_ID) return false;
+  if (campaign.targetKind !== normalizeKind(kind)) return false;
+  if (String(campaign.targetId ?? "") !== String(targetId ?? "")) return false;
+  if (entryId && String(campaign.entryId ?? "") !== String(entryId)) return false;
+  if (linkId && String(campaign.linkId ?? "") !== String(linkId)) return false;
+  return true;
+}
+
+function runDescriptor(session, result = null) {
+  if (!session) return null;
+  const status = String(session.status ?? "");
+  const outcome = result?.outcome ?? (status === "aborted" ? "aborted" : null);
+  return frozen({
+    sessionId: session.id,
+    sessionReference: createChaseReference("session", session.id),
+    blueprintId: session.blueprintId ?? null,
+    status,
+    outcome,
+    terminal: status === "completed" || status === "aborted",
+    startedAt: session.startedAt ?? null,
+    pausedAt: session.pausedAt ?? null,
+    endedAt: session.endedAt ?? result?.endedAt ?? null,
+    updatedAt: session.updatedAt ?? null,
+    campaign: cloneData(session.metadata?.campaign ?? result?.metadata?.campaign ?? null),
+    result: result ? cloneData(result) : null,
+    resultReference: result?.id ? createChaseReference("result", result.id) : null
+  });
+}
+
 function descriptor(kind, blueprint) {
   const targetKind = normalizeKind(kind);
   const id = String(blueprint?.id ?? "");
@@ -211,7 +252,13 @@ export function createCampaignForgeBridge({ getApi = () => globalThis.game?.modu
       try { await api.sync?.publishSession?.(session, { open: true }); }
       catch { /* Campaign-started Chases remain valid without a connected player socket. */ }
     }
-    if (openRunner) await api.ui?.openRunner?.({ sessionId: session.id });
+    if (openRunner) {
+      try { await api.ui?.openRunner?.({ sessionId: session.id }); }
+      catch (error) {
+        console.warn(`${MODULE_ID} | Campaign-started Chase '${session.id}' is active, but the GM Runner could not be opened.`, error);
+        notify("warn", format("PF2E_CHASE_FORGE.Campaign.RunnerOpenFailed", { name: blueprint.name }, `${blueprint.name} wurde gestartet, aber der GM-Runner konnte nicht geöffnet werden.`));
+      }
+    }
 
     notify("info", format("PF2E_CHASE_FORGE.Campaign.Started", { name: blueprint.name }, `${blueprint.name} gestartet.`));
     return frozen({
@@ -230,20 +277,38 @@ export function createCampaignForgeBridge({ getApi = () => globalThis.game?.modu
     return result ? frozen({ ...result, reference: createChaseReference("result", result.id) }) : null;
   }
 
-  async function getLatestResult(kind, targetId, { entryId = null } = {}) {
+  async function getLatestResult(kind, targetId, { entryId = null, linkId = null } = {}) {
     requireGm();
     const targetKind = normalizeKind(kind);
     const id = String(targetId ?? "");
     const results = await getApi()?.persistence?.results?.list?.({ blueprintId: id }) ?? [];
-    const filtered = results.filter(result => {
-      const campaign = result?.metadata?.campaign;
-      if (campaign?.targetKind && campaign.targetKind !== targetKind) return false;
-      if (entryId && campaign?.entryId !== entryId) return false;
-      return true;
-    });
-    filtered.sort((a, b) => String(b.endedAt ?? "").localeCompare(String(a.endedAt ?? "")));
-    const result = filtered[0] ?? null;
+    const filtered = results.filter(result => campaignMatches(result?.metadata?.campaign, {
+      kind: targetKind,
+      targetId: id,
+      entryId,
+      linkId
+    }));
+    const result = latestActivity(filtered);
     return result ? frozen({ ...result, reference: createChaseReference("result", result.id) }) : null;
+  }
+
+  async function getLatestRun(kind, targetId, { entryId = null, linkId = null } = {}) {
+    requireGm();
+    const targetKind = normalizeKind(kind);
+    const id = String(targetId ?? "");
+    const sessions = await getApi()?.persistence?.sessions?.list?.({ blueprintId: id }) ?? [];
+    const filtered = sessions.filter(session => campaignMatches(session?.metadata?.campaign, {
+      kind: targetKind,
+      targetId: id,
+      entryId,
+      linkId
+    }));
+    const session = latestActivity(filtered);
+    if (!session) return null;
+    const result = session.status === "completed"
+      ? (await getApi()?.persistence?.results?.list?.({ sessionId: session.id }) ?? [])[0] ?? null
+      : null;
+    return runDescriptor(session, result);
   }
 
   async function linkToCampaignEntry(entryId, kind, targetId, { label = null, meta = {} } = {}) {
@@ -283,6 +348,7 @@ export function createCampaignForgeBridge({ getApi = () => globalThis.game?.modu
     start,
     getResult,
     getLatestResult,
+    getLatestRun,
     linkToCampaignEntry
   });
 }

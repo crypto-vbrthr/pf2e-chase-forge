@@ -1,5 +1,6 @@
 import { MODULE_ID } from "../core/constants.js";
 import { cloneData } from "../data/utils.js";
+import { openChaseImage } from "../images/image-popout.js";
 import { createChaseChatPresenter } from "../presentation/chat-presenter.js";
 
 export const GM_RUNNER_CONTRACT_VERSION = 1;
@@ -30,7 +31,8 @@ function optionLabel(value) {
     active: "Aktiv", paused: "Pausiert", draft: "Entwurf", completed: "Beendet", aborted: "Abgebrochen",
     criticalSuccess: "Kritischer Erfolg", success: "Erfolg", failure: "Fehlschlag", criticalFailure: "Kritischer Fehlschlag",
     pendingConfirmation: "Bestätigung ausstehend", pendingSelection: "Auswahl ausstehend", manualFallback: "Manuell anwenden",
-    blocked: "Blockiert", failed: "Fehlgeschlagen", applied: "Angewendet", skipped: "Übersprungen"
+    blocked: "Blockiert", failed: "Fehlgeschlagen", applied: "Angewendet", skipped: "Übersprungen",
+    quarryEscaped: "Flüchtige entkommen", quarryCaught: "Flüchtige eingeholt", goalReached: "Ziel erreicht", timeExpired: "Zeit abgelaufen", raceWon: "Rennen gewonnen", aborted: "Abgebrochen"
   };
   const fallback = map[value] ?? value ?? "";
   return i18n(`PF2E_CHASE_FORGE.Runner.Label.${value}`, fallback);
@@ -120,8 +122,90 @@ function degreeOptions(selected = "success") {
   return ["criticalSuccess", "success", "failure", "criticalFailure"].map(value => ({ value, selected: value === selected, label: optionLabel(value) }));
 }
 
+function signedPoints(value) {
+  const amount = Number(value ?? 0);
+  return amount > 0 ? `+${amount}` : String(amount);
+}
+
+function lastParticipantResult(session, runtimeGroupId, participantId) {
+  const currentRound = Number(session?.round ?? 0);
+  const record = [...(session?.events ?? [])].reverse().find(item =>
+    item?.round === currentRound
+    && item?.runtimeGroupId === runtimeGroupId
+    && item?.participantId === participantId
+    && ["checkResolved", "automaticContribution", "participantSkipped"].includes(item?.type)
+  );
+  if (!record) return null;
+
+  const pointsKey = "PF2E_CHASE_FORGE.Runner.ChasePointsShort";
+  const pointsLabel = i18n(pointsKey, "VP");
+  if (record.type === "checkResolved") {
+    const degree = optionLabel(record.degree);
+    const delta = Number(record.chasePointDelta ?? 0);
+    return {
+      type: record.degree ?? "check",
+      label: `${degree} · ${signedPoints(delta)} ${pointsLabel}`,
+      degree: record.degree ?? null,
+      chasePointDelta: delta
+    };
+  }
+  if (record.type === "automaticContribution") {
+    const delta = Number(record.points ?? 0);
+    return {
+      type: "automatic",
+      label: `${i18n("PF2E_CHASE_FORGE.Runner.AutomaticResult", "Automatisch")} · ${signedPoints(delta)} ${pointsLabel}`,
+      degree: null,
+      chasePointDelta: delta
+    };
+  }
+  const delta = Number(record.penalty ?? 0);
+  return {
+    type: "skipped",
+    label: `${i18n("PF2E_CHASE_FORGE.Runner.Skipped", "Ausgesetzt")} · ${signedPoints(delta)} ${pointsLabel}`,
+    degree: null,
+    chasePointDelta: delta
+  };
+}
+
 function groupCurrentNode(session, runtimeGroup) {
   return session?.blueprintSnapshot?.graph?.nodes?.find(node => node.id === runtimeGroup?.position?.nodeId) ?? null;
+}
+
+async function resolveBlueprintImage(api, session) {
+  try {
+    const image = await api?.images?.resolveBlueprint?.(session?.blueprintSnapshot);
+    if (image?.path) return { path: image.path, alt: image.alt || session?.blueprintSnapshot?.image?.alt || session?.blueprintSnapshot?.name || "" };
+  } catch { /* manual fallback */ }
+  const image = session?.blueprintSnapshot?.image ?? {};
+  return image?.path ? { path: image.path, alt: image.alt || session?.blueprintSnapshot?.name || "" } : null;
+}
+
+function terminalSummary(session, chaseImage = null) {
+  if (!["completed", "aborted"].includes(session?.status)) return null;
+  const completed = [...(session?.events ?? [])].reverse().find(item => item?.type === "chaseCompleted") ?? null;
+  const aborted = [...(session?.events ?? [])].reverse().find(item => item?.type === "sessionAborted") ?? null;
+  const outcome = completed?.outcome ?? (aborted ? "aborted" : null);
+  const winnerIds = completed?.winnerGroupIds ?? [];
+  const loserIds = completed?.loserGroupIds ?? [];
+  const endingNodeId = session?.groups?.find(group => winnerIds.includes(group.id))?.position?.nodeId
+    ?? session?.groups?.find(group => loserIds.includes(group.id))?.position?.nodeId
+    ?? null;
+  const endingNode = session?.blueprintSnapshot?.graph?.nodes?.find(node => node.id === endingNodeId) ?? null;
+  const image = endingNode?.image?.path ? { path: endingNode.image.path, alt: endingNode.image.alt || endingNode.label || session?.blueprintSnapshot?.name || "" } : chaseImage;
+  const names = ids => ids.map(id => {
+    const runtime = session?.groups?.find(group => group.id === id);
+    return resolveBlueprintGroup(session, runtime)?.name || runtime?.groupId || id;
+  });
+  return { outcome, outcomeLabel: optionLabel(outcome), reason: completed?.reason ?? (aborted ? "aborted" : null), winnerNames: names(winnerIds), loserNames: names(loserIds), endingNodeId, endingLabel: endingNode?.label || "", endingDescription: endingNode?.description || "", image };
+}
+
+async function bringRunnerToFront(app) {
+  try { app?.bringToFront?.(); } catch { /* compatibility */ }
+  await new Promise(resolve => (globalThis.requestAnimationFrame ? requestAnimationFrame(() => resolve()) : setTimeout(resolve, 0)));
+  const element = app?.element ?? null;
+  if (!element) return;
+  try { element.setAttribute?.("tabindex", "-1"); } catch { /* ignore */ }
+  try { element.focus?.({ preventScroll: true }); } catch { try { element.focus?.(); } catch { /* ignore */ } }
 }
 
 function routeLabel(session, edge) {
@@ -178,7 +262,8 @@ function getAppClass() {
         confirmConsequence: this._actionConfirmConsequence,
         selectConsequenceRoute: this._actionSelectConsequenceRoute,
         refreshRunner: this._actionRefreshRunner,
-        syncPlayers: this._actionSyncPlayers
+        syncPlayers: this._actionSyncPlayers,
+        openImage: this._actionOpenImage
       }
     };
 
@@ -189,6 +274,7 @@ function getAppClass() {
       this.chaseApi = chaseApi;
       this.sessionId = sessionId;
       this._session = null;
+      this._completionShown = false;
       this.chat = createChaseChatPresenter();
     }
 
@@ -245,13 +331,15 @@ function getAppClass() {
             needsGmDc: (approach.dc?.mode ?? "gm") === "gm"
           };
         });
+        const groupTurnAllowed = this.chaseApi.rules.canGroupAct?.(session, runtimeGroup.id) ?? true;
         const participants = runtimeGroup.participantIds.map(participantId => {
           const participant = resolveParticipant(session, participantId) ?? { id: participantId, name: participantId, uuid: null, image: null };
           return {
             ...cloneData(participant),
             acted: session.roundState.actedParticipantIds.includes(participantId),
             skipped: session.roundState.skippedParticipantIds.includes(participantId),
-            canAct: activeRound && runtimeGroup.rules.paceMode === "roll" && !runtimeGroup.completed && !session.roundState.actedParticipantIds.includes(participantId),
+            canAct: activeRound && groupTurnAllowed && runtimeGroup.rules.paceMode === "roll" && !runtimeGroup.completed && !session.roundState.actedParticipantIds.includes(participantId),
+            lastResult: lastParticipantResult(session, runtimeGroup.id, participantId),
             degreeOptions: degreeOptions("success"),
             manualApproaches: approaches.map(approach => ({ value: approach.id, label: approach.label || approach.statistic || approach.id }))
           };
@@ -280,6 +368,7 @@ function getAppClass() {
           hasOutgoingEdges: outgoingEdges.length > 0,
           obstacleIndex,
           routeChoiceAvailable,
+          turnBlocked: activeRound && runtimeGroup.rules.paceMode === "roll" && !runtimeGroup.completed && !groupTurnAllowed,
           paceLabel: runtimeGroup.rules.paceMode === "steady" ? "Konstantes Tempo" : "Proben",
           statusLabel: runtimeGroup.completed ? "Am Ziel" : (node?.type === "card" ? "Am Hindernis" : (node?.type === "choice" ? "Wegentscheidung" : node?.type ?? "Unterwegs"))
         });
@@ -297,6 +386,8 @@ function getAppClass() {
           })
         };
       });
+      const chaseImage = await resolveBlueprintImage(this.chaseApi, session);
+      const completion = terminalSummary(session, chaseImage);
       return {
         session: cloneData(session),
         title: session.blueprintSnapshot?.name ?? session.id,
@@ -308,6 +399,8 @@ function getAppClass() {
         canPause: session.status === "active",
         canResume: session.status === "paused",
         terminal: ["completed", "aborted"].includes(session.status),
+        chaseImage,
+        completion,
         consequenceRecords,
         hasConsequences: consequenceRecords.length > 0,
         weather: session.blueprintSnapshot?.settings?.weather?.label ?? session.blueprintSnapshot?.settings?.weather ?? null,
@@ -343,12 +436,30 @@ function getAppClass() {
       }
     }
 
+    async _showCompletion(completedSession, outcome) {
+      if (this._completionShown || !outcome?.ended) return;
+      this._completionShown = true;
+      const summary = terminalSummary(completedSession, await resolveBlueprintImage(this.chaseApi, completedSession));
+      notify("info", format("PF2E_CHASE_FORGE.Runner.ChaseFinishedNotice", { result: summary?.outcomeLabel ?? outcome.outcome }, `Verfolgungsjagd beendet: ${summary?.outcomeLabel ?? outcome.outcome}`));
+      const DialogV2 = globalThis.foundry?.applications?.api?.DialogV2;
+      if (!DialogV2?.wait) return;
+      const image = summary?.image?.path ? `<img class="chase-completion-dialog-image" src="${summary.image.path}" alt="">` : "";
+      const winners = summary?.winnerNames?.length ? `<p><strong>${i18n("PF2E_CHASE_FORGE.Runner.Winners", "Sieger")}:</strong> ${summary.winnerNames.join(", ")}</p>` : "";
+      const ending = summary?.endingDescription ? `<p>${summary.endingDescription}</p>` : "";
+      await DialogV2.wait({
+        window: { title: i18n("PF2E_CHASE_FORGE.Runner.ChaseFinished", "Verfolgungsjagd beendet") },
+        content: `<div class="chase-completion-dialog">${image}<h3>${summary?.outcomeLabel ?? outcome.outcome}</h3>${ending}${winners}</div>`,
+        buttons: [{ action: "close", label: i18n("PF2E_CHASE_FORGE.Common.Close", "Schließen"), default: true }]
+      }).catch(() => null);
+    }
+
     async _saveOrFinish(session, options = {}) {
       const persisted = await maybePersistOutcome(this.chaseApi, session, options);
       this._session = persisted.session;
       await this.chaseApi.sync?.publishSession?.(persisted.session, { open: true });
       if (persisted.completed) {
-        await this.chat.postEvent({ title: "Verfolgungsjagd beendet", text: `Ergebnis: ${persisted.outcome.outcome}` }, { flags: { sessionId: session.id } }).catch(() => null);
+        await this.chat.postEvent({ title: i18n("PF2E_CHASE_FORGE.Runner.ChaseFinished", "Verfolgungsjagd beendet"), text: `${i18n("PF2E_CHASE_FORGE.Runner.Result", "Ergebnis")}: ${optionLabel(persisted.outcome.outcome)}` }, { flags: { sessionId: session.id } }).catch(() => null);
+        await this._showCompletion(persisted.session, persisted.outcome);
       }
       await refreshOpenBuilder(this.chaseApi);
       return persisted;
@@ -374,9 +485,7 @@ function getAppClass() {
           return this.render({ force: true });
         }
         session = this.chaseApi.rules.beginRound(session);
-        await this.chaseApi.sessionManager.saveSession(session);
-        await this.chaseApi.sync?.publishSession?.(session, { open: true });
-        this._session = session;
+        await this._saveOrFinish(session, { phase: "immediate" });
         return this.render({ force: true });
       } catch (error) { console.error(error); notify("error", error.message); }
     }
@@ -498,7 +607,7 @@ function getAppClass() {
     static async _actionChooseRoute(_event, target) {
       try {
         const session = await this.chaseApi.sessionManager.getSession(this.sessionId);
-        const result = this.chaseApi.rules.chooseRoute(session, target.dataset.runtimeGroupId, target.dataset.edgeId);
+        const result = this.chaseApi.rules.chooseRoute(session, { runtimeGroupId: target.dataset.runtimeGroupId, edgeId: target.dataset.edgeId });
         await this._saveOrFinish(result.session);
         return this.render({ force: true });
       } catch (error) { console.error(error); notify("error", error.message); }
@@ -552,6 +661,15 @@ function getAppClass() {
       } catch (error) { console.error(error); notify("error", error.message); }
     }
 
+    static async _actionOpenImage(_event, target) {
+      try {
+        return await openChaseImage(target.dataset.imageSrc, { title: target.dataset.imageTitle || "" });
+      } catch (error) {
+        console.error(`${MODULE_ID} | Chase image popout failed.`, error);
+        notify("error", error?.message ?? String(error));
+      }
+    }
+
     static async _actionRefreshRunner() { return this.render({ force: true }); }
 
     static async _actionSyncPlayers() {
@@ -589,6 +707,7 @@ export function createChaseRunnerUiService({ getApi = () => globalThis.game?.mod
       }
       await app.render({ force: true });
       await chaseApi.sync?.publishSession?.(session, { open: true });
+      await bringRunnerToFront(app);
       return app;
     },
     getOpenRunner(sessionId) { return openRunnerApps.get(sessionId) ?? null; },

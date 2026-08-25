@@ -255,7 +255,8 @@ export function createPublicApi({ registries = createRegistryService(), persiste
       campaignForgeAvailable: campaignForgeBridge.inspect().compatible,
       campaignPreparedChases: true,
       campaignDirectStart: true,
-      campaignResultReturn: true
+      campaignResultReturn: true,
+      campaignRunStatus: true
     }),
     factories: Object.freeze({
       card: createChaseCard,

@@ -20,6 +20,8 @@ function lifecyclePayload(session, { result = null, deleted = false } = {}) {
     sessionReference: session?.id ? createChaseReference("session", session.id) : null,
     blueprintId: session?.blueprintId ?? result?.blueprintId ?? null,
     status: deleted ? "deleted" : session?.status ?? null,
+    outcome: result?.outcome ?? (session?.status === "aborted" ? "aborted" : null),
+    terminal: session?.status === "completed" || session?.status === "aborted" || deleted,
     chaseName: session?.blueprintSnapshot?.name ?? null,
     campaign,
     session: session ? Object.freeze({

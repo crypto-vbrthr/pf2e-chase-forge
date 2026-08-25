@@ -104,11 +104,131 @@ test("Campaign integration is optional, capability-detected, and exposed as Cont
   const env = installGame({ campaignApi: { apiVersion: 1, stability: "stable", addExternalLink() {}, removeExternalLink() {}, integrations: { getStatus() {} } } });
   try {
     const api = createPublicApi();
-    assert.equal(api.version, 15);
+    assert.equal(api.version, 16);
     assert.equal(api.contracts.campaignForgeIntegration, CHASE_CAMPAIGN_INTEGRATION_CONTRACT_VERSION);
     assert.equal(api.getCapabilities().campaignForgeBridge, true);
     assert.equal(api.getCapabilities().campaignForgeAvailable, true);
     assert.equal(api.hooks.started, CHASE_LIFECYCLE_HOOKS.started);
     assert.equal(inspectCampaignForgeApi(globalThis.game.modules.get("campaign-forge").api).compatible, true);
+  } finally { env.cleanup(); }
+});
+
+test("Campaign runtime starts are independent and never mutate world or Library source content", async () => {
+  const env = installGame();
+  try {
+    const api = createPublicApi({ ui: { async openRunner() {} }, sync: { async publishSession() {} } });
+    await api.persistence.blueprints.create(sampleBlueprint());
+    const worldBefore = await api.persistence.blueprints.get("blueprint-1");
+    const first = await api.integrations.campaignForge.start("blueprint", "blueprint-1", {
+      campaign: { entryId: "quest-repeat", linkId: "link-repeat" }
+    });
+    const second = await api.integrations.campaignForge.start("blueprint", "blueprint-1", {
+      campaign: { entryId: "quest-repeat", linkId: "link-repeat" }
+    });
+    assert.notEqual(first.sessionId, second.sessionId);
+    assert.deepEqual(await api.persistence.blueprints.get("blueprint-1"), worldBefore);
+
+    api.extensions.forModule("campaign-addon").registerPack({
+      id: "runtime-library", label: "Runtime Library", cards: [], templates: [], imageProviders: [],
+      blueprints: [sampleBlueprint(undefined, { id: "library-runtime", name: "Library Runtime" })]
+    });
+    const libraryId = "campaign-addon:library-runtime";
+    const libraryBefore = api.library.get(libraryId);
+    const libraryStart = await api.integrations.campaignForge.start("library", libraryId, {
+      campaign: { entryId: "quest-library", linkId: "link-library" }
+    });
+    assert.equal(libraryStart.session.metadata.libraryOrigin.blueprintId, libraryId);
+    assert.deepEqual(api.library.get(libraryId), libraryBefore);
+  } finally { env.cleanup(); }
+});
+
+test("Campaign runtime target loss is explicit and Runner-open failures do not roll back an active Chase", async () => {
+  const env = installGame();
+  try {
+    const api = createPublicApi({
+      ui: { async openRunner() { throw new Error("runner render failed"); } },
+      sync: { async publishSession() {} }
+    });
+    await api.persistence.blueprints.create(sampleBlueprint());
+    const started = await api.integrations.campaignForge.start("blueprint", "blueprint-1", {
+      campaign: { entryId: "event-runtime", linkId: "link-runtime" }
+    });
+    assert.equal(started.session.status, "active");
+    assert.equal((await api.sessionManager.getSession(started.sessionId)).status, "active");
+    await assert.rejects(
+      () => api.integrations.campaignForge.start("blueprint", "deleted-target", { campaign: { entryId: "event-runtime" } }),
+      error => error.code === "CHASE_CAMPAIGN_TARGET_INVALID"
+    );
+  } finally { env.cleanup(); }
+});
+
+test("Campaign result lookup is isolated by current external-link provenance and latest run reports aborts", async () => {
+  const env = installGame();
+  try {
+    const api = createPublicApi({ ui: { async openRunner() {} }, sync: { async publishSession() {} } });
+    await api.persistence.blueprints.create(sampleBlueprint());
+
+    const oldRun = await api.integrations.campaignForge.start("blueprint", "blueprint-1", {
+      campaign: { entryId: "quest-relink", linkId: "old-link" }
+    });
+    const completed = await api.sessionManager.finishSession(oldRun.sessionId, {
+      ended: true,
+      outcome: "goalReached",
+      endingNodeId: "end",
+      winnerGroupIds: [],
+      loserGroupIds: [],
+      reason: "test",
+      details: {}
+    });
+
+    const currentRun = await api.integrations.campaignForge.start("blueprint", "blueprint-1", {
+      campaign: { entryId: "quest-relink", linkId: "new-link" }
+    });
+    await api.sessionManager.abortSession(currentRun.sessionId);
+
+    assert.equal((await api.integrations.campaignForge.getLatestResult("blueprint", "blueprint-1", {
+      entryId: "quest-relink", linkId: "old-link"
+    })).id, completed.result.id);
+    assert.equal(await api.integrations.campaignForge.getLatestResult("blueprint", "blueprint-1", {
+      entryId: "quest-relink", linkId: "new-link"
+    }), null);
+
+    const latestCurrent = await api.integrations.campaignForge.getLatestRun("blueprint", "blueprint-1", {
+      entryId: "quest-relink", linkId: "new-link"
+    });
+    assert.equal(latestCurrent.sessionId, currentRun.sessionId);
+    assert.equal(latestCurrent.status, "aborted");
+    assert.equal(latestCurrent.outcome, "aborted");
+    assert.equal(latestCurrent.terminal, true);
+    assert.equal(latestCurrent.result, null);
+
+    const latestEntry = await api.integrations.campaignForge.getLatestRun("blueprint", "blueprint-1", {
+      entryId: "quest-relink"
+    });
+    assert.equal(latestEntry.sessionId, currentRun.sessionId);
+    const abortedHook = env.hooks.find(call => call.name === CHASE_LIFECYCLE_HOOKS.aborted && call.payload.sessionId === currentRun.sessionId);
+    assert.equal(abortedHook.payload.outcome, "aborted");
+    assert.equal(abortedHook.payload.terminal, true);
+  } finally { env.cleanup(); }
+});
+
+test("Campaign result lookup excludes non-Campaign results even when they share the same Blueprint", async () => {
+  const env = installGame();
+  try {
+    const api = createPublicApi({ ui: { async openRunner() {} }, sync: { async publishSession() {} } });
+    await api.persistence.blueprints.create(sampleBlueprint());
+    const plainDraft = await api.sessionManager.createSession("blueprint-1");
+    await api.sessionManager.startSession(plainDraft.id);
+    await api.sessionManager.finishSession(plainDraft.id, {
+      ended: true,
+      outcome: "quarryCaught",
+      endingNodeId: "end",
+      winnerGroupIds: [],
+      loserGroupIds: [],
+      reason: "plain",
+      details: {}
+    });
+    assert.equal(await api.integrations.campaignForge.getLatestResult("blueprint", "blueprint-1"), null);
+    assert.equal(await api.integrations.campaignForge.getLatestRun("blueprint", "blueprint-1"), null);
   } finally { env.cleanup(); }
 });

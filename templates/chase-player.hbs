@@ -18,6 +18,13 @@
     {{else}}
       {{#if pending}}<div class="chase-player-pending"><i class="fa-solid fa-spinner fa-spin"></i> {{localize "PF2E_CHASE_FORGE.Player.Pending"}}</div>{{/if}}
 
+      {{#if chaseImage.path}}
+        <button type="button" class="chase-image-popout-button chase-player-chase-image" data-action="openImage" data-image-src="{{chaseImage.path}}" data-image-title="{{chaseImage.alt}}" title="{{localize 'PF2E_CHASE_FORGE.Images.OpenFull'}}">
+          <img src="{{chaseImage.path}}" alt="{{chaseImage.alt}}">
+          <span class="chase-image-popout-hint"><i class="fa-solid fa-magnifying-glass-plus"></i></span>
+        </button>
+      {{/if}}
+
       {{#if hasEffects}}
         <section class="chase-player-effects">
           <h3><i class="fa-solid fa-wand-magic-sparkles"></i> {{localize "PF2E_CHASE_FORGE.Player.Effects"}}</h3>
@@ -37,7 +44,10 @@
           {{#if group.hasObstacle}}
             <article class="chase-player-obstacle">
               {{#if group.obstacle.image.path}}
-                <img class="chase-player-hero" src="{{group.obstacle.image.path}}" alt="{{group.obstacle.image.alt}}">
+                <button type="button" class="chase-image-popout-button chase-player-image-button" data-action="openImage" data-image-src="{{group.obstacle.image.path}}" data-image-title="{{group.obstacle.image.alt}}" title="{{localize 'PF2E_CHASE_FORGE.Images.OpenFull'}}">
+                  <img class="chase-player-hero" src="{{group.obstacle.image.path}}" alt="{{group.obstacle.image.alt}}">
+                  <span class="chase-image-popout-hint"><i class="fa-solid fa-magnifying-glass-plus"></i></span>
+                </button>
               {{/if}}
               <div class="chase-player-obstacle-body">
                 <h2>{{group.obstacle.name}}</h2>
@@ -48,6 +58,7 @@
                   <progress max="{{group.obstacle.requiredPoints}}" value="{{group.obstacle.progress}}"></progress>
                 </div>
 
+                {{#if group.turnBlocked}}<div class="chase-player-dc-wait"><i class="fa-solid fa-hourglass-half"></i> {{localize "PF2E_CHASE_FORGE.Player.WaitingForQuarry"}}</div>{{/if}}
                 {{#if group.hasPendingDc}}<div class="chase-player-dc-wait"><i class="fa-solid fa-hourglass-half"></i> {{localize "PF2E_CHASE_FORGE.Player.WaitingForDc"}}</div>{{/if}}
                 {{#if group.myRollActions.length}}
                   <div class="chase-player-actions">
@@ -97,7 +108,23 @@
         </section>
       {{/each}}
 
-      {{#if terminal}}<section class="chase-player-terminal"><i class="fa-solid fa-flag-checkered"></i> {{localize "PF2E_CHASE_FORGE.Player.Terminal"}}</section>{{/if}}
+      {{#if terminal}}
+        <section class="chase-player-terminal detailed">
+          {{#if terminalSummary.image.path}}
+            <button type="button" class="chase-image-popout-button chase-player-ending-image" data-action="openImage" data-image-src="{{terminalSummary.image.path}}" data-image-title="{{terminalSummary.image.alt}}" title="{{localize 'PF2E_CHASE_FORGE.Images.OpenFull'}}">
+              <img src="{{terminalSummary.image.path}}" alt="{{terminalSummary.image.alt}}">
+              <span class="chase-image-popout-hint"><i class="fa-solid fa-magnifying-glass-plus"></i></span>
+            </button>
+          {{/if}}
+          <div>
+            <h3><i class="fa-solid fa-flag-checkered"></i> {{localize "PF2E_CHASE_FORGE.Player.Terminal"}}</h3>
+            {{#if terminalOutcomeLabel}}<strong>{{terminalOutcomeLabel}}</strong>{{/if}}
+            {{#if terminalSummary.endingLabel}}<p>{{terminalSummary.endingLabel}}</p>{{/if}}
+            {{#if terminalSummary.endingDescription}}<p>{{terminalSummary.endingDescription}}</p>{{/if}}
+            {{#if terminalSummary.winnerNames.length}}<p><b>{{localize "PF2E_CHASE_FORGE.Player.Winners"}}:</b> {{#each terminalSummary.winnerNames}}{{this}}{{#unless @last}}, {{/unless}}{{/each}}</p>{{/if}}
+          </div>
+        </section>
+      {{/if}}
     {{/if}}
   </div>
 </div>

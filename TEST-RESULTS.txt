@@ -1,44 +1,12 @@
-PF2E Chase Forge 0.1.0-dev.15 – Verification Summary
-======================================================
+PF2E Chase Forge 0.1.0-dev.16.3
 
-Automated tests
----------------
-Command: npm test
-Result: PASS
-Tests: 329
-Passed: 329
-Failed: 0
-Skipped: 0
+Automated test suite: 340/340 passed
+JavaScript syntax check: passed for all packaged .js files
+Localization parity: de/en 544/544 keys
 
-JavaScript syntax verification
-------------------------------
-Command: node --check for every .js file in the package
-Result: PASS
-Files checked: 86
-
-JSON / localization verification
---------------------------------
-Result: PASS
-JSON files parsed: 4
-Localization key parity: 517 / 517
-
-Campaign Forge Integration v1
------------------------------
-PASS: optional Campaign Forge bridge exposed through api.integrations.campaignForge
-PASS: world Blueprints and read-only Library chases can be listed as prepared Campaign targets
-PASS: Campaign can open, create/link, and directly start a Chase without owning Chase data
-PASS: direct-start Session snapshots preserve Campaign entry/link provenance
-PASS: completed ChaseResult preserves Campaign provenance and can be queried live
-PASS: lifecycle hooks expose started/paused/resumed/completed/aborted state without mutating Campaign progression
-PASS: Campaign Forge remains optional and capability-detected
-
-Cross-package smoke
--------------------
-PASS: Chase Forge 0.1.0-dev.15 <-> Campaign Forge 1.0.1
-Verified actual Chase public API + actual Campaign provider registry, prepared-target discovery,
-direct Session start, Campaign provenance, completion, and live result lookup.
-
-Persistent Chase schemas are unchanged in dev.15.
-Public API version: 15
-Campaign Forge Integration Contract: v1
-Session Lifecycle Contract: v1
+Focused regression coverage includes:
+- PF2e quarry-first pursuit/escape turn order
+- steady quarry movement at round start
+- rules-engine blocking of premature pursuer actions
+- GM/Player waiting-state UI wiring
+- German Unicode-safe Builder inspector headings

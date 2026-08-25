@@ -230,7 +230,7 @@ export function createChaseSessionSyncService({
       if (await canUserControlParticipant(participant, sender)) { allowed = true; break; }
     }
     if (!allowed) throw new Error("Du darfst für diese Gruppe keine Route auswählen.");
-    const result = api.rules.chooseRoute(session, runtimeGroupId, edgeId);
+    const result = api.rules.chooseRoute(session, { runtimeGroupId, edgeId });
     return (await saveOrFinish(api, result.session)).session;
   }
 

@@ -271,27 +271,61 @@ test("cleared obstacle with multiple outgoing routes waits for an explicit branc
   }
 });
 
-test("steady pace advances one obstacle per round by default", () => {
+test("steady quarry pace advances at the start of the round before pursuers act", () => {
   const rules = engine();
   const bp = blueprint({ groups: [group("npc", "quarry", [], { npc: true })] });
   let session = rules.initializeSession(bp, { status: "active", startPositions: { npc: "c1" } });
   assert.equal(session.groups[0].rules.paceMode, "steady");
   session = rules.beginRound(session);
+  assert.equal(session.groups[0].position.nodeId, "c2");
   const ended = rules.endRound(session, { autoSkipUnacted: false, completeOnOutcome: false });
-  assert.equal(ended.steadyAdvances[0].advancedObstacles, 1);
+  assert.equal(ended.steadyAdvances.length, 0);
   assert.equal(ended.session.groups[0].position.nodeId, "c2");
 });
 
-test("fractional steady pace can model a slower hard obstacle", () => {
+test("fractional steady quarry pace accumulates once per round at round start", () => {
   const rules = engine();
   const bp = blueprint({ groups: [group("npc", "quarry", [], { npc: true, obstaclesPerRound: 0.5 })] });
   let session = rules.initializeSession(bp, { status: "active", startPositions: { npc: "c1" } });
   session = rules.beginRound(session);
-  session = rules.endRound(session, { autoSkipUnacted: false, completeOnOutcome: false }).session;
   assert.equal(session.groups[0].position.nodeId, "c1");
-  session = rules.beginRound(session);
   session = rules.endRound(session, { autoSkipUnacted: false, completeOnOutcome: false }).session;
+  session = rules.beginRound(session);
   assert.equal(session.groups[0].position.nodeId, "c2");
+});
+
+test("rolled pursuers must wait until all quarry participants have acted", () => {
+  const rules = engine();
+  const bp = blueprint({
+    groups: [
+      group("q", "quarry", ["q-1"]),
+      group("p", "pursuer", ["p-1"])
+    ]
+  });
+  let session = rules.initializeSession(bp, { status: "active", startPositions: { q: "c2", p: "c1" } });
+  session = rules.beginRound(session);
+  assert.equal(rules.canGroupAct(session, "runtime-q"), true);
+  assert.equal(rules.canGroupAct(session, "runtime-p"), false);
+  assert.throws(
+    () => rules.applyDegree(session, { runtimeGroupId: "runtime-p", participantId: "p-1", degree: "success" }),
+    error => error instanceof ChaseRulesError && error.code === "GROUP_TURN_BLOCKED"
+  );
+  session = rules.applyDegree(session, { runtimeGroupId: "runtime-q", participantId: "q-1", degree: "failure" }).session;
+  assert.equal(rules.canGroupAct(session, "runtime-p"), true);
+});
+
+test("steady quarry movement is resolved automatically before rolled pursuers are enabled", () => {
+  const rules = engine();
+  const bp = blueprint({
+    groups: [
+      group("q", "quarry", [], { npc: true }),
+      group("p", "pursuer", ["p-1"])
+    ]
+  });
+  let session = rules.initializeSession(bp, { status: "active", startPositions: { q: "c1", p: "c1" } });
+  session = rules.beginRound(session);
+  assert.equal(session.groups.find(item => item.id === "runtime-q").position.nodeId, "c2");
+  assert.equal(rules.canGroupAct(session, "runtime-p"), true);
 });
 
 

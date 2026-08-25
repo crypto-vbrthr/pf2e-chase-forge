@@ -30,6 +30,7 @@ test("GM Runner keeps its toolbar outside the scroll viewport and protects Unico
   assert.match(css, /\.chase-runner-scroll[\s\S]*overflow-y: auto/);
   assert.match(css, /\.chase-runner-toolbar[\s\S]*position: relative/);
   assert.match(css, /\.chase-runner-obstacle h4[\s\S]*font-family: inherit !important[\s\S]*text-transform: none !important/);
+  assert.match(css, /\.chase-route-inspector-title h4[\s\S]*font-family: inherit !important[\s\S]*text-transform: none !important/);
   assert.match(source, /scroller\?\.style\?\.setProperty[\s\S]*overflow-y", "auto"/);
   assert.equal(de["PF2E_CHASE_FORGE.CoreCards.city-city-gate.Name"], "Schließendes Stadttor");
 });
@@ -115,7 +116,7 @@ test("Runner UI service is GM-only and reuses one ApplicationV2 per session", as
 test("public API advertises GM Runner only when a runner UI is supplied", async () => {
   const ui = { openRunner: async ({ sessionId }) => sessionId, closeRunner: () => true, getOpenRunner: () => null, getOpenRunners: () => [] };
   const api = createPublicApi({ ui });
-  assert.equal(api.version, 15);
+  assert.equal(api.version, 16);
   assert.equal(api.contracts.gmRunner, 1);
   assert.equal(api.contracts.chatPresenter, 1);
   assert.equal(api.getCapabilities().gmRunner, true);

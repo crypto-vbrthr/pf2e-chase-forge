@@ -165,10 +165,28 @@ export function rebuildBasicLinearGraph(input) {
     }
   }
   const records = blueprint.contentSnapshots?.cards ?? [];
-  const startNodeId = blueprint.graph?.nodes?.find(node => node.type === "start")?.id ?? null;
-  const endNodeId = blueprint.graph?.endNodeIds?.[0] ?? blueprint.graph?.nodes?.find(node => node.type === "end")?.id ?? null;
+  const previousStart = blueprint.graph?.nodes?.find(node => node.type === "start") ?? null;
+  const previousEnd = blueprint.graph?.nodes?.find(node => node.id === blueprint.graph?.endNodeIds?.[0]) ?? blueprint.graph?.nodes?.find(node => node.type === "end") ?? null;
+  const startNodeId = previousStart?.id ?? null;
+  const endNodeId = previousEnd?.id ?? null;
   const next = cloneData(blueprint);
   next.graph = linearGraphForRecords(records, { startNodeId, endNodeId });
+  const rebuiltStart = next.graph.nodes.find(node => node.id === startNodeId);
+  const rebuiltEnd = next.graph.nodes.find(node => node.id === endNodeId);
+  if (previousStart && rebuiltStart) {
+    rebuiltStart.label = previousStart.label;
+    rebuiltStart.description = previousStart.description;
+    rebuiltStart.image = cloneData(previousStart.image ?? rebuiltStart.image);
+    rebuiltStart.public = previousStart.public;
+    rebuiltStart.metadata = cloneData(previousStart.metadata ?? {});
+  }
+  if (previousEnd && rebuiltEnd) {
+    rebuiltEnd.label = previousEnd.label;
+    rebuiltEnd.description = previousEnd.description;
+    rebuiltEnd.image = cloneData(previousEnd.image ?? rebuiltEnd.image);
+    rebuiltEnd.public = previousEnd.public;
+    rebuiltEnd.metadata = cloneData(previousEnd.metadata ?? {});
+  }
   next.settings.routeComplexity = "linear";
   next.contentSnapshots.mode = "snapshot";
   ensureBuilderMetadata(next);

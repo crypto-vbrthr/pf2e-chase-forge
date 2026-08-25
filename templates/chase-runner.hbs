@@ -21,6 +21,29 @@
   </header>
 
   <div class="chase-runner-scroll">
+    {{#if completion}}
+      <section class="chase-runner-completion">
+        {{#if completion.image.path}}
+          <button type="button" class="chase-image-popout-button chase-runner-ending-image" data-action="openImage" data-image-src="{{completion.image.path}}" data-image-title="{{completion.image.alt}}" title="{{localize 'PF2E_CHASE_FORGE.Images.OpenFull'}}">
+            <img src="{{completion.image.path}}" alt="{{completion.image.alt}}">
+            <span class="chase-image-popout-hint"><i class="fa-solid fa-magnifying-glass-plus"></i></span>
+          </button>
+        {{/if}}
+        <div>
+          <h3><i class="fa-solid fa-flag-checkered"></i> {{localize "PF2E_CHASE_FORGE.Runner.ChaseFinished"}}</h3>
+          <strong>{{completion.outcomeLabel}}</strong>
+          {{#if completion.endingLabel}}<p>{{completion.endingLabel}}</p>{{/if}}
+          {{#if completion.endingDescription}}<p>{{completion.endingDescription}}</p>{{/if}}
+          {{#if completion.winnerNames.length}}<p><b>{{localize "PF2E_CHASE_FORGE.Runner.Winners"}}:</b> {{#each completion.winnerNames}}{{this}}{{#unless @last}}, {{/unless}}{{/each}}</p>{{/if}}
+        </div>
+      </section>
+    {{else if chaseImage.path}}
+      <button type="button" class="chase-image-popout-button chase-runner-chase-image" data-action="openImage" data-image-src="{{chaseImage.path}}" data-image-title="{{chaseImage.alt}}" title="{{localize 'PF2E_CHASE_FORGE.Images.OpenFull'}}">
+        <img src="{{chaseImage.path}}" alt="{{chaseImage.alt}}">
+        <span class="chase-image-popout-hint"><i class="fa-solid fa-magnifying-glass-plus"></i></span>
+      </button>
+    {{/if}}
+
     {{#if hasConsequences}}
       <section class="chase-runner-consequences">
         <h3><i class="fa-solid fa-triangle-exclamation"></i> {{localize "PF2E_CHASE_FORGE.Runner.OpenConsequences"}}</h3>
@@ -54,6 +77,7 @@
               <h3>{{group.definition.name}}</h3>
               <div class="chase-runner-meta"><span>{{group.roleLabel}}</span><span>{{group.paceLabel}}</span><span>{{group.statusLabel}}</span>{{#if group.obstacleIndex}}<span>{{localize "PF2E_CHASE_FORGE.Runner.Position"}} {{group.obstacleIndex}}</span>{{/if}}</div>
             </div>
+            {{#if group.turnBlocked}}<span class="chase-runner-pill turn-wait"><i class="fa-solid fa-hourglass-half"></i> {{localize "PF2E_CHASE_FORGE.Runner.WaitingForQuarry"}}</span>{{/if}}
             {{#if group.obstacle}}
               <button type="button" data-action="postObstacle" data-runtime-group-id="{{group.runtime.id}}"><i class="fa-solid fa-message"></i> {{localize "PF2E_CHASE_FORGE.Runner.PostChat"}}</button>
             {{/if}}
@@ -62,7 +86,10 @@
           {{#if group.obstacle}}
             <div class="chase-runner-obstacle">
               {{#if group.obstacle.card.image.path}}
-                <img class="chase-runner-obstacle-image" src="{{group.obstacle.card.image.path}}" alt="{{group.obstacle.card.image.alt}}">
+                <button type="button" class="chase-image-popout-button chase-runner-image-button" data-action="openImage" data-image-src="{{group.obstacle.card.image.path}}" data-image-title="{{group.obstacle.card.image.alt}}" title="{{localize 'PF2E_CHASE_FORGE.Images.OpenFull'}}">
+                  <img class="chase-runner-obstacle-image" src="{{group.obstacle.card.image.path}}" alt="{{group.obstacle.card.image.alt}}">
+                  <span class="chase-image-popout-hint"><i class="fa-solid fa-magnifying-glass-plus"></i></span>
+                </button>
               {{/if}}
               <div class="chase-runner-obstacle-body">
                 <h4>{{group.obstacle.card.name}}</h4>
@@ -89,7 +116,15 @@
                 <article class="chase-runner-participant" data-runner-participant>
                   <div class="chase-runner-participant-name">
                     {{#if participant.image}}<img src="{{participant.image}}" alt="">{{/if}}
-                    <div><strong>{{participant.name}}</strong>{{#if participant.acted}}<small>{{localize "PF2E_CHASE_FORGE.Runner.Acted"}}{{#if participant.skipped}} · {{localize "PF2E_CHASE_FORGE.Runner.Skipped"}}{{/if}}</small>{{else}}<small>{{localize "PF2E_CHASE_FORGE.Runner.NotActed"}}</small>{{/if}}</div>
+                    <div>
+                      <strong>{{participant.name}}</strong>
+                      {{#if participant.acted}}
+                        <small>{{localize "PF2E_CHASE_FORGE.Runner.Acted"}}{{#if participant.skipped}} · {{localize "PF2E_CHASE_FORGE.Runner.Skipped"}}{{/if}}</small>
+                        {{#if participant.lastResult}}<small class="chase-runner-participant-result {{participant.lastResult.type}}"><i class="fa-solid fa-circle-check"></i> {{participant.lastResult.label}}</small>{{/if}}
+                      {{else}}
+                        <small>{{localize "PF2E_CHASE_FORGE.Runner.NotActed"}}</small>
+                      {{/if}}
+                    </div>
                   </div>
                   {{#if participant.canAct}}
                     <div class="chase-runner-participant-actions">

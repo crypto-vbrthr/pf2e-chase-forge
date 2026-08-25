@@ -1,4 +1,4 @@
-# PF2E Chase Forge Public API - dev.15
+# PF2E Chase Forge Public API - dev.16
 
 ## Access
 
@@ -6,12 +6,12 @@
 const forge = game.modules.get("pf2e-chase-forge")?.api;
 ```
 
-Current public API version: `15`  
+Current public API version: `16`  
 Extension Contract version: `1`  
 Basic Builder Contract version: `1`  
 Branching Builder Contract version: `1`
 
-Dev.15 adds Campaign Forge Integration Contract v1 and Session Lifecycle Hook Contract v1 and raises the public API to `15`. Persisted schema versions remain unchanged.
+Dev.16 hardens Campaign Forge runtime/lifecycle integration and raises the public API to `16`. Campaign Integration Contract v1, Session Lifecycle Hook Contract v1, and persisted schema versions remain unchanged.
 
 ## Current dev.14 capabilities
 
@@ -363,10 +363,11 @@ forge.integrations.campaignForge.open(kind, targetId);
 forge.integrations.campaignForge.openNew();
 forge.integrations.campaignForge.start(kind, targetId, { campaign });
 forge.integrations.campaignForge.getResult(sessionId);
-forge.integrations.campaignForge.getLatestResult(kind, targetId, { entryId });
+forge.integrations.campaignForge.getLatestResult(kind, targetId, { entryId, linkId });
+forge.integrations.campaignForge.getLatestRun(kind, targetId, { entryId, linkId });
 ```
 
 The bridge is GM-only. `kind` is `blueprint` for editable world Blueprints or `library` for immutable registered Library content. Campaign provenance is stored only on the generated Session/Result. Chase Forge never writes Campaign Forge persistence directly unless the GM explicitly calls `linkToCampaignEntry()`.
 
-Lifecycle hook names are exposed through `forge.hooks` and include `sessionCreated`, `sessionStarted`, `sessionPaused`, `sessionResumed`, `sessionCompleted`, `sessionAborted`, and `sessionDeleted`. Hook payloads use `pf2e-chase-forge/session-lifecycle` v1.
+Lifecycle hook names are exposed through `forge.hooks` and include `sessionCreated`, `sessionStarted`, `sessionPaused`, `sessionResumed`, `sessionCompleted`, `sessionAborted`, and `sessionDeleted`. Hook payloads use `pf2e-chase-forge/session-lifecycle` v1. Dev.16 adds backward-compatible top-level `outcome` and `terminal` fields; `getLatestRun()` provides the corresponding persisted live Session summary without fabricating an abort result.
 

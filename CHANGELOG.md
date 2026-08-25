@@ -1,3 +1,44 @@
+## 0.1.0-dev.16.3 – Quarry-First Turn Order & Builder Unicode Hotfix
+
+- Enforces the PF2e chase rule that the quarry acts before pursuers during each pursuit/escape round.
+- Rolled pursuer participants are disabled in both GM Runner and Player View until all rolled quarry participants have acted.
+- Rules-engine validation rejects out-of-order pursuer actions even if a client attempts to bypass the UI.
+- Steady-pace quarry groups now take their abstract movement at round start, before pursuer actions, rather than at round end.
+- Other steady-pace groups still advance at round end, preserving quarry-first sequencing in escape/pursuit chases.
+- The Player View displays an explicit waiting notice while the quarry turn is pending.
+- A steady quarry reaching a terminal/capture state at round start is evaluated immediately by the GM Runner.
+- Protects Chase Builder card-inspector headings from PF2e decorative heading fonts that can mangle German `ß`/umlauts, including `Schließendes Stadttor`.
+- Adds regression coverage for quarry-first gating, steady quarry timing, and Builder Unicode heading protection.
+
+## 0.1.0-dev.16.2 – Chase Completion, Pace & Ending Visuals
+
+- Added an explicit completion notification and GM completion dialog when a chase ends automatically, including capture on the same obstacle.
+- Added richer terminal summaries to GM Runner and synchronized Player View.
+- Added per-group pace configuration in the Builder (`roll` or `steady`) plus configurable obstacles per round for steady groups.
+- Exposed the existing chase-level image as a Runner/Player title visual.
+- Added editable ending-node labels, descriptions, and images, used preferentially for the completion view.
+- Starting a chase now leaves the GM Runner in the foreground with keyboard focus.
+- Preserved the PF2e group-point model; steady NPC pacing is now directly configurable to avoid participant-count action inflation.
+
+## 0.1.0-dev.16.1 – Chase Runner Route & UX Hotfix
+
+- Fixes branch selection in both the GM Runner and Player View request path by passing `runtimeGroupId` and `edgeId` through the rules-engine object contract, eliminating `Unknown runtime group 'undefined'.`
+- Gives the Chase Builder selection sidebar and the main editor their own independent vertical scroll positions while keeping the command toolbar sticky in the editor pane.
+- Makes obstacle images in both GM Runner and Player View clickable and opens the original image through Foundry's full-resolution image popout.
+- Shows the acting participant's current-round outcome to the GM after an action, including degree of success and Chase Point delta, or automatic/skip resolution.
+- Preserves the PF2e group-progress rules unchanged: a group advances only when the current obstacle has enough Chase Points, and a participant who has not yet acted can immediately contribute at the next obstacle in the same round.
+- Adds regression coverage for branch-call wiring, independent Builder pane scrolling, image popouts, and GM action-result presentation.
+
+## 0.1.0-dev.16 – Campaign Forge Runtime & Lifecycle Hardening
+
+- Raises the Chase Forge public API to version `16` without changing persisted schema versions or Campaign Integration Contract v1.
+- Adds `integrations.campaignForge.getLatestRun()` for live per-link run status across active, paused, completed, and aborted Campaign-started Sessions.
+- Filters Campaign result/run lookup by exact target kind/id plus optional Campaign entry and external-link id, preventing stale results after unlink/relink workflows.
+- Keeps repeated world and Library starts independent and verifies that source Blueprints/Library definitions remain unchanged.
+- Treats GM Runner rendering failure as non-fatal after a Session has already started, while still surfacing a warning to the GM.
+- Adds additive lifecycle payload fields `outcome` and `terminal`; aborted Sessions report `outcome: "aborted"` immediately.
+- Adds regression coverage for duplicate starts, Library immutability, missing targets, Runner-open failure, relink isolation, abort reporting, and exclusion of non-Campaign results.
+
 ## 0.1.0-dev.15 – Campaign Forge Integration
 
 - Adds Campaign Forge Integration Contract v1 and raises the Chase Forge public API to version `15` without changing persisted schema versions.
