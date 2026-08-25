@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.1.0-dev.14.3 – GM Runner Layout & German Heading Hotfix
+
+- Separates the GM Runner toolbar from the actual scrolling viewport so restored scroll positions cannot place chase content underneath the toolbar or visually into the Foundry window title bar.
+- Makes `.chase-runner-scroll` the sole vertical Runner scroller, matching the ApplicationV2 `PARTS.scrollable` declaration.
+- Adds bounded flex/overflow rules for the Runner root, `.window-content`, application part, and shell, with runtime style hardening against Foundry/theme overrides.
+- Defines Runner-local panel/border/accent variables so the toolbar and group panels are no longer accidentally transparent when Builder-only variables are unavailable.
+- Prevents PF2e decorative heading capitalization/font rules from mangling German `ß` or umlauts in runtime chase/card names.
+- Adds regression coverage for Runner scroll containment and the localized `Schließendes Stadttor` card name.
+
 ## 0.1.0-dev.14.2 – Branching Participant Editability Hotfix
 
 - Fixed a Builder regression where adding an Actor or Token participant to an already branched chase changed `metadata.builder.mode` from `branching` to `basic`.

@@ -325,8 +325,21 @@ function getAppClass() {
       await super._onRender?.(context, options);
       const content = this.element?.querySelector?.(".window-content");
       if (content?.style?.setProperty) {
-        content.style.setProperty("overflow-y", "auto", "important");
-        content.style.setProperty("overflow-x", "hidden", "important");
+        content.style.setProperty("padding", "0", "important");
+        content.style.setProperty("min-height", "0", "important");
+        content.style.setProperty("overflow", "hidden", "important");
+      }
+      const part = content?.querySelector?.("[data-application-part]");
+      if (part?.style?.setProperty) {
+        part.style.setProperty("height", "100%", "important");
+        part.style.setProperty("min-height", "0", "important");
+        part.style.setProperty("overflow", "hidden", "important");
+      }
+      const scroller = this.element?.querySelector?.(".chase-runner-scroll");
+      if (scroller?.style?.setProperty) {
+        scroller.style.setProperty("min-height", "0", "important");
+        scroller.style.setProperty("overflow-y", "auto", "important");
+        scroller.style.setProperty("overflow-x", "hidden", "important");
       }
     }
 

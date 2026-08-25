@@ -21,6 +21,19 @@ test("GM Runner template and styles are packaged with core runner actions", asyn
   assert.match(css, /\.pf2e-chase-forge-chat/);
 });
 
+
+test("GM Runner keeps its toolbar outside the scroll viewport and protects Unicode headings", async () => {
+  const css = await readFile(new URL("../styles/chase-forge.css", import.meta.url), "utf8");
+  const source = await readFile(new URL("../scripts/app/chase-runner-app.js", import.meta.url), "utf8");
+  const de = JSON.parse(await readFile(new URL("../lang/de.json", import.meta.url), "utf8"));
+  assert.match(css, /chase-forge-runner \.window-content[\s\S]*overflow: hidden !important/);
+  assert.match(css, /\.chase-runner-scroll[\s\S]*overflow-y: auto/);
+  assert.match(css, /\.chase-runner-toolbar[\s\S]*position: relative/);
+  assert.match(css, /\.chase-runner-obstacle h4[\s\S]*font-family: inherit !important[\s\S]*text-transform: none !important/);
+  assert.match(source, /scroller\?\.style\?\.setProperty[\s\S]*overflow-y", "auto"/);
+  assert.equal(de["PF2E_CHASE_FORGE.CoreCards.city-city-gate.Name"], "Schließendes Stadttor");
+});
+
 test("public obstacle Chat presentation excludes hidden GM mechanics", () => {
   const html = obstacleChatHtml({
     session: { round: 2 },

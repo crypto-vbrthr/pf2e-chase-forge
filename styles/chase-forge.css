@@ -626,21 +626,53 @@
 }
 
 /* 0.1.0-dev.8 GM Chase Runner */
+.pf2e-chase-forge.chase-forge-runner {
+  --chase-border: color-mix(in srgb, var(--color-border-light-2, #9a8f7a) 55%, transparent);
+  --chase-panel: var(--color-cool-5, #20242b);
+  --chase-panel-soft: color-mix(in srgb, var(--color-cool-5, #20242b) 92%, white 8%);
+  --chase-accent: var(--color-warm-2, #d5b36a);
+  --chase-danger: var(--color-level-error, #b84b4b);
+  --chase-success: var(--color-level-success, #4f9f69);
+  display: flex !important;
+  flex-direction: column;
+  overflow: hidden !important;
+}
+
+/*
+ * Keep the Foundry title bar outside the Runner's scrolling viewport.  The
+ * previous implementation scrolled .window-content while also using a sticky
+ * toolbar inside it.  Restored scroll positions could therefore slide group
+ * content behind the toolbar and make it appear to run into the window title.
+ */
 .pf2e-chase-forge.chase-forge-runner .window-content {
-  overflow-y: auto !important;
-  overflow-x: hidden !important;
+  padding: 0;
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  overflow: hidden !important;
+}
+
+.pf2e-chase-forge.chase-forge-runner .window-content > [data-application-part],
+.pf2e-chase-forge.chase-forge-runner .window-content > .chase-runner-shell {
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 0 !important;
+  overflow: hidden !important;
 }
 
 .chase-runner-shell {
   display: flex;
   flex-direction: column;
+  width: 100%;
+  height: 100%;
   min-width: 0;
+  min-height: 0;
+  overflow: hidden;
   gap: 0;
 }
 
 .chase-runner-toolbar {
-  position: sticky;
-  top: 0;
+  position: relative;
+  flex: 0 0 auto;
   z-index: 5;
   display: flex;
   justify-content: space-between;
@@ -654,6 +686,15 @@
 .chase-runner-toolbar h2,
 .chase-runner-group h3,
 .chase-runner-obstacle h4 { margin: 0; }
+
+/* PF2e's decorative heading face/capitalization can misrender German ß/umlauts. */
+.chase-runner-toolbar h2,
+.chase-runner-group h3,
+.chase-runner-obstacle h4 {
+  font-family: inherit !important;
+  text-transform: none !important;
+  letter-spacing: normal;
+}
 
 .chase-runner-toolbar-actions,
 .chase-runner-meta,
@@ -684,7 +725,14 @@
   font-size: .82em;
 }
 
-.chase-runner-scroll { padding: 12px; }
+.chase-runner-scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  padding: 12px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-gutter: stable;
+}
 .chase-runner-groups { display: grid; gap: 12px; }
 
 .chase-runner-group {
@@ -806,7 +854,7 @@
 .chase-builder-session-row small { opacity: .68; }
 
 @media (max-width: 850px) {
-  .chase-runner-toolbar { position: static; flex-direction: column; }
+  .chase-runner-toolbar { flex-direction: column; }
   .chase-runner-obstacle { grid-template-columns: 1fr; }
   .chase-runner-participant { grid-template-columns: 1fr; }
   .chase-runner-participant-actions { justify-content: flex-start; }

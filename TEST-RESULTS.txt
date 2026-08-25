@@ -1,12 +1,12 @@
-PF2E Chase Forge 0.1.0-dev.14.2 – Verification Summary
+PF2E Chase Forge 0.1.0-dev.14.3 – Verification Summary
 ======================================================
 
 Automated tests
 ---------------
 Command: npm test
 Result: PASS
-Tests: 324
-Passed: 324
+Tests: 325
+Passed: 325
 Failed: 0
 Skipped: 0
 
@@ -23,40 +23,21 @@ Validated: module.json, package.json, lang/de.json, lang/en.json
 Localization key parity: 515 / 515
 Namespace remains flat (PF2E_CHASE_FORGE.* keys).
 
-Protected persistence deletion/recovery coverage
-------------------------------------------------
-PASS: internal persistence Journal is ownership-protected and clearly named DO NOT DELETE
-PASS: successful initialization mirrors canonical state to a hidden world-setting recovery backup
-PASS: successful saves refresh the recovery backup
-PASS: missing vault with a valid recovery backup recreates and restores the canonical Journal vault
-PASS: deletion after store initialization is detected before the next read and recovered from backup
-PASS: already-missing vault without a prior backup recreates an empty vault instead of crashing Builder rendering
-PASS: preDeleteJournalEntry hook vetoes accidental deletion of the internal persistence Journal while Chase Forge is active
-PASS: non-GM clients remain unable to load canonical persistence
+GM Runner layout regression coverage
+------------------------------------
+PASS: the Foundry .window-content element is bounded and no longer scrolls Runner content
+PASS: .chase-runner-scroll is the sole vertical Runner scroll viewport
+PASS: the Runner toolbar remains outside that viewport and cannot overlap restored scroll content
+PASS: Runner panel CSS variables are defined locally so toolbar/group backgrounds do not become transparent
+PASS: runtime ApplicationV2 style hardening enforces the same scroll containment under theme overrides
 
-Branching participant editability regression coverage
-----------------------------------------------------
-PASS: adding an Actor participant to a branching Blueprint preserves metadata.builder.mode=branching
-PASS: the branched route remains routeComplexity=branched after participant mutation
-PASS: isBranchingBuilderBlueprint remains true after the participant is added
-PASS: branching Blueprint validation remains valid and Save/editor controls stay eligible for editing
-PASS: group reset operations preserve branching Builder mode as well
+German runtime heading regression coverage
+------------------------------------------
+PASS: runtime chase/group/card headings preserve normal casing instead of inherited PF2e uppercase transforms
+PASS: obstacle card headings use the normal UI font to avoid decorative-font glyph corruption
+PASS: localized Core Card text retains the exact UTF-8 string "Schließendes Stadttor"
 
-Journal Integration regression coverage
----------------------------------------
-PASS: world Blueprint and read-only Library Journal reference syntax round-trips
-PASS: custom TextEditor enrichers are registered for both Chase reference forms
-PASS: GM enriched links expose open/start actions while player links remain read-only
-PASS: normal Foundry JournalEntry creation stores only stable Chase reference/provenance flags
-PASS: world Blueprint links open the editable Builder
-PASS: Library links open the read-only Library preview
-PASS: world Blueprint links start a fresh independent active ChaseSession
-PASS: Library links start from an independent source snapshot and preserve library provenance
-PASS: Journal-started Sessions record metadata.startedFromJournal
-PASS: public API exposes Journal Integration Contract v1 and capabilities
-PASS: Builder packages Journal Entry creation and copy-link actions
-
-Persisted schema versions are unchanged in dev.14.2.
+Persisted schema versions are unchanged in dev.14.3.
 Public API version: 14
 Journal Integration contract version: 1
 Visual System contract version: 1
