@@ -1,5 +1,34 @@
 # Changelog
 
+## 0.1.0-dev.9.1.4 – Player View Delivery & Session List Refresh Hotfix
+
+- Hardens Chase Player View synchronization with socket-start retries instead of relying on a single ready-time listener registration.
+- Adds a player-ready handshake so a newly connected/reloaded player client explicitly asks the authoritative GM for all active/paused Chase views.
+- Adds per-delivery acknowledgements: the Player View confirms whether state was received and rendered, while **Send Player View** now reports sent versus confirmed clients.
+- Adds `forge.sync.status()` diagnostics with transport state, active users, authority GM, send/receive counters, acknowledgement counters, and last error information.
+- Supports Foundry user collections exposed through `.contents` in addition to iterable/value APIs.
+- Refreshes an open Chase Builder immediately after session abort, pause/resume, and automatic completion so aborted sessions disappear from the active-session list without a manual refresh.
+- Adds regression coverage for Player View acknowledgement, the player-ready handshake, and immediate Builder session-list refresh wiring.
+
+## 0.1.0-dev.9.1.3 – Player Socket & Sticky Builder Toolbar Hotfix
+
+- Enables Foundry module socket transport in `module.json` via `"socket": true`, fixing **Send Player View**/automatic Player View synchronization not reaching connected player clients.
+- Keeps the Builder's upper command bar (Refresh, Duplicate, Delete, Save, Start) visible while the long Builder form scrolls.
+- Applies the sticky toolbar rule both in CSS and through the existing ApplicationV2 runtime layout enforcement so Foundry core styles cannot silently undo it.
+- Adds regression coverage for the manifest socket flag and sticky Builder toolbar wiring.
+
+## 0.1.0-dev.9.1.2 – Builder Save Hotfix
+
+- Fixed `ReferenceError: editable is not defined` when saving a Chase Blueprint from the Basic Chase Builder.
+- `_save()` now derives editability from the current draft immediately after syncing the form, matching the Builder render/start paths.
+- Adds regression coverage so the save path cannot reference an undeclared `editable` variable again.
+
+## 0.1.0-dev.9.1.1 – Manual Card Add Hotfix
+
+- Fixed the Basic Chase Builder assigning the full `{ blueprint, ref, index }` result from `addManualCardToBasicBlueprint()` to its draft state. The Builder now correctly keeps only `.blueprint`, preventing `draft.settings` from becoming undefined after adding a manual obstacle.
+- Hardened Weather Forge render context access with optional chaining so malformed/legacy transient draft state cannot crash the Builder while rendering.
+- Added a regression test for the manual-card action wrapper bug.
+
 ## 0.1.0-dev.9.1 – Participant Drag & Drop Hotfix
 
 - Restores Actor and Token drag-and-drop into Builder participant groups.

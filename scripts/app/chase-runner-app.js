@@ -140,6 +140,13 @@ async function maybePersistOutcome(api, session, { phase = "immediate" } = {}) {
   return { session: completed.session, outcome: evaluation, completed };
 }
 
+async function refreshOpenBuilder(api) {
+  const builder = api?.ui?.getOpenBuilder?.() ?? null;
+  if (!builder?.render) return false;
+  try { await builder.render({ force: true }); return true; }
+  catch (error) { console.warn(`${MODULE_ID} | Failed to refresh Chase Builder session list.`, error); return false; }
+}
+
 function getAppClass() {
   if (runnerAppClass) return runnerAppClass;
   const api = globalThis.foundry?.applications?.api;
@@ -311,6 +318,7 @@ function getAppClass() {
       if (persisted.completed) {
         await this.chat.postEvent({ title: "Verfolgungsjagd beendet", text: `Ergebnis: ${persisted.outcome.outcome}` }, { flags: { sessionId: session.id } }).catch(() => null);
       }
+      await refreshOpenBuilder(this.chaseApi);
       return persisted;
     }
 
@@ -353,12 +361,14 @@ function getAppClass() {
     static async _actionPauseSession() {
       this._session = await this.chaseApi.sessionManager.pauseSession(this.sessionId);
       await this.chaseApi.sync?.publishSession?.(this._session, { open: true });
+      await refreshOpenBuilder(this.chaseApi);
       return this.render({ force: true });
     }
 
     static async _actionResumeSession() {
       this._session = await this.chaseApi.sessionManager.resumeSession(this.sessionId);
       await this.chaseApi.sync?.publishSession?.(this._session, { open: true });
+      await refreshOpenBuilder(this.chaseApi);
       return this.render({ force: true });
     }
 
@@ -368,6 +378,7 @@ function getAppClass() {
       this._session = await this.chaseApi.sessionManager.abortSession(this.sessionId);
       await this.chaseApi.sync?.publishSession?.(this._session, { open: true });
       await this.chat.postEvent({ title: "Verfolgungsjagd abgebrochen" }, { flags: { sessionId: this.sessionId } }).catch(() => null);
+      await refreshOpenBuilder(this.chaseApi);
       return this.render({ force: true });
     }
 
@@ -502,8 +513,15 @@ function getAppClass() {
     static async _actionSyncPlayers() {
       try {
         const session = await this.chaseApi.sessionManager.getSession(this.sessionId);
-        const result = await this.chaseApi.sync?.publishSession?.(session, { open: true });
-        notify("info", format("PF2E_CHASE_FORGE.Runner.PlayersSynced", { count: result?.sent ?? 0 }, `Spieleransichten aktualisiert: ${result?.sent ?? 0}`));
+        const result = await this.chaseApi.sync?.publishSession?.(session, { open: true, waitForAckMs: 1200 });
+        const sent = result?.sent ?? 0;
+        const confirmed = result?.confirmed ?? 0;
+        const failed = result?.failed ?? 0;
+        if (sent === 0) notify("warn", i18n("PF2E_CHASE_FORGE.Runner.NoPlayersToSync", "Keine aktiven Spielerclients gefunden."));
+        else if (confirmed < sent || failed > 0) {
+          notify("warn", format("PF2E_CHASE_FORGE.Runner.PlayersSyncUnconfirmed", { sent, confirmed }, `Spieleransicht gesendet: ${sent}, bestätigt: ${confirmed}.`));
+          console.warn(`${MODULE_ID} | Player View delivery was not fully confirmed.`, { result, sync: this.chaseApi.sync?.status?.() });
+        } else notify("info", format("PF2E_CHASE_FORGE.Runner.PlayersSyncedConfirmed", { count: confirmed }, `Spieleransichten geöffnet/aktualisiert: ${confirmed}`));
       } catch (error) { console.error(error); notify("error", error?.message ?? String(error)); }
     }
   };

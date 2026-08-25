@@ -15,6 +15,29 @@ let playerUi = null;
 let syncService = null;
 let chaseUi = null;
 
+function startSessionSyncWithRetry() {
+  const delays = [0, 100, 500, 1500, 3000];
+  const attempt = index => {
+    if (syncService?.isStarted?.()) return;
+    let ok = false;
+    try { ok = syncService?.start?.() === true; }
+    catch (error) { console.warn(`${MODULE_ID} | Chase session synchronization start attempt failed.`, error); }
+    if (ok) {
+      if (game.user?.isGM !== true) {
+        Promise.resolve(syncService?.announcePlayerReady?.()).catch(error => console.warn(`${MODULE_ID} | Failed to announce Chase player readiness.`, error));
+      }
+      return;
+    }
+    const next = index + 1;
+    if (next >= delays.length) {
+      console.error(`${MODULE_ID} | Chase session synchronization could not start.`, syncService?.status?.());
+      return;
+    }
+    globalThis.setTimeout?.(() => attempt(next), delays[next]);
+  };
+  attempt(0);
+}
+
 Hooks.once("init", () => {
   registerSettings();
   registryService = createRegistryService({ stateStore: new FoundryPackStateStore() });
@@ -39,8 +62,7 @@ Hooks.once("init", () => {
 
 Hooks.once("ready", async () => {
   const api = game.modules.get(MODULE_ID)?.api ?? null;
-  try { syncService?.start?.(); }
-  catch (error) { console.error(`${MODULE_ID} | Failed to start Chase session synchronization.`, error); }
+  startSessionSyncWithRetry();
   if (api && game.user?.isGM) {
     try { await api.persistence.initialize(); }
     catch (error) { console.error(`${MODULE_ID} | Failed to initialize protected persistence.`, error); }

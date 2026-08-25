@@ -23,6 +23,7 @@ test("manifest targets Foundry 14 and PF2e", () => {
   assert.equal(moduleJson.compatibility.minimum, "14");
   assert.equal(moduleJson.compatibility.verified, "14");
   assert.equal(moduleJson.relationships.systems[0].id, "pf2e");
+  assert.equal(moduleJson.socket, true);
   assert.ok(moduleJson.styles.includes("styles/chase-forge.css"));
 });
 

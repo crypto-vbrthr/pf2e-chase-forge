@@ -117,3 +117,11 @@ test("Builder start action hands newly started sessions to the GM Runner", async
   assert.match(source, /Runner\.ChatStarted/);
   assert.match(source, /openSessionRunner/);
 });
+
+
+test("Runner lifecycle refreshes the open Builder session list after abort/finish changes", async () => {
+  const source = await readFile(new URL("../scripts/app/chase-runner-app.js", import.meta.url), "utf8");
+  assert.match(source, /async function refreshOpenBuilder/);
+  assert.match(source, /abortSession\(this\.sessionId\)[\s\S]*refreshOpenBuilder\(this\.chaseApi\)/);
+  assert.match(source, /_saveOrFinish[\s\S]*refreshOpenBuilder\(this\.chaseApi\)/);
+});

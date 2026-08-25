@@ -232,5 +232,8 @@
   "PF2E_CHASE_FORGE.Player.ActorMissing": "Für diesen Beteiligten ist kein Actor verknüpft.",
   "PF2E_CHASE_FORGE.Player.RollUnreadable": "Das PF2e-Wurfergebnis konnte nicht ausgewertet werden.",
   "PF2E_CHASE_FORGE.Player.Requested": "Spieleransicht wird von der Spielleitung angefordert.",
-  "PF2E_CHASE_FORGE.Player.WaitingForDc": "Die Spielleitung muss für mindestens eine Vorgehensweise noch den SG festlegen."
+  "PF2E_CHASE_FORGE.Player.WaitingForDc": "Die Spielleitung muss für mindestens eine Vorgehensweise noch den SG festlegen.",
+  "PF2E_CHASE_FORGE.Runner.NoPlayersToSync": "Keine aktiven Spielerclients gefunden.",
+  "PF2E_CHASE_FORGE.Runner.PlayersSyncUnconfirmed": "Spieleransicht gesendet: {sent}, bestätigt: {confirmed}.",
+  "PF2E_CHASE_FORGE.Runner.PlayersSyncedConfirmed": "Spieleransichten geöffnet/aktualisiert: {count}"
 }

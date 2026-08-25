@@ -9,6 +9,7 @@ function usersArray() {
   const users = globalThis.game?.users;
   if (!users) return [];
   if (Array.isArray(users)) return users;
+  if (Array.isArray(users.contents)) return [...users.contents];
   if (typeof users.values === "function") return [...users.values()];
   if (typeof users[Symbol.iterator] === "function") return [...users];
   return [];
@@ -80,8 +81,35 @@ export function createChaseSessionSyncService({
   let started = false;
   let socketRef = socket;
   let handler = null;
+  const ackWaiters = new Map();
+  const diagnostics = {
+    startAttempts: 0,
+    startedAt: null,
+    lastStartFailureAt: null,
+    sentStates: 0,
+    receivedStates: 0,
+    receivedAcks: 0,
+    lastSentStateAt: null,
+    lastReceivedStateAt: null,
+    lastAckAt: null,
+    lastError: null
+  };
   const getSocket = () => socketRef ?? globalThis.game?.socket ?? null;
   const getProjector = () => projector ?? createChasePublicStateProjector({ getApi });
+
+  function syncStatus() {
+    return {
+      contractVersion: CHASE_SESSION_SYNC_CONTRACT_VERSION,
+      channel: CHASE_SOCKET_CHANNEL,
+      started,
+      socketAvailable: Boolean(getSocket()?.on && getSocket()?.emit),
+      currentUserId: globalThis.game?.user?.id ?? null,
+      currentUserIsGM: globalThis.game?.user?.isGM === true,
+      authorityGmId: authorityGmId(),
+      users: usersArray().map(user => ({ id: user?.id ?? null, name: user?.name ?? null, isGM: user?.isGM === true, active: user?.active !== false })),
+      ...cloneData(diagnostics)
+    };
+  }
 
   async function emit(payload) {
     const activeSocket = getSocket();
@@ -89,21 +117,52 @@ export function createChaseSessionSyncService({
     return activeSocket.emit(CHASE_SOCKET_CHANNEL, payload);
   }
 
-  async function sendStateToUser(session, user, { open = true } = {}) {
-    const state = await getProjector().project(session, { user });
-    await emit({ type: "state", toUserId: user.id, fromUserId: globalThis.game?.user?.id ?? null, open, state });
-    return state;
+  function waitForAck(deliveryId, timeoutMs) {
+    if (!Number.isFinite(Number(timeoutMs)) || Number(timeoutMs) <= 0) return Promise.resolve(null);
+    return new Promise(resolve => {
+      const timer = globalThis.setTimeout?.(() => {
+        ackWaiters.delete(deliveryId);
+        resolve(null);
+      }, Number(timeoutMs));
+      ackWaiters.set(deliveryId, ack => {
+        if (timer) globalThis.clearTimeout?.(timer);
+        ackWaiters.delete(deliveryId);
+        resolve(ack);
+      });
+    });
   }
 
-  async function publishSession(session, { open = true, includeInactive = false } = {}) {
-    if (globalThis.game?.user?.isGM !== true) return { sent: 0, states: [] };
+  async function sendStateToUser(session, user, { open = true, waitForAckMs = 0 } = {}) {
+    if (!user?.id) throw new Error("Cannot send Chase player state without a target user id.");
+    const state = await getProjector().project(session, { user });
+    const deliveryId = createId("chase-state");
+    const ackPromise = waitForAck(deliveryId, waitForAckMs);
+    await emit({ type: "state", deliveryId, toUserId: user.id, fromUserId: globalThis.game?.user?.id ?? null, open, state });
+    diagnostics.sentStates += 1;
+    diagnostics.lastSentStateAt = new Date().toISOString();
+    const ack = await ackPromise;
+    return { state, deliveryId, ack };
+  }
+
+  async function publishSession(session, { open = true, includeInactive = false, waitForAckMs = 0 } = {}) {
+    if (globalThis.game?.user?.isGM !== true) return { sent: 0, confirmed: 0, failed: 0, states: [], deliveries: [] };
     const targets = usersArray().filter(user => user?.isGM !== true && (includeInactive || user?.active !== false));
     const states = [];
+    const deliveries = [];
     for (const user of targets) {
-      try { states.push(await sendStateToUser(session, user, { open })); }
-      catch (error) { console.warn(`${MODULE_ID} | Failed to publish Chase player state to '${user?.id ?? "unknown"}'.`, error); }
+      try {
+        const delivery = await sendStateToUser(session, user, { open, waitForAckMs });
+        states.push(delivery.state);
+        deliveries.push({ userId: user.id, deliveryId: delivery.deliveryId, ack: delivery.ack });
+      } catch (error) {
+        diagnostics.lastError = error?.message ?? String(error);
+        console.warn(`${MODULE_ID} | Failed to publish Chase player state to '${user?.id ?? "unknown"}'.`, error);
+        deliveries.push({ userId: user?.id ?? null, deliveryId: null, ack: { ok: false, message: diagnostics.lastError } });
+      }
     }
-    return { sent: states.length, states };
+    const confirmed = deliveries.filter(item => item.ack?.ok === true).length;
+    const failed = deliveries.filter(item => item.ack?.ok === false).length;
+    return { sent: states.length, confirmed, failed, states, deliveries };
   }
 
   async function refreshGmRunner(sessionId) {
@@ -225,7 +284,44 @@ export function createChaseSessionSyncService({
     const currentUserId = globalThis.game?.user?.id ?? null;
     if (message.type === "state") {
       if (message.toUserId !== currentUserId || globalThis.game?.user?.isGM === true) return;
-      await playerUi?.receiveState?.(cloneData(message.state), { open: message.open !== false });
+      diagnostics.receivedStates += 1;
+      diagnostics.lastReceivedStateAt = new Date().toISOString();
+      let ok = true;
+      let errorMessage = "";
+      try {
+        await playerUi?.receiveState?.(cloneData(message.state), { open: message.open !== false });
+      } catch (error) {
+        ok = false;
+        errorMessage = error?.message ?? String(error);
+        diagnostics.lastError = errorMessage;
+        console.error(`${MODULE_ID} | Failed to open/update Chase Player View.`, error);
+      }
+      if (message.deliveryId && message.fromUserId) {
+        try {
+          await emit({ type: "stateAck", deliveryId: message.deliveryId, sessionId: message.state?.sessionId ?? null, toUserId: message.fromUserId, fromUserId: currentUserId, ok, message: errorMessage });
+        } catch (error) {
+          console.warn(`${MODULE_ID} | Failed to acknowledge Chase Player View delivery.`, error);
+        }
+      }
+      return;
+    }
+    if (message.type === "stateAck") {
+      if (message.toUserId !== currentUserId || globalThis.game?.user?.isGM !== true) return;
+      diagnostics.receivedAcks += 1;
+      diagnostics.lastAckAt = new Date().toISOString();
+      ackWaiters.get(message.deliveryId)?.(cloneData(message));
+      return;
+    }
+    if (message.type === "playerReady") {
+      if (globalThis.game?.user?.isGM !== true) return;
+      if (message.toUserId && message.toUserId !== currentUserId) return;
+      if (authorityGmId() && authorityGmId() !== currentUserId) return;
+      const user = userById(message.fromUserId);
+      if (!user || user.isGM) return;
+      const api = getApi();
+      const active = await api?.sessionManager?.listSessions?.({ status: "active" }) ?? [];
+      const paused = await api?.sessionManager?.listSessions?.({ status: "paused" }) ?? [];
+      for (const session of [...active, ...paused]) await sendStateToUser(session, user, { open: true });
       return;
     }
     if (message.type === "intentResult") {
@@ -241,13 +337,23 @@ export function createChaseSessionSyncService({
     channel: CHASE_SOCKET_CHANNEL,
     authorityGmId,
     start() {
+      diagnostics.startAttempts += 1;
       if (started) return true;
       const activeSocket = getSocket();
-      if (!activeSocket?.on) return false;
-      handler = message => { Promise.resolve(onMessage(message)).catch(error => console.error(`${MODULE_ID} | Chase socket handler failed.`, error)); };
+      if (!activeSocket?.on) {
+        diagnostics.lastStartFailureAt = new Date().toISOString();
+        diagnostics.lastError = "Foundry game.socket is unavailable.";
+        return false;
+      }
+      handler = message => { Promise.resolve(onMessage(message)).catch(error => {
+        diagnostics.lastError = error?.message ?? String(error);
+        console.error(`${MODULE_ID} | Chase socket handler failed.`, error);
+      }); };
       activeSocket.on(CHASE_SOCKET_CHANNEL, handler);
       socketRef = activeSocket;
       started = true;
+      diagnostics.startedAt = new Date().toISOString();
+      diagnostics.lastError = null;
       return true;
     },
     stop() {
@@ -258,7 +364,15 @@ export function createChaseSessionSyncService({
       return true;
     },
     isStarted: () => started,
+    status: syncStatus,
     publishSession,
+    async announcePlayerReady() {
+      if (globalThis.game?.user?.isGM === true) return false;
+      const gmId = authorityGmId();
+      if (!gmId) return false;
+      await emit({ type: "playerReady", fromUserId: globalThis.game?.user?.id ?? null, toUserId: gmId });
+      return true;
+    },
     async publishActiveSessions() {
       if (globalThis.game?.user?.isGM !== true) return { sent: 0 };
       const api = getApi();

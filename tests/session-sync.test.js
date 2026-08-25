@@ -78,3 +78,52 @@ test("socket state messages are accepted only by their addressed player client",
     if (previousGame === undefined) delete globalThis.game; else globalThis.game = previousGame;
   }
 });
+
+
+test("player client acknowledges state delivery after opening the Player View", async () => {
+  const previousGame = globalThis.game;
+  const socket = fakeSocket();
+  const states = [];
+  globalThis.game = {
+    user: { id: "player", isGM: false, active: true },
+    users: { contents: [{ id: "gm", isGM: true, active: true }, { id: "player", isGM: false, active: true }] },
+    socket
+  };
+  const playerUi = { async receiveState(state) { states.push(state); } };
+  try {
+    const sync = createChaseSessionSyncService({ socket, playerUi, getApi: () => ({}) });
+    assert.equal(sync.start(), true);
+    await socket.receive({ type: "state", deliveryId: "delivery-1", fromUserId: "gm", toUserId: "player", open: true, state: { sessionId: "s1", status: "active" } });
+    await new Promise(resolve => setTimeout(resolve, 0));
+    assert.equal(states.length, 1);
+    const ack = socket.emitted.find(entry => entry.payload.type === "stateAck");
+    assert.ok(ack);
+    assert.equal(ack.payload.deliveryId, "delivery-1");
+    assert.equal(ack.payload.toUserId, "gm");
+    assert.equal(ack.payload.ok, true);
+    assert.equal(sync.status().receivedStates, 1);
+  } finally {
+    if (previousGame === undefined) delete globalThis.game; else globalThis.game = previousGame;
+  }
+});
+
+test("player readiness handshake is addressed to the deterministic GM", async () => {
+  const previousGame = globalThis.game;
+  const socket = fakeSocket();
+  globalThis.game = {
+    user: { id: "player", isGM: false, active: true },
+    users: { contents: [{ id: "gm", isGM: true, active: true }, { id: "player", isGM: false, active: true }] },
+    socket
+  };
+  try {
+    const sync = createChaseSessionSyncService({ socket, getApi: () => ({}) });
+    assert.equal(sync.start(), true);
+    assert.equal(await sync.announcePlayerReady(), true);
+    const ready = socket.emitted.find(entry => entry.payload.type === "playerReady");
+    assert.ok(ready);
+    assert.equal(ready.payload.toUserId, "gm");
+    assert.equal(ready.payload.fromUserId, "player");
+  } finally {
+    if (previousGame === undefined) delete globalThis.game; else globalThis.game = previousGame;
+  }
+});

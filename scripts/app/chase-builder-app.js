@@ -258,6 +258,7 @@ function applyBuilderRuntimeLayout(app, reason = "runtime") {
   const windowContent = root.querySelector?.(":scope > .window-content") ?? root.querySelector?.(".window-content") ?? null;
   const shell = root.querySelector?.(".chase-builder-shell") ?? null;
   const main = root.querySelector?.(".chase-builder-main") ?? null;
+  const toolbar = root.querySelector?.(".chase-builder-toolbar") ?? null;
   const editor = root.querySelector?.(".chase-builder-editor-scroll") ?? null;
   const sidebar = root.querySelector?.(".chase-builder-sidebar") ?? null;
 
@@ -284,6 +285,14 @@ function applyBuilderRuntimeLayout(app, reason = "runtime") {
   setImportantStyle(main, "height", "auto");
   setImportantStyle(main, "overflow", "visible");
 
+  // Keep the Builder command bar visible while Foundry's bounded window-content
+  // viewport scrolls the long form below it. Runtime enforcement mirrors the
+  // CSS because ApplicationV2/core styles have overridden module layout rules
+  // in this window on some Foundry builds.
+  setImportantStyle(toolbar, "position", "sticky");
+  setImportantStyle(toolbar, "top", "0");
+  setImportantStyle(toolbar, "z-index", "20");
+
   setImportantStyle(editor, "height", "auto");
   setImportantStyle(editor, "overflow", "visible");
 
@@ -291,7 +300,7 @@ function applyBuilderRuntimeLayout(app, reason = "runtime") {
   setImportantStyle(sidebar, "overflow", "visible");
 
   root.dataset.chaseRuntimeLayout = reason;
-  return { root, windowContent, shell, main, editor, sidebar };
+  return { root, windowContent, shell, main, toolbar, editor, sidebar };
 }
 
 function getAppClass() {
@@ -449,7 +458,7 @@ function getAppClass() {
           statusLabel: i18n(`PF2E_CHASE_FORGE.SessionStatus.${session.status}`, session.status)
         }));
       const weatherForgeStatus = this.chaseApi.integrations?.weatherForge?.inspect?.() ?? { available: false, compatible: false };
-      const weatherFromWeatherForge = this._draft.settings.weather?.source?.moduleId === "pf2e-weather-forge";
+      const weatherFromWeatherForge = this._draft.settings?.weather?.source?.moduleId === "pf2e-weather-forge";
 
       return {
         ...context,
@@ -691,6 +700,7 @@ function getAppClass() {
 
     async _save({ silent = false } = {}) {
       this._syncDraftFromForm();
+      const editable = isBasicLinearBlueprint(this._draft);
       const validation = editable ? validateBasicBuilderBlueprint(this._draft) : this.chaseApi.validation.blueprint(this._draft);
       this._lastValidation = validation;
       if (!validation.valid) {
@@ -817,7 +827,7 @@ function getAppClass() {
 
     static async _actionAddManualCard() {
       this._syncDraftFromForm();
-      this._draft = addManualCardToBasicBlueprint(this._draft);
+      this._draft = addManualCardToBasicBlueprint(this._draft).blueprint;
       return this.render({ force: true });
     }
 

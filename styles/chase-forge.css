@@ -141,11 +141,15 @@
 }
 
 .chase-builder-toolbar {
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 20;
   flex: 0 0 auto;
   justify-content: space-between;
   padding: 10px 14px;
   border-bottom: 1px solid var(--chase-border);
   background: var(--chase-panel);
+  box-shadow: 0 4px 10px color-mix(in srgb, black 22%, transparent);
   gap: 16px;
 }
 

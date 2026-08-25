@@ -62,6 +62,7 @@ test("Builder template and localization resources are packaged", async () => {
   assert.match(css, /\.pf2e-chase-forge\.chase-forge-builder \.chase-builder-shell\s*\{[^}]*display:\s*grid !important;[^}]*height:\s*auto !important;[^}]*overflow:\s*visible !important;/s);
   assert.match(css, /\.pf2e-chase-forge\.chase-forge-builder \.chase-builder-main\s*\{[^}]*display:\s*flex !important;[^}]*height:\s*auto !important;[^}]*overflow:\s*visible !important;/s);
   assert.match(css, /\.pf2e-chase-forge\.chase-forge-builder \.chase-builder-editor-scroll\s*\{[^}]*flex:\s*0 0 auto !important;[^}]*height:\s*auto !important;[^}]*overflow:\s*visible !important;/s);
+  assert.match(css, /\.chase-builder-toolbar\s*\{[^}]*position:\s*sticky !important;[^}]*top:\s*0 !important;[^}]*z-index:\s*20;/s);
   assert.match(css, /\.chase-builder-editor-scroll::\-webkit-scrollbar,[^}]*\.chase-builder-sidebar::\-webkit-scrollbar\s*\{[^}]*width:\s*12px;/s);
   assert.equal(de["PF2E_CHASE_FORGE.Builder.Title"].length > 0, true);
   assert.equal(en["PF2E_CHASE_FORGE.Builder.Title"].length > 0, true);
@@ -115,6 +116,8 @@ test("builder applies runtime layout enforcement for Foundry ApplicationV2", asy
   assert.match(source, /function applyBuilderRuntimeLayout/);
   assert.match(source, /setImportantStyle\(windowContent, "overflow-y", "scroll"\)/);
   assert.match(source, /setImportantStyle\(shell, "display", "grid"\)/);
+  assert.match(source, /setImportantStyle\(toolbar, "position", "sticky"\)/);
+  assert.match(source, /setImportantStyle\(toolbar, "top", "0"\)/);
   assert.match(source, /render\+500ms/);
 });
 
@@ -194,4 +197,24 @@ test("participant drop UUID resolver supports Actor and Scene Token payloads", a
   assert.equal(resolveParticipantDropUuid({ type: "Token", sceneId: "scene1", tokenId: "token1" }), "Scene.scene1.Token.token1");
   assert.equal(resolveParticipantDropUuid({ type: "TokenDocument", scene: "scene1", id: "token1" }), "Scene.scene1.Token.token1");
   assert.equal(resolveParticipantDropUuid(null), null);
+});
+
+
+test("manual card action keeps the Builder draft as a ChaseBlueprint instead of the add-card result wrapper", async () => {
+  const source = await readFile(new URL("../scripts/app/chase-builder-app.js", import.meta.url), "utf8");
+  assert.match(source, /this\._draft = addManualCardToBasicBlueprint\(this\._draft\)\.blueprint;/);
+  assert.doesNotMatch(source, /this\._draft = addManualCardToBasicBlueprint\(this\._draft\);/);
+  assert.match(source, /this\._draft\.settings\?\.weather\?\.source\?\.moduleId/);
+});
+
+
+test("Builder save derives editability locally before validation", async () => {
+  const source = await readFile(new URL("../scripts/app/chase-builder-app.js", import.meta.url), "utf8");
+  const saveStart = source.indexOf("async _save({ silent = false } = {})");
+  assert.notEqual(saveStart, -1);
+  const saveEnd = source.indexOf("async _confirmDelete()", saveStart);
+  assert.notEqual(saveEnd, -1);
+  const saveBlock = source.slice(saveStart, saveEnd);
+  assert.match(saveBlock, /const editable = isBasicLinearBlueprint\(this\._draft\);/);
+  assert.match(saveBlock, /const validation = editable \? validateBasicBuilderBlueprint\(this\._draft\) : this\.chaseApi\.validation\.blueprint\(this\._draft\);/);
 });

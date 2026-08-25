@@ -232,5 +232,8 @@
   "PF2E_CHASE_FORGE.Player.ActorMissing": "No Actor is linked to this participant.",
   "PF2E_CHASE_FORGE.Player.RollUnreadable": "The PF2e roll result could not be evaluated.",
   "PF2E_CHASE_FORGE.Player.Requested": "Player view requested from the GM.",
-  "PF2E_CHASE_FORGE.Player.WaitingForDc": "The GM still needs to set the DC for at least one approach."
+  "PF2E_CHASE_FORGE.Player.WaitingForDc": "The GM still needs to set the DC for at least one approach.",
+  "PF2E_CHASE_FORGE.Runner.NoPlayersToSync": "No active player clients found.",
+  "PF2E_CHASE_FORGE.Runner.PlayersSyncUnconfirmed": "Player View sent: {sent}, confirmed: {confirmed}.",
+  "PF2E_CHASE_FORGE.Runner.PlayersSyncedConfirmed": "Player Views opened/updated: {count}"
 }

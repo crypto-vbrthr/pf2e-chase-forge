@@ -1,12 +1,17 @@
 # PF2E Chase Forge
 
-**Version:** 0.1.0-dev.9.1  
+**Version:** 0.1.0-dev.9.1.4  
 **Foundry VTT:** 14  
 **System:** Pathfinder 2e
 
-PF2E Chase Forge is a modular Pathfinder 2e chase framework for Foundry VTT. `0.1.0-dev.9.1` adds the first synchronized **Player Chase View**, so players receive a dedicated chase window with images, obstacle text, progress, PF2e roll buttons, route choices, and a free-form action proposal flow while the GM remains authoritative over the persisted Chase Session.
+PF2E Chase Forge is a modular Pathfinder 2e chase framework for Foundry VTT. `0.1.0-dev.9.1.4` keeps the synchronized **Player Chase View**, enables Foundry module-socket transport for reliable GM→player delivery, and keeps the Builder command bar visible while scrolling, so players receive a dedicated chase window with images, obstacle text, progress, PF2e roll buttons, route choices, and a free-form action proposal flow while the GM remains authoritative over the persisted Chase Session.
 
 The underlying dev.1-dev.6 architecture remains intact: DAG route graphs, add-on registries, PF2e chase rules, consequence orchestration, optional Critical Forge / Effect Forge integration, and protected restart-safe Blueprint/Session persistence.
+
+
+## dev.9.1.3 Player socket & sticky toolbar hotfix
+
+Foundry module socket relay is explicitly enabled in the manifest (`"socket": true`). This is required for the GM Runner's **Send Player View** action and automatic Chase state publishing to reach connected player clients. The Builder command toolbar is also sticky inside the bounded ApplicationV2 viewport, so Refresh/Duplicate/Delete/Save/Start stay available while editing long chases.
 
 
 ## dev.9 Player Chase View & Session Synchronization
