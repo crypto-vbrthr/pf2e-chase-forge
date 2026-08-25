@@ -9,7 +9,7 @@ When registered cards are insufficient for the selected template/context, the ge
 
 ## Purpose
 
-The Chase Builder began as the linear Basic Builder in dev.7. Dev.10 adds managed Branching Builder routes. Dev.10.1 adds an explicit New Chase workflow and separates editable world Blueprints from read-only prepared Chase libraries supplied by Core/add-on packs. Dev.10.2 replaces the expanded card stack with a visual route diagram plus a click-to-open card/branch inspector. Dev.11 adds template-driven route generation and seeded regeneration on top of the same editable Blueprint contracts.
+The Chase Builder began as the linear Basic Builder in dev.7. Dev.10 adds managed Branching Builder routes. Dev.10.1 adds an explicit New Chase workflow and separates editable world Blueprints from read-only prepared Chase libraries supplied by Core/add-on packs. Dev.10.2 replaces the expanded card stack with a visual route diagram plus a click-to-open card/branch inspector. Dev.11 adds template-driven route generation and seeded regeneration on top of the same editable Blueprint contracts. Dev.14 adds sticky Journal actions for creating a Journal Entry or copying a stable Chase reference.
 
 
 ## Visual route diagram and inspector

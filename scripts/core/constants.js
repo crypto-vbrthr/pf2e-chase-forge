@@ -1,6 +1,6 @@
 export const MODULE_ID = "pf2e-chase-forge";
-export const MODULE_VERSION = "0.1.0-dev.13.1";
-export const API_VERSION = 13;
+export const MODULE_VERSION = "0.1.0-dev.14.2";
+export const API_VERSION = 14;
 export const EXTENSION_CONTRACT_VERSION = 1;
 
 export const SCHEMA_VERSIONS = Object.freeze({
@@ -45,6 +45,7 @@ export const EXTENSION_CAPABILITIES = Object.freeze([
   "generator.seededSelection",
   "generator.fallbackCards",
   "integrations.weatherForge",
+  "integrations.journal",
   "runner.gm",
   "runner.player",
   "sync.playerIntents",

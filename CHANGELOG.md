@@ -1,5 +1,37 @@
 # Changelog
 
+## 0.1.0-dev.14.2 – Branching Participant Editability Hotfix
+
+- Fixed a Builder regression where adding an Actor or Token participant to an already branched chase changed `metadata.builder.mode` from `branching` to `basic`.
+- The unchanged branched route graph then no longer matched either supported Builder mode, causing Save and the complete editor to become disabled after the next render.
+- Participant additions now preserve the existing Builder mode for both linear and branching Blueprints.
+- Group reset operations use the same mode-preserving behavior so they cannot silently lock a branching chase either.
+- Added a regression test proving that participant additions keep branched Blueprints valid and editable.
+
+## 0.1.0-dev.14.1 – Protected Vault Deletion Recovery
+
+- Blocks accidental deletion of the internal Chase Forge persistence Journal while the module is active.
+- Renames newly created vaults to make their internal/protected purpose explicit.
+- Mirrors canonical persistence to a hidden world-setting recovery backup after initialization and every successful save.
+- Automatically recreates a missing vault from the recovery backup.
+- If a vault was already deleted before a backup existed, recreates an empty vault with a prominent warning instead of throwing `VAULT_MISSING` on every Builder render.
+- Revalidates the cached vault against `game.journal` before reads and writes so external deletion cannot leave a stale document reference behind.
+
+## 0.1.0-dev.14 – Journal Integration
+
+- Adds Journal Integration Contract v1 and raises the public API to version `14` without changing persisted schema versions.
+- Adds custom `@ChaseBlueprint[...]` and `@ChaseLibrary[...]` Journal references that Foundry enriches into Chase Forge controls.
+- Lets GMs open world Blueprints directly in the editable Builder and Library chases directly in their read-only preview from Journal text.
+- Adds a compact Journal play control that starts a fresh independent Chase Session and opens the GM Runner.
+- Preserves read-only Library semantics by snapshotting Library content into the new Session instead of mutating source content.
+- Records `metadata.startedFromJournal` and Library provenance on Sessions launched from Journal links.
+- Adds sticky Builder toolbar actions to create a normal Foundry Journal Entry or copy a Chase reference for insertion into an existing Journal page.
+- Automatically saves a valid unsaved world Blueprint before creating/copying its Journal reference.
+- Makes Journal controls GM-only; players see a read-only Chase label and continue to receive runtime data only through the existing Player View projection.
+- Adds missing-reference handling for deleted world Blueprints or unavailable add-on Library content.
+- Adds `docs/JOURNAL_INTEGRATION.md` and regression coverage for reference parsing, enrichment, world/Library opening, Journal creation, Session start, provenance, and public API exposure.
+- Expands automated coverage to **319 passing tests**.
+
 ## 0.1.0-dev.13.1 – Image Picker Path Hotfix
 
 - Fixes Foundry FilePicker selections not being transferred into the Blueprint or card image-path field on some current/custom FilePicker implementations.

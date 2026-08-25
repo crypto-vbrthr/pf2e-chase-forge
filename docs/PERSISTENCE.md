@@ -42,7 +42,7 @@ ChaseSession.<id>
 ChaseResult.<id>
 ```
 
-They are storage-location independent and are intended for the later Journal and Campaign Forge bridges.
+They are storage-location independent. Dev.14 uses the same stable Blueprint identity in the Journal bridge; Campaign Forge integration remains separate.
 
 ## Content snapshots
 
@@ -121,3 +121,8 @@ Missing optional references do not corrupt the Blueprint. Missing card content w
 ## Fail-closed behavior
 
 If the storage marker says a protected vault already exists but that document can no longer be found, Chase Forge does not create an empty replacement automatically. Initialization fails with `VAULT_MISSING` to avoid silent data loss.
+
+
+## Journal references (dev.14)
+
+Ordinary Journal pages do **not** become a second Chase data store. `@ChaseBlueprint[...]` and `@ChaseLibrary[...]` text references contain only a target id and display label. Opening or starting a Journal link resolves the current world Blueprint or read-only Library source at action time. Deleting a Blueprint or disabling/removing the supplying add-on therefore leaves a visible but unresolved Journal link rather than a stale hidden copy.

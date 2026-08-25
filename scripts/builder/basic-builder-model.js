@@ -26,10 +26,11 @@ function builderSource() {
   return { moduleId: MODULE_ID, packId: "world-builder", version: MODULE_VERSION };
 }
 
-function ensureBuilderMetadata(blueprint) {
+function ensureBuilderMetadata(blueprint, { preserveMode = false } = {}) {
+  const existingMode = blueprint.metadata?.builder?.mode;
   blueprint.metadata ??= {};
   blueprint.metadata.builder ??= {};
-  blueprint.metadata.builder.mode = "basic";
+  blueprint.metadata.builder.mode = preserveMode && ["basic", "branching"].includes(existingMode) ? existingMode : "basic";
   blueprint.metadata.builder.contractVersion = BASIC_BUILDER_CONTRACT_VERSION;
   blueprint.metadata.builder.actionLevel ??= "medium";
   blueprint.metadata.builder.humorLevel ??= "low";
@@ -366,7 +367,11 @@ export function addParticipantToBasicBlueprint(input, groupId, participantInput)
     (participant.uuid && candidate.uuid === participant.uuid) || candidate.id === participant.id
   );
   if (!duplicate) group.participants.push(participant);
-  ensureBuilderMetadata(next);
+  // Participant mutations are valid for both the linear and branching Builder.
+  // Do not collapse a branching Blueprint back to `basic` metadata here: doing
+  // so makes isBuilderEditableBlueprint() reject the still-branched graph and
+  // the UI consequently renders the entire document read-only.
+  ensureBuilderMetadata(next, { preserveMode: true });
   next.updatedAt = nowIso();
   return createChaseBlueprint(next);
 }
@@ -392,7 +397,9 @@ export function replaceBasicGroupsForChaseType(input, chaseType, { preserveParti
   if (preserveParticipants && priorParticipants.length > 0) groups[0].participants = priorParticipants;
   next.groups = groups;
   next.settings.chaseType = chaseType;
-  ensureBuilderMetadata(next);
+  // Group resets are also allowed on branching Blueprints, so retain the
+  // existing Builder mode instead of invalidating the visual route editor.
+  ensureBuilderMetadata(next, { preserveMode: true });
   next.updatedAt = nowIso();
   return createChaseBlueprint(next);
 }

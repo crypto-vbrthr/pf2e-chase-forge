@@ -49,6 +49,7 @@ import { CHASE_SESSION_SYNC_CONTRACT_VERSION } from "../sync/chase-session-sync.
 import { PLAYER_STATE_PROJECTOR_CONTRACT_VERSION, projectChasePublicState } from "../player/public-state-projector.js";
 import { CHASE_GENERATOR_CONTRACT_VERSION, createChaseGenerator, generateChaseFromTemplate, inspectGenerationCandidates, selectGenerationCards } from "../generator/chase-generator.js";
 import { CHASE_VISUAL_SYSTEM_CONTRACT_VERSION, createChaseImageService } from "../images/image-service.js";
+import { CHASE_JOURNAL_CONTRACT_VERSION, createChaseJournalBridge } from "../integrations/journal-bridge.js";
 import {
   BASIC_BUILDER_CONTRACT_VERSION,
   addApproachToBasicCard,
@@ -150,8 +151,10 @@ export function createPublicApi({ registries = createRegistryService(), persiste
   const persistence = createChasePersistenceService({ store: persistenceStore, routeEngine: route, rulesEngine: rules, registries });
   const sessionManager = createChaseSessionManager(persistence);
   const chatPresenter = createChaseChatPresenter();
+  let publicApi = null;
+  const journalBridge = createChaseJournalBridge({ getApi: () => publicApi });
 
-  return Object.freeze({
+  publicApi = Object.freeze({
     version: API_VERSION,
     moduleVersion: MODULE_VERSION,
     stability: "development",
@@ -182,7 +185,8 @@ export function createPublicApi({ registries = createRegistryService(), persiste
       sessionSync: CHASE_SESSION_SYNC_CONTRACT_VERSION,
       chatPresenter: CHASE_CHAT_PRESENTER_CONTRACT_VERSION,
       generator: CHASE_GENERATOR_CONTRACT_VERSION,
-      visualSystem: CHASE_VISUAL_SYSTEM_CONTRACT_VERSION
+      visualSystem: CHASE_VISUAL_SYSTEM_CONTRACT_VERSION,
+      journalIntegration: CHASE_JOURNAL_CONTRACT_VERSION
     }),
     getCapabilities: () => Object.freeze({
       coreDataModel: true,
@@ -236,6 +240,9 @@ export function createPublicApi({ registries = createRegistryService(), persiste
       effectForgeAvailable: effectForgeBridge.inspect().compatible,
       weatherForgeBridge: true,
       weatherForgeAvailable: weatherForgeBridge.inspect().compatible,
+      journalIntegration: true,
+      journalLinks: true,
+      journalStartActions: true,
       campaignForgeBridge: false
     }),
     factories: Object.freeze({
@@ -340,7 +347,8 @@ export function createPublicApi({ registries = createRegistryService(), persiste
         readCurrent: weatherForgeBridge.readCurrent,
         inspectApi: inspectWeatherForgeApi,
         createBridge: createWeatherForgeBridge
-      })
+      }),
+      journal: journalBridge
     }),
     builder: Object.freeze({
       contractVersion: BASIC_BUILDER_CONTRACT_VERSION,
@@ -403,6 +411,7 @@ export function createPublicApi({ registries = createRegistryService(), persiste
     }),
     sync: sync ?? Object.freeze({}),
     presentation: Object.freeze({ chat: chatPresenter }),
+    journal: journalBridge,
     persistence,
     sessionManager,
     cards: content.cards,
@@ -415,6 +424,7 @@ export function createPublicApi({ registries = createRegistryService(), persiste
       getStats: () => registries.getStats()
     })
   });
+  return publicApi;
 }
 
 export function initializePublicApi({ registries = createRegistryService(), persistenceStore = createMemoryChaseStore(), ui = null, sync = null } = {}) {

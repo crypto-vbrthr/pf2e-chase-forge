@@ -433,6 +433,8 @@ function getAppClass() {
         loadLibraryBlueprint: this._actionLoadLibraryBlueprint,
         copyLibraryBlueprint: this._actionCopyLibraryBlueprint,
         saveBlueprint: this._actionSaveBlueprint,
+        copyJournalLink: this._actionCopyJournalLink,
+        createJournalEntry: this._actionCreateJournalEntry,
         duplicateBlueprint: this._actionDuplicateBlueprint,
         deleteBlueprint: this._actionDeleteBlueprint,
         startBlueprint: this._actionStartBlueprint,
@@ -1179,6 +1181,15 @@ function getAppClass() {
       }
     }
 
+    async _journalTarget() {
+      if (this._libraryBlueprintId) {
+        const blueprint = this.chaseApi.library?.get?.(this._libraryBlueprintId, { includeDisabled: false });
+        return blueprint ? { kind: "library", id: blueprint.id, label: blueprint.name } : null;
+      }
+      const saved = await this._save({ silent: true });
+      return saved ? { kind: "blueprint", id: saved.id, label: saved.name } : null;
+    }
+
     static async _actionNewBlueprint() {
       await this._resetDraftWithEnvironmentPrefill();
       return this.render({ force: true });
@@ -1208,6 +1219,38 @@ function getAppClass() {
     }
 
     static async _actionSaveBlueprint() { return this._save(); }
+
+    static async _actionCopyJournalLink() {
+      const target = await this._journalTarget();
+      if (!target) return null;
+      try {
+        const result = await this.chaseApi.journal?.copyReference?.(target.kind, target.id, target.label);
+        if (!result) return null;
+        notify(result.copied ? "info" : "warn", result.copied
+          ? i18n("PF2E_CHASE_FORGE.Journal.LinkCopied", "Journal-Link in die Zwischenablage kopiert.")
+          : i18n("PF2E_CHASE_FORGE.Journal.ClipboardUnavailable", "Zwischenablage nicht verfügbar. Der Journal-Link wurde in der Konsole ausgegeben."));
+        if (!result.copied) console.info(`${MODULE_ID} | Chase Journal link: ${result.reference}`);
+        return result;
+      } catch (error) {
+        console.error(`${MODULE_ID} | Failed to copy Chase Journal link.`, error);
+        notify("error", i18n("PF2E_CHASE_FORGE.Journal.CopyFailed", "Der Journal-Link konnte nicht kopiert werden."));
+        return null;
+      }
+    }
+
+    static async _actionCreateJournalEntry() {
+      const target = await this._journalTarget();
+      if (!target) return null;
+      try {
+        const entry = await this.chaseApi.journal?.createEntry?.(target.kind, target.id);
+        if (entry) notify("info", i18n("PF2E_CHASE_FORGE.Journal.EntryCreated", "Journal-Eintrag für die Verfolgungsjagd erstellt."));
+        return entry ?? null;
+      } catch (error) {
+        console.error(`${MODULE_ID} | Failed to create Chase Journal entry.`, error);
+        notify("error", i18n("PF2E_CHASE_FORGE.Journal.EntryFailed", "Der Journal-Eintrag konnte nicht erstellt werden."));
+        return null;
+      }
+    }
 
     static async _actionDuplicateBlueprint() {
       const saved = await this._save({ silent: true });
@@ -1669,7 +1712,7 @@ function getAppClass() {
 
 export function createChaseBuilderUiService({ getApi = () => globalThis.game?.modules?.get?.(MODULE_ID)?.api ?? null } = {}) {
   return Object.freeze({
-    async openBuilder({ blueprintId = null } = {}) {
+    async openBuilder({ blueprintId = null, libraryBlueprintId = null } = {}) {
       if (!isGm()) {
         notify("warn", i18n("PF2E_CHASE_FORGE.Builder.GmOnly", "Die Chase Forge Verwaltung ist nur für die Spielleitung verfügbar."));
         return null;
@@ -1682,7 +1725,9 @@ export function createChaseBuilderUiService({ getApi = () => globalThis.game?.mo
         openBuilderApp = new App(chaseApi);
         created = true;
       }
-      if (blueprintId) {
+      if (libraryBlueprintId) {
+        await openBuilderApp.loadLibraryBlueprint(libraryBlueprintId);
+      } else if (blueprintId) {
         await openBuilderApp.loadBlueprint(blueprintId);
       } else {
         if (created) await openBuilderApp._applyWeatherForgePrefill({ onlyUnset: true, notifyUser: false });

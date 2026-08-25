@@ -52,6 +52,8 @@ test("Builder template and localization resources are packaged", async () => {
   const de = JSON.parse(await readFile(new URL("../lang/de.json", import.meta.url), "utf8"));
   const en = JSON.parse(await readFile(new URL("../lang/en.json", import.meta.url), "utf8"));
   assert.match(template, /data-action="saveBlueprint"/);
+  assert.match(template, /data-action="createJournalEntry"/);
+  assert.match(template, /data-action="copyJournalLink"/);
   assert.match(template, /data-participant-drop/);
   assert.match(template, /data-builder-card/);
   assert.match(template, /data-action="applyWeatherForge"/);
@@ -74,11 +76,14 @@ test("Builder template and localization resources are packaged", async () => {
   assert.match(css, /\.chase-route-workspace/);
   assert.match(css, /\.chase-route-card-node/);
   assert.match(css, /\.chase-route-decision-node/);
+  assert.match(css, /\.pf2e-chase-journal-link/);
   assert.match(css, /\.chase-builder-editor-scroll::\-webkit-scrollbar,[^}]*\.chase-builder-sidebar::\-webkit-scrollbar\s*\{[^}]*width:\s*12px;/s);
   assert.equal(de["PF2E_CHASE_FORGE.Builder.Title"].length > 0, true);
   assert.equal(en["PF2E_CHASE_FORGE.Builder.Title"].length > 0, true);
   assert.equal(de["PF2E_CHASE_FORGE.Builder.WeatherForgeApply"].length > 0, true);
   assert.equal(en["PF2E_CHASE_FORGE.Builder.WeatherForgeApply"].length > 0, true);
+  assert.equal(de["PF2E_CHASE_FORGE.Journal.CopyLink"].length > 0, true);
+  assert.equal(en["PF2E_CHASE_FORGE.Journal.CopyLink"].length > 0, true);
 });
 
 test("Builder UI service lazily creates a GM ApplicationV2 window and reuses it", async () => {

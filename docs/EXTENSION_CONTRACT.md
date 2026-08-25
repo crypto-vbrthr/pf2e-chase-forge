@@ -94,6 +94,11 @@ Image candidates returned by providers or embedded in `card.image.candidates` ma
 Templates registered in `templates` are executable by `forge.generator`. Add-ons can use the existing `filters` block to restrict/prefer cards and the `generator` block to control card count, branch count, duplicate policy, route labels, and localized fallback-card naming. No new extension contract version is required because these payloads were already open template fields. See `GENERATOR.md`.
 
 
+
+## Journal links (dev.14)
+
+Add-ons do not need a separate Journal registration API. Any prepared Chase registered in `blueprints` automatically becomes linkable through `@ChaseLibrary[owned-id]{label}` and `forge.journal.reference("library", ownedId, label)`. Library ownership/read-only rules remain unchanged, and starting such a link creates an independent Session snapshot. Extensions that require this feature can request the `integrations.journal` capability.
+
 ## Namespaces
 
 An extension may use local ids:

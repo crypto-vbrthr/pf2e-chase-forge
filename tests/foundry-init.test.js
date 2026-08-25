@@ -36,6 +36,7 @@ test("Foundry init registers Core generator templates, protected persistence, an
   };
 
   globalThis.CONST = { DOCUMENT_OWNERSHIP_LEVELS: { NONE: 0 } };
+  globalThis.CONFIG = { TextEditor: { enrichers: [] } };
   globalThis.JournalEntry = class {
     static async create(data) {
       const id = `vault-${++journalCounter}`;
@@ -59,6 +60,7 @@ test("Foundry init registers Core generator templates, protected persistence, an
     assert.ok(settingDefinitions.has(`${MODULE_ID}.contentPackStates`));
     assert.ok(settingDefinitions.has(`${MODULE_ID}.storageVersion`));
     assert.ok(settingDefinitions.has(`${MODULE_ID}.vaultId`));
+    assert.ok(settingDefinitions.has(`${MODULE_ID}.vaultBackup`));
     assert.equal(settingDefinitions.get(`${MODULE_ID}.contentPackStates`).config, false);
     assert.equal(moduleRecord.api.moduleVersion, MODULE_VERSION);
     assert.equal(moduleRecord.api.getCapabilities().registries, true);
@@ -76,6 +78,10 @@ test("Foundry init registers Core generator templates, protected persistence, an
     assert.equal(moduleRecord.api.getCapabilities().playerView, true);
     assert.equal(moduleRecord.api.getCapabilities().sessionSync, true);
     assert.equal(typeof moduleRecord.api.ui.openPlayerView, "function");
+    assert.equal(moduleRecord.api.getCapabilities().journalIntegration, true);
+    assert.equal(moduleRecord.api.contracts.journalIntegration, 1);
+    assert.equal(moduleRecord.api.journal.isRegistered(), true);
+    assert.equal(globalThis.CONFIG.TextEditor.enrichers.length, 2);
 
     await onceHandlers.get("ready")();
     assert.equal(journal.size, 1);
@@ -87,5 +93,6 @@ test("Foundry init registers Core generator templates, protected persistence, an
     delete globalThis.game;
     delete globalThis.JournalEntry;
     delete globalThis.CONST;
+    delete globalThis.CONFIG;
   }
 });

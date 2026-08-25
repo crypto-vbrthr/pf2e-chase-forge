@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { createBasicBuilderDraft, addManualCardToBasicBlueprint, addParticipantToBasicBlueprint } from "../scripts/builder/basic-builder-model.js";
+import { createBasicBuilderDraft, addManualCardToBasicBlueprint, addParticipantToBasicBlueprint, replaceBasicGroupsForChaseType } from "../scripts/builder/basic-builder-model.js";
 import {
   addBranchAfterCard,
   appendCardToBranchRoute,
@@ -102,4 +102,30 @@ test("Rules Engine pauses after a cleared obstacle when a player route decision 
   assert.equal(result.obstacleCleared, true);
   assert.equal(result.routeChoiceRequired, true);
   assert.equal(result.session.groups[0].position.nodeId, blueprint.graph.nodes.find(node => node.label === "Marktplatz").id);
+});
+
+test("adding a participant to an existing branch keeps the Builder editable", () => {
+  let blueprint = branchedDraft();
+  const groupId = blueprint.groups[1].id;
+  blueprint = addParticipantToBasicBlueprint(blueprint, groupId, {
+    id: "late-pursuer",
+    kind: "actor",
+    uuid: "Actor.late-pursuer",
+    name: "Late Pursuer"
+  });
+  assert.equal(blueprint.metadata.builder.mode, "branching");
+  assert.equal(blueprint.settings.routeComplexity, "branched");
+  assert.equal(isBranchingBuilderBlueprint(blueprint), true);
+  assert.equal(blueprint.groups[1].participants.some(participant => participant.id === "late-pursuer"), true);
+  assert.equal(validateBranchingBuilderBlueprint(blueprint).valid, true);
+});
+
+
+test("group resets on an existing branch keep the Builder mode intact", () => {
+  let blueprint = branchedDraft();
+  blueprint = replaceBasicGroupsForChaseType(blueprint, blueprint.settings.chaseType, { preserveParticipants: true });
+  assert.equal(blueprint.metadata.builder.mode, "branching");
+  assert.equal(blueprint.settings.routeComplexity, "branched");
+  assert.equal(isBranchingBuilderBlueprint(blueprint), true);
+  assert.equal(validateBranchingBuilderBlueprint(blueprint).valid, true);
 });

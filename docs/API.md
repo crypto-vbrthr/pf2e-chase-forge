@@ -1,4 +1,4 @@
-# PF2E Chase Forge Public API - dev.13
+# PF2E Chase Forge Public API - dev.14
 
 ## Access
 
@@ -6,14 +6,14 @@
 const forge = game.modules.get("pf2e-chase-forge")?.api;
 ```
 
-Current public API version: `13`  
+Current public API version: `14`  
 Extension Contract version: `1`  
 Basic Builder Contract version: `1`  
 Branching Builder Contract version: `1`
 
-Dev.13 adds Visual System Contract v1 and raises the public API to `13`. Persisted schema versions remain unchanged.
+Dev.14 adds Journal Integration Contract v1 and raises the public API to `14`. Persisted schema versions remain unchanged.
 
-## Current dev.13 capabilities
+## Current dev.14 capabilities
 
 ```text
 chaseLibrary
@@ -28,6 +28,9 @@ visualSystem
 resolvedCardImages
 predefinedImageCandidates
 automaticImageProviders
+journalIntegration
+journalLinks
+journalStartActions
 builderUi
 gmRunner
 playerView
@@ -39,6 +42,22 @@ chatWorkflow
 `gmRunner` and `playerView` are true in normal Foundry initialization. `sessionSync` and `playerIntents` expose the module-socket bridge that keeps player-safe projections synchronized while the GM remains authoritative. Campaign Forge integration remains false.
 
 
+
+
+## Journal Integration
+
+```js
+forge.journal.contractVersion; // 1
+forge.journal.reference("blueprint", blueprintId, "Display Name");
+forge.journal.reference("library", libraryId, "Display Name");
+forge.journal.parseReference("@ChaseBlueprint[blueprint-id]{Display Name}");
+await forge.journal.open("blueprint", blueprintId);
+await forge.journal.start("blueprint", blueprintId);
+await forge.journal.createEntry("blueprint", blueprintId);
+await forge.journal.copyReference("blueprint", blueprintId);
+```
+
+The same bridge is exposed as `forge.integrations.journal`. Journal links remain references rather than canonical Chase storage. World links resolve through protected persistence; Library links resolve through the read-only registry. GM enrichment adds open/start controls, while players receive only a read-only label. See `docs/JOURNAL_INTEGRATION.md`.
 
 ## Visual System
 
@@ -144,6 +163,7 @@ Nested branches inside a branch lane are deliberately rejected in dev.10. Arbitr
 ```js
 await forge.ui.openBuilder();
 await forge.ui.openBuilder({ blueprintId });
+await forge.ui.openBuilder({ libraryBlueprintId });
 forge.ui.getOpenBuilder();
 await forge.ui.closeBuilder();
 ```
@@ -206,7 +226,7 @@ Public obstacle messages exclude GM notes and exact DCs by contract.
 
 ## Schemas
 
-No core schema versions changed in dev.10:
+No core schema versions changed in dev.14:
 
 ```text
 forge.schemas.blueprint === 2

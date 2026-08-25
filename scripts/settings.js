@@ -3,7 +3,8 @@ import { MODULE_ID } from "./core/constants.js";
 export const SETTINGS = Object.freeze({
   CONTENT_PACK_STATES: "contentPackStates",
   STORAGE_VERSION: "storageVersion",
-  VAULT_ID: "vaultId"
+  VAULT_ID: "vaultId",
+  VAULT_BACKUP: "vaultBackup"
 });
 
 export function registerSettings() {
@@ -31,6 +32,14 @@ export function registerSettings() {
     config: false,
     type: String,
     default: ""
+  });
+  game.settings.register(MODULE_ID, SETTINGS.VAULT_BACKUP, {
+    name: "PF2E Chase Forge protected vault backup",
+    hint: "Internal recovery copy of Chase Forge persistence data. Used only if the protected Journal vault is unexpectedly removed.",
+    scope: "world",
+    config: false,
+    type: Object,
+    default: {}
   });
 }
 

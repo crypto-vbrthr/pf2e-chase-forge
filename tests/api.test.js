@@ -49,6 +49,9 @@ test("dev.12 public API advertises builder, persistence, route, rules, consequen
   assert.equal(caps.effectForgeAvailable, false);
   assert.equal(caps.weatherForgeBridge, true);
   assert.equal(caps.weatherForgeAvailable, false);
+  assert.equal(caps.journalIntegration, true);
+  assert.equal(caps.journalLinks, true);
+  assert.equal(caps.journalStartActions, true);
   assert.equal(caps.campaignForgeBridge, false);
 });
 
@@ -91,6 +94,8 @@ test("public API containers are frozen", () => {
   assert.equal(Object.isFrozen(api.integrations), true);
   assert.equal(Object.isFrozen(api.integrations.effectForge), true);
   assert.equal(Object.isFrozen(api.integrations.weatherForge), true);
+  assert.equal(Object.isFrozen(api.integrations.journal), true);
+  assert.equal(Object.isFrozen(api.journal), true);
   assert.equal(Object.isFrozen(api.builder), true);
   assert.equal(Object.isFrozen(api.generator), true);
   assert.equal(Object.isFrozen(api.presentation), true);
@@ -188,7 +193,7 @@ test("dev.13 advertises Player View, synchronization, branching Builder, and Vis
   const ui = { openPlayerView() {}, getOpenPlayerViews() { return []; } };
   const sync = { sendIntent() {}, publishSession() {} };
   const api = createPublicApi({ ui, sync });
-  assert.equal(api.version, 13);
+  assert.equal(api.version, 14);
   assert.equal(api.contracts.playerView, 1);
   assert.equal(api.contracts.playerStateProjector, 1);
   assert.equal(api.contracts.sessionSync, 1);

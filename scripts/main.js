@@ -2,7 +2,7 @@ import { MODULE_ID, MODULE_VERSION } from "./core/constants.js";
 import { initializePublicApi } from "./api/public-api.js";
 import { createRegistryService } from "./registries/registry-service.js";
 import { FoundryPackStateStore, registerSettings } from "./settings.js";
-import { createFoundryChaseVaultStore } from "./persistence/foundry-vault-store.js";
+import { createFoundryChaseVaultStore, registerFoundryChaseVaultProtectionHooks } from "./persistence/foundry-vault-store.js";
 import { createChaseBuilderUiService, registerChaseBuilderSceneControls } from "./app/chase-builder-app.js";
 import { createChaseRunnerUiService } from "./app/chase-runner-app.js";
 import { createChasePlayerUiService } from "./app/chase-player-app.js";
@@ -42,6 +42,7 @@ function startSessionSyncWithRetry() {
 
 Hooks.once("init", () => {
   registerSettings();
+  registerFoundryChaseVaultProtectionHooks();
   registryService = createRegistryService({ stateStore: new FoundryPackStateStore() });
   try { registryService.registerPacks(MODULE_ID, [createCoreTemplatePack(), createCoreCardPack()]); }
   catch (error) { console.error(`${MODULE_ID} | Failed to register Core Chase content.`, error); }
@@ -54,14 +55,15 @@ Hooks.once("init", () => {
     openRunner: runnerUi.openRunner, closeRunner: runnerUi.closeRunner, closeAllRunners: runnerUi.closeAllRunners, getOpenRunner: runnerUi.getOpenRunner, getOpenRunners: runnerUi.getOpenRunners,
     openPlayerView: playerUi.openPlayerView, closePlayerView: playerUi.closePlayerView, closeAllPlayerViews: playerUi.closeAllPlayerViews, getOpenPlayerView: playerUi.getOpenPlayerView, getOpenPlayerViews: playerUi.getOpenPlayerViews, getPlayerState: playerUi.getState
   });
-  initializePublicApi({ registries: registryService, persistenceStore: createFoundryChaseVaultStore(), ui: chaseUi, sync: syncService });
+  const chaseApi = initializePublicApi({ registries: registryService, persistenceStore: createFoundryChaseVaultStore(), ui: chaseUi, sync: syncService });
+  chaseApi.journal?.register?.();
   registerChaseBuilderSceneControls(builderUi);
   globalThis.Hooks?.on?.("userConnected", (user, connected) => {
     if (game.user?.isGM !== true || connected !== true || user?.isGM === true) return;
     const api = game.modules.get(MODULE_ID)?.api ?? null;
     Promise.resolve(api?.sync?.publishActiveSessions?.()).catch(error => console.warn(`${MODULE_ID} | Failed to sync active Chases to connected player.`, error));
   });
-  console.info(`${MODULE_ID} | ${MODULE_VERSION} Visual System, Core Card Library, Generator/Templates, visual Builder, GM/Player Chase views, session sync, Chat workflow, and protected persistence initialized.`);
+  console.info(`${MODULE_ID} | ${MODULE_VERSION} Journal integration, Visual System, Core Card Library, Generator/Templates, visual Builder, GM/Player Chase views, session sync, Chat workflow, and protected persistence initialized.`);
 });
 
 Hooks.once("ready", async () => {

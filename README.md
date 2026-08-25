@@ -1,12 +1,29 @@
 # PF2E Chase Forge
 
-**Version:** 0.1.0-dev.13.1  
+**Version:** 0.1.0-dev.14.2  
 **Foundry VTT:** 14  
 **System:** Pathfinder 2e
 
-PF2E Chase Forge is a modular Pathfinder 2e chase framework for Foundry VTT. `0.1.0-dev.13.1` includes the **Visual System** that resolves manual, predefined, provider-driven, and automatic artwork consistently across the Builder, GM Runner, and Player View.
+PF2E Chase Forge is a modular Pathfinder 2e chase framework for Foundry VTT. `0.1.0-dev.14.2` fixes branching-Builder participant editability and retains the protected persistence recovery and **Journal Integration**, allowing prepared world Blueprints and read-only add-on Library chases to be referenced, opened, and started directly from Foundry Journal text.
 
-The underlying architecture remains intact: DAG route graphs, synchronized GM/Player runtime views, add-on registries, template-based generation, the 72-card Core Library, PF2e chase rules, consequence orchestration, optional Critical Forge / Effect Forge integration, Weather Forge prefill, and protected restart-safe Blueprint/Session persistence.
+The underlying architecture remains intact: DAG route graphs, synchronized GM/Player runtime views, add-on registries, template-based generation, the 72-card Core Library, the shared Visual System, PF2e chase rules, consequence orchestration, optional Critical Forge / Effect Forge integration, Weather Forge prefill, and protected restart-safe Blueprint/Session persistence.
+
+## dev.14.2 Branching Participant Editability Hotfix
+
+Participant and group mutations now preserve whether a prepared Chase is using the linear or branching Builder. Adding an Actor or Token to a branched Chase therefore no longer changes its Builder metadata to `basic`, which previously made the still-branched graph fail Builder editability checks and caused the UI to render read-only.
+
+## dev.14 Journal Integration
+
+The Builder toolbar can create a normal Foundry Journal Entry for the current prepared Chase or copy a compact reference for insertion into an existing Journal page:
+
+```text
+@ChaseBlueprint[blueprint-id]{Display Name}
+@ChaseLibrary[addon:prepared-id]{Display Name}
+```
+
+Foundry enriches these references into Chase Forge controls. A GM can click the name to open the preparation in Chase Forge or use the play control to create a fresh Session immediately. Library sources stay read-only; starting them snapshots their content into the Session. Players only see a read-only label and do not receive Blueprint/GM state through Journal integration.
+
+See `docs/JOURNAL_INTEGRATION.md` for the full contract and API.
 
 ## dev.13 Visual System
 
@@ -411,15 +428,14 @@ See:
 - `docs/EFFECT_FORGE_INTEGRATION.md`
 - `docs/REGISTRIES.md`
 - `docs/PERSISTENCE.md`
+- `docs/JOURNAL_INTEGRATION.md`
 - `docs/EXTENSION_CONTRACT.md`
 
 ## Deliberately not implemented yet
 
 - free-form graphical route canvas and nested branch editing;
-- large Core Card library;
-- full Image Provider UI;
-- Journal embedding;
-- Campaign Forge integration.
+- Campaign Forge integration;
+- advanced arbitrary party-splitting controls beyond the existing multi-group runtime model.
 
 ## Testing
 
@@ -427,7 +443,7 @@ See:
 npm test
 ```
 
-The dev.11 suite covers the full earlier baseline plus Core template registration, deterministic seeded card selection, contextual filtering, placeholder fallback, generated split/merge routes, path-length preservation, participant/Blueprint identity preservation, public Generator API coverage, and Builder generation controls.
+The dev.14 suite covers the full earlier baseline plus Journal reference parsing/enrichment, Builder Journal actions, world and read-only Library link resolution, Journal Entry creation, direct Session start, provenance metadata, and the public Journal Integration API.
 
 ## Builder layout diagnostics (dev.7.4.1)
 
@@ -445,3 +461,11 @@ The report contains client/scroll/offset heights and computed flex/overflow valu
 
 ### Weather Forge compatibility note (dev.7.5.1)
 If Weather Forge is active but its own persistent `weatherState` setting is not registered, Chase Forge now degrades safely and reports the provider state as unreadable instead of throwing. The Weather Forge registration issue itself must be corrected by Weather Forge.
+
+### Protected persistence hardening (dev.14.1)
+
+- The internal Chase Forge Journal vault is now explicitly named `PF2E Chase Forge · Protected Data · DO NOT DELETE`.
+- Deleting that internal Journal while Chase Forge is active is blocked.
+- Every successful persistence write is mirrored to a hidden world-setting recovery backup.
+- If the protected Journal is unexpectedly removed outside Chase Forge, it is recreated automatically from that backup.
+- Worlds that already lost the vault before this hotfix recover gracefully with a new empty vault and a visible warning instead of leaving the Builder unusable.

@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { MODULE_ID, PERSISTENCE_STORAGE } from "../scripts/core/constants.js";
 import { SETTINGS } from "../scripts/settings.js";
-import { createFoundryChaseVaultStore } from "../scripts/persistence/foundry-vault-store.js";
+import { createFoundryChaseVaultStore, registerFoundryChaseVaultProtectionHooks } from "../scripts/persistence/foundry-vault-store.js";
 import { sampleBlueprint } from "./helpers.js";
 import { createChasePersistenceService } from "../scripts/persistence/persistence-service.js";
 import { createRouteGraphEngine } from "../scripts/engine/route-graph-engine.js";
@@ -12,14 +12,15 @@ class MockJournal {
   constructor(data, collection) { this.id = `vault-${collection.size + 1}`; this.name = data.name; this.ownership = structuredClone(data.ownership); this.flags = structuredClone(data.flags); this.collection = collection; }
   getFlag(scope, key) { return this.flags?.[scope]?.[key]; }
   async setFlag(scope, key, value) { this.flags[scope] ??= {}; this.flags[scope][key] = structuredClone(value); return value; }
-  async update(changes) { if (changes.ownership) this.ownership = structuredClone(changes.ownership); return this; }
+  async update(changes) { if (changes.ownership) this.ownership = structuredClone(changes.ownership); if (changes.name) this.name = String(changes.name); return this; }
 }
 
 function foundryHarness({ isGM = true } = {}) {
   const journal = new Map();
   const values = new Map([
     [`${MODULE_ID}.${SETTINGS.STORAGE_VERSION}`, 0],
-    [`${MODULE_ID}.${SETTINGS.VAULT_ID}`, ""]
+    [`${MODULE_ID}.${SETTINGS.VAULT_ID}`, ""],
+    [`${MODULE_ID}.${SETTINGS.VAULT_BACKUP}`, {}]
   ]);
   globalThis.CONST = { DOCUMENT_OWNERSHIP_LEVELS: { NONE: 0 } };
   globalThis.game = {
@@ -45,6 +46,7 @@ test("Foundry canonical persistence is stored in an ownership-protected JournalE
     assert.equal(h.journal.size, 1);
     const vault = [...h.journal.values()][0];
     assert.equal(vault.ownership.default, 0);
+    assert.match(vault.name, /DO NOT DELETE/);
     assert.equal(vault.getFlag(MODULE_ID, PERSISTENCE_STORAGE.FLAG_META).kind, "vault");
     assert.equal(h.values.get(`${MODULE_ID}.${SETTINGS.VAULT_ID}`), vault.id);
     assert.equal(h.values.get(`${MODULE_ID}.${SETTINGS.STORAGE_VERSION}`), PERSISTENCE_STORAGE.VERSION);
@@ -78,12 +80,72 @@ test("non-GM clients cannot load canonical persistence", async () => {
   } finally { h.cleanup(); }
 });
 
-test("protected store fails closed if storage marker exists but the vault vanished", async () => {
+test("protected store recreates an already-missing vault gracefully when no backup exists", async () => {
   const h = foundryHarness();
   try {
     h.values.set(`${MODULE_ID}.${SETTINGS.STORAGE_VERSION}`, PERSISTENCE_STORAGE.VERSION);
     h.values.set(`${MODULE_ID}.${SETTINGS.VAULT_ID}`, "missing-vault");
     const store = createFoundryChaseVaultStore();
-    await assert.rejects(() => store.initialize(), error => error.code === "VAULT_MISSING");
+    const status = await store.initialize();
+    assert.equal(status.lastRecovery, "empty");
+    assert.equal(h.journal.size, 1);
+    assert.notEqual(h.values.get(`${MODULE_ID}.${SETTINGS.VAULT_ID}`), "missing-vault");
+    assert.deepEqual((await store.load()).blueprints, []);
   } finally { h.cleanup(); }
+});
+
+test("protected store restores a missing vault from the recovery backup", async () => {
+  const h = foundryHarness();
+  try {
+    const route = createRouteGraphEngine();
+    const rules = createChaseRulesEngine({ routeEngine: route });
+    const firstStore = createFoundryChaseVaultStore();
+    const first = createChasePersistenceService({ store: firstStore, routeEngine: route, rulesEngine: rules });
+    const blueprint = await first.blueprints.create(sampleBlueprint());
+    const oldVaultId = h.values.get(`${MODULE_ID}.${SETTINGS.VAULT_ID}`);
+    assert.ok(h.values.get(`${MODULE_ID}.${SETTINGS.VAULT_BACKUP}`).blueprints.some(item => item.id === blueprint.id));
+    h.journal.delete(oldVaultId);
+
+    const secondStore = createFoundryChaseVaultStore();
+    const status = await secondStore.initialize();
+    assert.equal(status.lastRecovery, "backup");
+    assert.equal(h.journal.size, 1);
+    const restored = await secondStore.load();
+    assert.equal(restored.blueprints.find(item => item.id === blueprint.id)?.id, blueprint.id);
+  } finally { h.cleanup(); }
+});
+
+test("protected store notices deletion after initialization and restores before the next read", async () => {
+  const h = foundryHarness();
+  try {
+    const route = createRouteGraphEngine();
+    const rules = createChaseRulesEngine({ routeEngine: route });
+    const store = createFoundryChaseVaultStore();
+    const service = createChasePersistenceService({ store, routeEngine: route, rulesEngine: rules });
+    const blueprint = await service.blueprints.create(sampleBlueprint());
+    const oldVaultId = h.values.get(`${MODULE_ID}.${SETTINGS.VAULT_ID}`);
+    h.journal.delete(oldVaultId);
+    const listed = await service.blueprints.list();
+    assert.equal(listed.find(item => item.id === blueprint.id)?.id, blueprint.id);
+    assert.equal(h.journal.size, 1);
+  } finally { h.cleanup(); }
+});
+
+test("vault protection hook vetoes deletion of the internal persistence Journal", async () => {
+  const h = foundryHarness();
+  const callbacks = new Map();
+  globalThis.Hooks = { on(name, callback) { callbacks.set(name, callback); return 1; } };
+  globalThis.ui = { notifications: { warn() {} } };
+  try {
+    const store = createFoundryChaseVaultStore();
+    await store.initialize();
+    const vault = [...h.journal.values()][0];
+    assert.equal(registerFoundryChaseVaultProtectionHooks(), true);
+    assert.equal(callbacks.get("preDeleteJournalEntry")?.(vault), false);
+    assert.equal(callbacks.get("preDeleteJournalEntry")?.({ id: "normal", flags: {} }), true);
+  } finally {
+    delete globalThis.Hooks;
+    delete globalThis.ui;
+    h.cleanup();
+  }
 });

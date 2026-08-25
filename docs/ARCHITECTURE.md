@@ -2,7 +2,7 @@
 
 ## Baseline
 
-Version `0.1.0-dev.13` adds a centralized Visual System on top of the Core Card and template-driven generator layers while keeping source content separate from editable world snapshots. UI, transport, persistence, route traversal, PF2e rules, consequences, and integrations remain separate layers. The synchronized GM/Player runtime surfaces from dev.9 remain authoritative and are reused for interactive route choices.
+Version `0.1.0-dev.14` adds Journal Integration on top of the centralized Visual System, Core Card Library, and template-driven generator layers while keeping Journal references separate from canonical Chase data. UI, transport, persistence, route traversal, PF2e rules, consequences, and integrations remain separate layers. The synchronized GM/Player runtime surfaces from dev.9 remain authoritative and are reused for interactive route choices.
 
 ```text
 External Chase Add-ons
@@ -44,6 +44,8 @@ Extension Contract / Registries
         v                  v
  Visual Chase Builder     GM Chase Runner
         |                     |
+        +---- Journal Links --+
+        |   open / start      |
         v                     v
  Prepared Blueprint      ChaseSession
                               |
@@ -116,7 +118,7 @@ ChaseResult.*
 
 Critical Forge remains optional and is discovered through its public Effect API. Missing optional effects degrade to manual fallback.
 
-Campaign Forge and Journal embedding remain later milestones.
+Campaign Forge remains a later milestone. Journal Integration is now implemented through stable custom Journal references and does not move canonical Chase data into ordinary Journal pages.
 
 
 ## Core Card content layer
@@ -126,3 +128,8 @@ The `core:cards` pack is registered through the same registry service used by ad
 ## dev.13 Visual System
 
 Image resolution is centralized in `scripts/images/image-service.js`. UI layers consume resolved view data and do not independently query providers or mutate automatic previews. Registered image providers remain extension-owned runtime functions, while pinned selections and predefined candidates remain ordinary serializable Blueprint/Card image data. GM Runner and Player View share the same resolver, with optional Chase-level fallback art.
+
+
+## dev.14 Journal Integration
+
+Journal text uses `@ChaseBlueprint[...]` and `@ChaseLibrary[...]` references. Enrichment resolves them into GM-only open/start controls, while non-GM users see a read-only label. World references resolve through protected persistence; Library references resolve through immutable registries. Starting from a Journal creates the same normal independent `ChaseSession` used by the Builder and therefore reuses the existing GM Runner, public-state projection, socket synchronization, and Player View security boundaries.

@@ -1667,3 +1667,39 @@
   opacity: .8;
   font-size: .8rem;
 }
+
+/* dev.14 Journal integration */
+.chase-builder-icon-button {
+  flex: 0 0 auto;
+  min-width: 34px;
+  padding-inline: 8px !important;
+}
+
+.pf2e-chase-journal-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  vertical-align: middle;
+}
+
+.pf2e-chase-journal-link .content-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.pf2e-chase-journal-start {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.65em;
+  height: 1.65em;
+  min-width: 0;
+  padding: 0;
+  border-radius: 4px;
+  line-height: 1;
+}
+
+.pf2e-chase-journal-readonly {
+  cursor: default;
+}
