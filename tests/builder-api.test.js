@@ -4,7 +4,7 @@ import { createPublicApi } from "../scripts/api/public-api.js";
 
 test("dev.12 public API exposes Basic and Branching Builder helpers", () => {
   const api = createPublicApi();
-  assert.equal(api.version, 14);
+  assert.equal(api.version, 15);
   assert.equal(api.getCapabilities().basicBuilder, true);
   assert.equal(api.getCapabilities().builderUi, false);
   assert.equal(api.builder.contractVersion, 1);

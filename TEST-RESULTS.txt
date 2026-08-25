@@ -1,43 +1,44 @@
-PF2E Chase Forge 0.1.0-dev.14.3 – Verification Summary
+PF2E Chase Forge 0.1.0-dev.15 – Verification Summary
 ======================================================
 
 Automated tests
 ---------------
 Command: npm test
 Result: PASS
-Tests: 325
-Passed: 325
+Tests: 329
+Passed: 329
 Failed: 0
 Skipped: 0
 
 JavaScript syntax verification
 ------------------------------
-Command: node --check for every .js file under scripts/ and tests/
+Command: node --check for every .js file in the package
 Result: PASS
-Files checked: 84
+Files checked: 86
 
 JSON / localization verification
 --------------------------------
 Result: PASS
-Validated: module.json, package.json, lang/de.json, lang/en.json
-Localization key parity: 515 / 515
-Namespace remains flat (PF2E_CHASE_FORGE.* keys).
+JSON files parsed: 4
+Localization key parity: 517 / 517
 
-GM Runner layout regression coverage
-------------------------------------
-PASS: the Foundry .window-content element is bounded and no longer scrolls Runner content
-PASS: .chase-runner-scroll is the sole vertical Runner scroll viewport
-PASS: the Runner toolbar remains outside that viewport and cannot overlap restored scroll content
-PASS: Runner panel CSS variables are defined locally so toolbar/group backgrounds do not become transparent
-PASS: runtime ApplicationV2 style hardening enforces the same scroll containment under theme overrides
+Campaign Forge Integration v1
+-----------------------------
+PASS: optional Campaign Forge bridge exposed through api.integrations.campaignForge
+PASS: world Blueprints and read-only Library chases can be listed as prepared Campaign targets
+PASS: Campaign can open, create/link, and directly start a Chase without owning Chase data
+PASS: direct-start Session snapshots preserve Campaign entry/link provenance
+PASS: completed ChaseResult preserves Campaign provenance and can be queried live
+PASS: lifecycle hooks expose started/paused/resumed/completed/aborted state without mutating Campaign progression
+PASS: Campaign Forge remains optional and capability-detected
 
-German runtime heading regression coverage
-------------------------------------------
-PASS: runtime chase/group/card headings preserve normal casing instead of inherited PF2e uppercase transforms
-PASS: obstacle card headings use the normal UI font to avoid decorative-font glyph corruption
-PASS: localized Core Card text retains the exact UTF-8 string "Schließendes Stadttor"
+Cross-package smoke
+-------------------
+PASS: Chase Forge 0.1.0-dev.15 <-> Campaign Forge 1.0.1
+Verified actual Chase public API + actual Campaign provider registry, prepared-target discovery,
+direct Session start, Campaign provenance, completion, and live result lookup.
 
-Persisted schema versions are unchanged in dev.14.3.
-Public API version: 14
-Journal Integration contract version: 1
-Visual System contract version: 1
+Persistent Chase schemas are unchanged in dev.15.
+Public API version: 15
+Campaign Forge Integration Contract: v1
+Session Lifecycle Contract: v1

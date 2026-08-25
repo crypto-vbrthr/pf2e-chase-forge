@@ -115,7 +115,7 @@ test("Runner UI service is GM-only and reuses one ApplicationV2 per session", as
 test("public API advertises GM Runner only when a runner UI is supplied", async () => {
   const ui = { openRunner: async ({ sessionId }) => sessionId, closeRunner: () => true, getOpenRunner: () => null, getOpenRunners: () => [] };
   const api = createPublicApi({ ui });
-  assert.equal(api.version, 14);
+  assert.equal(api.version, 15);
   assert.equal(api.contracts.gmRunner, 1);
   assert.equal(api.contracts.chatPresenter, 1);
   assert.equal(api.getCapabilities().gmRunner, true);

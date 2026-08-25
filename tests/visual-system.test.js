@@ -17,7 +17,7 @@ function blueprint(card = null) {
 
 test("Visual System resolves manual and predefined card images", async () => {
   const api = createPublicApi();
-  assert.equal(api.version, 14);
+  assert.equal(api.version, 15);
   assert.equal(api.contracts.visualSystem, 1);
   assert.equal(api.getCapabilities().visualSystem, true);
 

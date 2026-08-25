@@ -136,7 +136,7 @@ test("starting a Library Chase from Journal snapshots the source and records Lib
 
 test("public API exposes Journal Integration Contract v1", () => {
   const api = createPublicApi();
-  assert.equal(api.version, 14);
+  assert.equal(api.version, 15);
   assert.equal(api.contracts.journalIntegration, CHASE_JOURNAL_CONTRACT_VERSION);
   assert.equal(api.getCapabilities().journalIntegration, true);
   assert.equal(api.getCapabilities().journalLinks, true);

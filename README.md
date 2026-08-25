@@ -1,12 +1,35 @@
 # PF2E Chase Forge
 
-**Version:** 0.1.0-dev.14.3  
+**Version:** 0.1.0-dev.15  
 **Foundry VTT:** 14  
 **System:** Pathfinder 2e
 
-PF2E Chase Forge is a modular Pathfinder 2e chase framework for Foundry VTT. `0.1.0-dev.14.3` fixes branching-Builder participant editability and retains the protected persistence recovery and **Journal Integration**, allowing prepared world Blueprints and read-only add-on Library chases to be referenced, opened, and started directly from Foundry Journal text.
+PF2E Chase Forge is a modular Pathfinder 2e chase framework for Foundry VTT. `0.1.0-dev.15` adds **Campaign Forge Integration Contract v1**, allowing Campaign Forge entries to reference, open, create, and directly start prepared Chase Blueprints or read-only Library chases without taking ownership of Chase data.
 
 The underlying architecture remains intact: DAG route graphs, synchronized GM/Player runtime views, add-on registries, template-based generation, the 72-card Core Library, the shared Visual System, PF2e chase rules, consequence orchestration, optional Critical Forge / Effect Forge integration, Weather Forge prefill, and protected restart-safe Blueprint/Session persistence.
+
+## dev.15 Campaign Forge Integration
+
+Campaign Forge can now discover Chase Forge as an optional provider. The integration follows the same ownership boundary as the rest of the Forge Suite: Campaign Forge stores only `provider`, `kind`, `targetId`, label, and optional provenance metadata, while Chase Forge remains authoritative for Blueprints, Library content, Sessions, and ChaseResults.
+
+Prepared world Blueprints and read-only Library chases can be listed through the public integration bridge, opened in the correct Builder mode, or started directly from a campaign entry. A direct start creates a normal independent Chase Session and records the Campaign entry/link provenance in `session.metadata.campaign`. Library sources remain immutable and are snapshotted into the running Session.
+
+Chase lifecycle hooks are now public and stable at Contract v1 for created, started, paused, resumed, completed, aborted, and deleted Sessions. Completed ChaseResults inherit Campaign provenance, allowing Campaign Forge to resolve the result live without copying Chase-owned result data into campaign persistence. Campaign progression is deliberately not changed automatically by Chase Forge.
+
+Public API example:
+
+```js
+const forge = game.modules.get("pf2e-chase-forge")?.api;
+
+const prepared = await forge.integrations.campaignForge.listPrepared();
+await forge.integrations.campaignForge.open("blueprint", "blueprint-id");
+const started = await forge.integrations.campaignForge.start("blueprint", "blueprint-id", {
+  campaign: { entryId: "quest-1", entryTitle: "The Pursuit", linkId: "external-1" }
+});
+const result = await forge.integrations.campaignForge.getLatestResult("blueprint", "blueprint-id", { entryId: "quest-1" });
+```
+
+See `docs/CAMPAIGN_FORGE_INTEGRATION.md` for the provider contract and lifecycle boundary.
 
 ## dev.14.2 Branching Participant Editability Hotfix
 

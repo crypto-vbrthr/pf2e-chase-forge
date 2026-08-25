@@ -1,4 +1,4 @@
-# PF2E Chase Forge Public API - dev.14
+# PF2E Chase Forge Public API - dev.15
 
 ## Access
 
@@ -6,12 +6,12 @@
 const forge = game.modules.get("pf2e-chase-forge")?.api;
 ```
 
-Current public API version: `14`  
+Current public API version: `15`  
 Extension Contract version: `1`  
 Basic Builder Contract version: `1`  
 Branching Builder Contract version: `1`
 
-Dev.14 adds Journal Integration Contract v1 and raises the public API to `14`. Persisted schema versions remain unchanged.
+Dev.15 adds Campaign Forge Integration Contract v1 and Session Lifecycle Hook Contract v1 and raises the public API to `15`. Persisted schema versions remain unchanged.
 
 ## Current dev.14 capabilities
 
@@ -353,3 +353,20 @@ forge.packs.get("core:cards");
 ```
 
 The API contract version is unchanged in dev.12 because this uses the existing card/pack registry interfaces.
+
+## Campaign Forge Integration v1
+
+```js
+forge.integrations.campaignForge.listPrepared();
+forge.integrations.campaignForge.getContext(kind, targetId);
+forge.integrations.campaignForge.open(kind, targetId);
+forge.integrations.campaignForge.openNew();
+forge.integrations.campaignForge.start(kind, targetId, { campaign });
+forge.integrations.campaignForge.getResult(sessionId);
+forge.integrations.campaignForge.getLatestResult(kind, targetId, { entryId });
+```
+
+The bridge is GM-only. `kind` is `blueprint` for editable world Blueprints or `library` for immutable registered Library content. Campaign provenance is stored only on the generated Session/Result. Chase Forge never writes Campaign Forge persistence directly unless the GM explicitly calls `linkToCampaignEntry()`.
+
+Lifecycle hook names are exposed through `forge.hooks` and include `sessionCreated`, `sessionStarted`, `sessionPaused`, `sessionResumed`, `sessionCompleted`, `sessionAborted`, and `sessionDeleted`. Hook payloads use `pf2e-chase-forge/session-lifecycle` v1.
+

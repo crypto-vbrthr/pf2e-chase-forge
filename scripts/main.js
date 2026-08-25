@@ -63,7 +63,7 @@ Hooks.once("init", () => {
     const api = game.modules.get(MODULE_ID)?.api ?? null;
     Promise.resolve(api?.sync?.publishActiveSessions?.()).catch(error => console.warn(`${MODULE_ID} | Failed to sync active Chases to connected player.`, error));
   });
-  console.info(`${MODULE_ID} | ${MODULE_VERSION} Journal integration, Visual System, Core Card Library, Generator/Templates, visual Builder, GM/Player Chase views, session sync, Chat workflow, and protected persistence initialized.`);
+  console.info(`${MODULE_ID} | ${MODULE_VERSION} Campaign Forge integration, Journal integration, Visual System, Core Card Library, Generator/Templates, visual Builder, GM/Player Chase views, session sync, Chat workflow, and protected persistence initialized.`);
 });
 
 Hooks.once("ready", async () => {

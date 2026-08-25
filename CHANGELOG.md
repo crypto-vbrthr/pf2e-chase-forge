@@ -1,3 +1,14 @@
+## 0.1.0-dev.15 – Campaign Forge Integration
+
+- Adds Campaign Forge Integration Contract v1 and raises the Chase Forge public API to version `15` without changing persisted schema versions.
+- Exposes prepared world Blueprints and read-only Library chases as GM-only Campaign provider targets.
+- Adds campaign-facing resolve/open/new/start/result methods while preserving Chase Forge ownership of all Chase domain data.
+- Direct Campaign starts create normal independent Sessions, preserve Library immutability, open the GM Runner, publish Player View state, and store Campaign entry/link provenance in Session metadata.
+- Propagates Campaign provenance into completed ChaseResults so consumers can resolve outcomes without copying result records into their own persistence.
+- Adds public Session Lifecycle Hook Contract v1 for created, started, paused, resumed, completed, aborted, and deleted Sessions.
+- Adds `integrations.campaignForge` to advertised extension capabilities and capability detection.
+- Adds `docs/CAMPAIGN_FORGE_INTEGRATION.md` plus regression coverage for listing, opening, direct starts, result return, optional-provider detection, and lifecycle hooks.
+
 # Changelog
 
 ## 0.1.0-dev.14.3 – GM Runner Layout & German Heading Hotfix

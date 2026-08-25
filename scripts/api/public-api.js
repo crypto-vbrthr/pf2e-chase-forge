@@ -40,7 +40,7 @@ import { createEffectForgeBridge, inspectEffectForgeApi } from "../integrations/
 import { createWeatherForgeBridge, inspectWeatherForgeApi, WEATHER_FORGE_BRIDGE_CONTRACT_VERSION } from "../integrations/weather-forge-bridge.js";
 import { createChasePersistenceService } from "../persistence/persistence-service.js";
 import { createMemoryChaseStore } from "../persistence/memory-store.js";
-import { createChaseSessionManager } from "../persistence/session-manager.js";
+import { CHASE_LIFECYCLE_HOOKS, createChaseSessionManager } from "../persistence/session-manager.js";
 import { validatePersistenceState } from "../persistence/state.js";
 import { CHASE_CHAT_PRESENTER_CONTRACT_VERSION, createChaseChatPresenter } from "../presentation/chat-presenter.js";
 import { GM_RUNNER_CONTRACT_VERSION } from "../app/chase-runner-app.js";
@@ -50,6 +50,7 @@ import { PLAYER_STATE_PROJECTOR_CONTRACT_VERSION, projectChasePublicState } from
 import { CHASE_GENERATOR_CONTRACT_VERSION, createChaseGenerator, generateChaseFromTemplate, inspectGenerationCandidates, selectGenerationCards } from "../generator/chase-generator.js";
 import { CHASE_VISUAL_SYSTEM_CONTRACT_VERSION, createChaseImageService } from "../images/image-service.js";
 import { CHASE_JOURNAL_CONTRACT_VERSION, createChaseJournalBridge } from "../integrations/journal-bridge.js";
+import { CHASE_CAMPAIGN_INTEGRATION_CONTRACT_VERSION, createCampaignForgeBridge, inspectCampaignForgeApi } from "../integrations/campaign-forge-bridge.js";
 import {
   BASIC_BUILDER_CONTRACT_VERSION,
   addApproachToBasicCard,
@@ -149,10 +150,11 @@ export function createPublicApi({ registries = createRegistryService(), persiste
   const weatherForgeBridge = createWeatherForgeBridge();
   const consequences = createConsequenceEngine({ routeEngine: route, effectForgeBridge });
   const persistence = createChasePersistenceService({ store: persistenceStore, routeEngine: route, rulesEngine: rules, registries });
-  const sessionManager = createChaseSessionManager(persistence);
+  const sessionManager = createChaseSessionManager(persistence, { emit: (hook, payload) => globalThis.Hooks?.callAll?.(hook, payload) });
   const chatPresenter = createChaseChatPresenter();
   let publicApi = null;
   const journalBridge = createChaseJournalBridge({ getApi: () => publicApi });
+  const campaignForgeBridge = createCampaignForgeBridge({ getApi: () => publicApi });
 
   publicApi = Object.freeze({
     version: API_VERSION,
@@ -186,7 +188,13 @@ export function createPublicApi({ registries = createRegistryService(), persiste
       chatPresenter: CHASE_CHAT_PRESENTER_CONTRACT_VERSION,
       generator: CHASE_GENERATOR_CONTRACT_VERSION,
       visualSystem: CHASE_VISUAL_SYSTEM_CONTRACT_VERSION,
-      journalIntegration: CHASE_JOURNAL_CONTRACT_VERSION
+      journalIntegration: CHASE_JOURNAL_CONTRACT_VERSION,
+      campaignForgeIntegration: CHASE_CAMPAIGN_INTEGRATION_CONTRACT_VERSION,
+      sessionLifecycle: 1
+    }),
+    hooks: Object.freeze({
+      ready: "pf2eChaseForge.ready",
+      ...CHASE_LIFECYCLE_HOOKS
     }),
     getCapabilities: () => Object.freeze({
       coreDataModel: true,
@@ -243,7 +251,11 @@ export function createPublicApi({ registries = createRegistryService(), persiste
       journalIntegration: true,
       journalLinks: true,
       journalStartActions: true,
-      campaignForgeBridge: false
+      campaignForgeBridge: true,
+      campaignForgeAvailable: campaignForgeBridge.inspect().compatible,
+      campaignPreparedChases: true,
+      campaignDirectStart: true,
+      campaignResultReturn: true
     }),
     factories: Object.freeze({
       card: createChaseCard,
@@ -348,7 +360,12 @@ export function createPublicApi({ registries = createRegistryService(), persiste
         inspectApi: inspectWeatherForgeApi,
         createBridge: createWeatherForgeBridge
       }),
-      journal: journalBridge
+      journal: journalBridge,
+      campaignForge: Object.freeze({
+        ...campaignForgeBridge,
+        inspectApi: inspectCampaignForgeApi,
+        createBridge: createCampaignForgeBridge
+      })
     }),
     builder: Object.freeze({
       contractVersion: BASIC_BUILDER_CONTRACT_VERSION,

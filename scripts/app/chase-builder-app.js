@@ -1712,7 +1712,7 @@ function getAppClass() {
 
 export function createChaseBuilderUiService({ getApi = () => globalThis.game?.modules?.get?.(MODULE_ID)?.api ?? null } = {}) {
   return Object.freeze({
-    async openBuilder({ blueprintId = null, libraryBlueprintId = null } = {}) {
+    async openBuilder({ blueprintId = null, libraryBlueprintId = null, newChase = false } = {}) {
       if (!isGm()) {
         notify("warn", i18n("PF2E_CHASE_FORGE.Builder.GmOnly", "Die Chase Forge Verwaltung ist nur für die Spielleitung verfügbar."));
         return null;
@@ -1725,7 +1725,10 @@ export function createChaseBuilderUiService({ getApi = () => globalThis.game?.mo
         openBuilderApp = new App(chaseApi);
         created = true;
       }
-      if (libraryBlueprintId) {
+      if (newChase) {
+        await openBuilderApp._resetDraftWithEnvironmentPrefill();
+        await openBuilderApp.render({ force: true });
+      } else if (libraryBlueprintId) {
         await openBuilderApp.loadLibraryBlueprint(libraryBlueprintId);
       } else if (blueprintId) {
         await openBuilderApp.loadBlueprint(blueprintId);

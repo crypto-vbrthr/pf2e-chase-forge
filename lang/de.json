@@ -513,5 +513,7 @@
   "PF2E_CHASE_FORGE.Journal.Type": "Typ",
   "PF2E_CHASE_FORGE.Persistence.VaultDeleteBlocked": "Dieser Journal-Eintrag enthält geschützte Chase-Forge-Daten und kann nicht gelöscht werden, solange Chase Forge aktiv ist. Deaktiviere das Modul zuerst, wenn du ihn absichtlich entfernen möchtest.",
   "PF2E_CHASE_FORGE.Persistence.VaultRecoveredBackup": "Der geschützte Chase-Forge-Datenspeicher wurde aus der automatischen Sicherung wiederhergestellt.",
-  "PF2E_CHASE_FORGE.Persistence.VaultRecreatedEmpty": "Der geschützte Chase-Forge-Datenspeicher wurde gelöscht. Es war noch keine Sicherung vorhanden, daher wurde ein neuer leerer Datenspeicher angelegt. Bereits darin gespeicherte Chase-Forge-Daten konnten nicht automatisch wiederhergestellt werden."
+  "PF2E_CHASE_FORGE.Persistence.VaultRecreatedEmpty": "Der geschützte Chase-Forge-Datenspeicher wurde gelöscht. Es war noch keine Sicherung vorhanden, daher wurde ein neuer leerer Datenspeicher angelegt. Bereits darin gespeicherte Chase-Forge-Daten konnten nicht automatisch wiederhergestellt werden.",
+  "PF2E_CHASE_FORGE.Campaign.Started": "{name} wurde aus Campaign Forge gestartet.",
+  "PF2E_CHASE_FORGE.Campaign.ChatStarted": "Verfolgungsjagd aus Campaign Forge gestartet: {name}"
 }

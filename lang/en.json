@@ -513,5 +513,7 @@
   "PF2E_CHASE_FORGE.Journal.Type": "Type",
   "PF2E_CHASE_FORGE.Persistence.VaultDeleteBlocked": "This Journal entry contains protected Chase Forge data and cannot be deleted while Chase Forge is active. Disable the module first if you intentionally want to remove it.",
   "PF2E_CHASE_FORGE.Persistence.VaultRecoveredBackup": "The protected Chase Forge data vault was restored from the automatic recovery backup.",
-  "PF2E_CHASE_FORGE.Persistence.VaultRecreatedEmpty": "The protected Chase Forge data vault was deleted. No recovery backup existed yet, so a new empty data vault was created. Previously stored Chase Forge data could not be restored automatically."
+  "PF2E_CHASE_FORGE.Persistence.VaultRecreatedEmpty": "The protected Chase Forge data vault was deleted. No recovery backup existed yet, so a new empty data vault was created. Previously stored Chase Forge data could not be restored automatically.",
+  "PF2E_CHASE_FORGE.Campaign.Started": "{name} was started from Campaign Forge.",
+  "PF2E_CHASE_FORGE.Campaign.ChatStarted": "Chase started from Campaign Forge: {name}"
 }

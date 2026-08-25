@@ -937,7 +937,11 @@ export function createChaseRulesEngine({ registries = null, cardResolver = null,
       events: normalized.events,
       startedAt: normalized.startedAt,
       endedAt: normalized.endedAt,
-      metadata: { reason: evaluation.reason, details: cloneData(evaluation.details ?? {}) }
+      metadata: {
+        reason: evaluation.reason,
+        details: cloneData(evaluation.details ?? {}),
+        ...(normalized.metadata?.campaign ? { campaign: cloneData(normalized.metadata.campaign) } : {})
+      }
     });
     return Object.freeze({ session: normalized, result });
   }
