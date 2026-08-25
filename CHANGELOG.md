@@ -1,3 +1,36 @@
+## 0.1.0-dev.17.3 – Runner Abort Focus Hotfix
+
+- Replaced the GM Runner's native browser `window.confirm()` abort prompt with Foundry's ApplicationV2 `DialogV2.confirm()` when available.
+- Prevents the Electron/Chromium native-modal focus state from leaving Builder text inputs unable to receive keyboard input after aborting a Chase until the Foundry window loses and regains OS focus.
+- Keeps the native confirmation only as a compatibility fallback when `DialogV2` is unavailable.
+- Added a regression check to keep Runner destructive confirmation on Foundry's managed dialog path.
+
+## 0.1.0-dev.17.2 – Builder Editability Restore Hotfix
+
+- Fixes a Foundry ApplicationV2 lifecycle regression where prepared world Chases could remain visually read-only after starting and then aborting/completing a Session.
+- Re-asserts the authoritative Builder editability state after every render instead of relying on DOM diffing to clear stale `disabled` properties.
+- Explicitly removes stale Library read-only styling when returning to an editable world Blueprint.
+- Re-enables form fields and editability-only controls while preserving genuinely structural disabled states such as first/last card movement and protected branch-source deletion.
+- Adds regression coverage for a forced Builder refresh transitioning controls from stale disabled/read-only state back to editable state.
+
+## 0.1.0-dev.17.1 – Participant Drop Scroll Position Hotfix
+
+- Preserves the Chase Builder editor and sidebar scroll positions when a participant is added via Actor/Token drag & drop.
+- Applies the same scroll preservation to adding selected scene tokens and removing participants, keeping all participant-list edits spatially stable.
+- Adds regression coverage so participant mutations that force an ApplicationV2 re-render cannot silently reintroduce the jump-to-top behavior.
+
+## 0.1.0-dev.17 – Final Rules, Balance & Runtime Hardening
+
+- Enforces PF2e race initiative at participant level for every round. The GM Runner collects initiative values for all rolling competitors, blocks out-of-order actions, and exposes the current initiative turn to the Player View.
+- Keeps steady-pace NPC competitors outside race initiative and advances them through the existing steady-pacing model. End-of-round auto-skip now follows race initiative order instead of storage/group order.
+- Implements the GM Core Chase Point guideline for automatically scalable obstacles: generated and newly created obstacles alternate between group size − 1 and group size − 2, minimum 1.
+- Resolves automatic Chase Point requirements per rolling runtime group, so differently sized sides no longer share an accidentally inflated requirement. Steady groups are ignored when choosing Builder/generator reference group size. Explicitly edited/custom requirements remain fixed.
+- Adds best-effort optimistic multi-GM persistence hardening with revision checks, write tokens, observed conflict detection, and bounded automatic transaction retries.
+- Escapes user-authored/imported completion-dialog text and image attributes before HTML interpolation.
+- Adds broad ApplicationV2 action-wiring regression coverage plus focused race, Chase Point scaling, persistence-conflict, and completion-dialog tests.
+- Refreshes architecture/API/rules documentation for Campaign Forge v2, race initiative, scalable Chase Points, and the current development milestone.
+- Raises the public API to version `17`; persisted schema versions and Campaign Forge Integration Contract v2 remain unchanged.
+
 ## 0.1.0-dev.16.8 – Campaign Run Resume & Reopen Hotfix
 
 - Raises the Campaign Forge Integration Contract to v2 while keeping persisted Chase schemas and the public API version unchanged.

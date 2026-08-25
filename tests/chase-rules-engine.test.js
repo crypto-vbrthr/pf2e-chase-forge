@@ -413,11 +413,51 @@ test("quarry acts before pursuers in pursuit and escape policy", () => {
   }
 });
 
-test("race policy requires initiative", () => {
+test("race policy requires initiative for rolling participants", () => {
   const rules = engine();
-  const bp = blueprint({ chaseType: "race", groups: [group("a", "competitor", []), group("b", "competitor", [])] });
+  const bp = blueprint({ chaseType: "race", groups: [group("a", "competitor"), group("b", "competitor")] });
   const session = rules.initializeSession(bp, { status: "active", autoResolveStart: false });
-  assert.equal(rules.getTurnPolicy(session).initiativeRequired, true);
+  const policy = rules.getTurnPolicy(session);
+  assert.equal(policy.initiativeRequired, true);
+  assert.equal(policy.entries.length, 4);
+});
+
+test("race round requires a complete participant initiative order and enforces it", () => {
+  const rules = engine();
+  const bp = blueprint({ chaseType: "race", groups: [group("a", "competitor", ["a-1"]), group("b", "competitor", ["b-1"])] });
+  let session = rules.initializeSession(bp, { status: "active", autoResolveStart: false });
+  assert.throws(() => rules.beginRound(session), error => error?.code === "RACE_INITIATIVE_REQUIRED");
+  assert.throws(() => rules.beginRound(session, { initiativeOrder: ["b-1"] }), error => error?.code === "RACE_INITIATIVE_INCOMPLETE");
+
+  session = rules.beginRound(session, { initiativeOrder: ["b-1", "a-1"] });
+  assert.equal(rules.getTurnPolicy(session).currentParticipantId, "b-1");
+  assert.equal(rules.canParticipantAct(session, "runtime-b", "b-1"), true);
+  assert.equal(rules.canParticipantAct(session, "runtime-a", "a-1"), false);
+  assert.throws(
+    () => rules.applyAutomaticContribution(session, { runtimeGroupId: "runtime-a", participantId: "a-1", chasePoints: 1 }),
+    error => error?.code === "INITIATIVE_TURN_BLOCKED"
+  );
+
+  session = rules.applyAutomaticContribution(session, { runtimeGroupId: "runtime-b", participantId: "b-1", chasePoints: 1 }).session;
+  assert.equal(rules.getTurnPolicy(session).currentParticipantId, "a-1");
+  assert.equal(rules.canParticipantAct(session, "runtime-a", "a-1"), true);
+});
+
+test("race end-round auto-skip follows initiative order and steady competitors move without initiative", () => {
+  const rules = engine();
+  const bp = blueprint({
+    chaseType: "race",
+    groups: [
+      group("a", "competitor", ["a-1"]),
+      group("b", "competitor", ["b-1"]),
+      group("npc", "competitor", ["npc-1"], { paceMode: "steady", obstaclesPerRound: 1 })
+    ]
+  });
+  let session = rules.initializeSession(bp, { status: "active", autoResolveStart: true });
+  session = rules.beginRound(session, { initiativeOrder: ["b-1", "a-1"] });
+  const result = rules.endRound(session, { completeOnOutcome: false });
+  assert.deepEqual(result.skipped.map(item => item.participantId), ["b-1", "a-1"]);
+  assert.equal(result.steadyAdvances.some(item => item.runtimeGroupId === "runtime-npc"), true);
 });
 
 test("GM Core obstacle-point guideline uses group size minus one or two with minimum one", () => {

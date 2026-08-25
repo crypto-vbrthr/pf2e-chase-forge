@@ -14,6 +14,7 @@ import { validateChaseSession } from "../data/validators.js";
 import { createRouteGraphEngine } from "../engine/route-graph-engine.js";
 import { degreeOfSuccess } from "./degree-of-success.js";
 import { resolveApproachDc } from "./pf2e-dc.js";
+import { effectiveObstaclePoints, recommendObstaclePoints } from "./chase-guidelines.js";
 
 function rulesError(code, message, details = null) {
   return new ChaseRulesError(message, { code, details });
@@ -94,25 +95,108 @@ function groupFinishedRoundTurn(session, group) {
   return participants.every(participantId => session.roundState.actedParticipantIds.includes(participantId));
 }
 
+function raceInitiativeEntries(session) {
+  const entries = [];
+  for (const group of session.groups ?? []) {
+    if (group.completed || group.rules?.paceMode !== "roll") continue;
+    const definition = getBlueprintGroup(session, group);
+    for (const participantId of group.participantIds ?? []) {
+      const participant = definition?.participants?.find?.(item => item.id === participantId) ?? null;
+      entries.push({
+        participantId,
+        runtimeGroupId: group.id,
+        groupId: group.groupId,
+        participantName: participant?.name || participantId,
+        groupName: definition?.name || group.groupId
+      });
+    }
+  }
+  return entries;
+}
+
+function normalizeRaceInitiativeOrder(session, initiativeOrder) {
+  const entries = raceInitiativeEntries(session);
+  if (entries.length === 0) return [];
+  if (!Array.isArray(initiativeOrder) || initiativeOrder.length === 0) {
+    throw rulesError("RACE_INITIATIVE_REQUIRED", "A race round requires an initiative order for all rolling participants.", { participantIds: entries.map(item => item.participantId) });
+  }
+  const byParticipant = new Map(entries.map(item => [item.participantId, item]));
+  const byGroup = new Map();
+  for (const entry of entries) {
+    const list = byGroup.get(entry.runtimeGroupId) ?? [];
+    list.push(entry.participantId);
+    byGroup.set(entry.runtimeGroupId, list);
+  }
+  const expanded = [];
+  for (const rawId of initiativeOrder) {
+    const id = String(rawId ?? "");
+    if (byParticipant.has(id)) expanded.push(id);
+    else if (byGroup.has(id)) expanded.push(...byGroup.get(id));
+  }
+  const normalized = uniqueStrings(expanded).filter(id => byParticipant.has(id));
+  const missing = entries.map(item => item.participantId).filter(id => !normalized.includes(id));
+  if (missing.length > 0) {
+    throw rulesError("RACE_INITIATIVE_INCOMPLETE", "Race initiative must include every rolling participant exactly once.", { missingParticipantIds: missing, initiativeOrder: normalized });
+  }
+  return normalized;
+}
+
+function nextRaceParticipantId(session) {
+  if (session.blueprintSnapshot?.settings?.chaseType !== "race" || session.roundState?.phase !== "active") return null;
+  const entries = new Map(raceInitiativeEntries(session).map(item => [item.participantId, item]));
+  for (const participantId of session.roundState?.initiativeOrder ?? []) {
+    const entry = entries.get(participantId);
+    if (!entry) continue;
+    if (session.roundState.actedParticipantIds.includes(participantId)) continue;
+    const group = getRuntimeGroup(session, entry.runtimeGroupId);
+    if (!group || group.completed) continue;
+    return participantId;
+  }
+  return null;
+}
+
 function runtimeGroupCanAct(session, runtimeGroupId) {
   if (session.roundState?.phase !== "active") return false;
   const group = getRuntimeGroup(session, runtimeGroupId);
   if (!group || group.completed) return false;
   const type = session.blueprintSnapshot?.settings?.chaseType;
+  if (type === "race") {
+    if (group.rules?.paceMode !== "roll") return false;
+    const nextParticipantId = nextRaceParticipantId(session);
+    return nextParticipantId ? group.participantIds.includes(nextParticipantId) : false;
+  }
   if (!["pursuit", "escape"].includes(type)) return true;
   if (groupRole(session, group) === "quarry") return true;
   return roleGroups(session, "quarry").every(quarry => groupFinishedRoundTurn(session, quarry));
+}
+
+function participantCanAct(session, runtimeGroupId, participantId) {
+  if (session.roundState?.phase !== "active") return false;
+  const group = getRuntimeGroup(session, runtimeGroupId);
+  if (!group || group.completed || group.rules?.paceMode !== "roll") return false;
+  if (!participantId || !group.participantIds.includes(participantId)) return false;
+  if (session.roundState.actedParticipantIds.includes(participantId)) return false;
+  if (!runtimeGroupCanAct(session, runtimeGroupId)) return false;
+  if (session.blueprintSnapshot?.settings?.chaseType === "race") return nextRaceParticipantId(session) === participantId;
+  return true;
 }
 
 function assertParticipantTurn(session, group, participantId) {
   if (!participantId || !group.participantIds.includes(participantId)) {
     throw rulesError("PARTICIPANT_NOT_IN_GROUP", `Participant '${participantId ?? ""}' is not part of runtime group '${group.id}'.`, { runtimeGroupId: group.id, participantId });
   }
-  if (!runtimeGroupCanAct(session, group.id)) {
-    throw rulesError("GROUP_TURN_BLOCKED", `Runtime group '${group.id}' must wait until the quarry has acted this round.`, { runtimeGroupId: group.id, round: session.round });
-  }
   if (session.roundState.actedParticipantIds.includes(participantId)) {
     throw rulesError("PARTICIPANT_ALREADY_ACTED", `Participant '${participantId}' already acted this round.`, { participantId, round: session.round });
+  }
+  if (!participantCanAct(session, group.id, participantId)) {
+    const race = session.blueprintSnapshot?.settings?.chaseType === "race";
+    throw rulesError(
+      race ? "INITIATIVE_TURN_BLOCKED" : "GROUP_TURN_BLOCKED",
+      race
+        ? `Participant '${participantId}' must wait for their place in the race initiative order.`
+        : `Runtime group '${group.id}' must wait until the quarry has acted this round.`,
+      { runtimeGroupId: group.id, participantId, round: session.round, nextParticipantId: race ? nextRaceParticipantId(session) : null }
+    );
   }
 }
 
@@ -346,14 +430,7 @@ function makeEvaluation(outcome, { winners = [], losers = [], endingNodeId = nul
   });
 }
 
-export function recommendObstaclePoints(groupSize) {
-  const size = Math.max(1, Math.trunc(Number(groupSize) || 1));
-  return Object.freeze({
-    groupSize: size,
-    oneLess: Math.max(1, size - 1),
-    twoLess: Math.max(1, size - 2)
-  });
-}
+export { recommendObstaclePoints } from "./chase-guidelines.js";
 
 export function getChaseLengthGuideline(length) {
   if (!Object.hasOwn(CHASE_LENGTH_GUIDELINES, length)) throw rulesError("UNKNOWN_CHASE_LENGTH", `No fixed obstacle guideline exists for chase length '${length}'.`, { length });
@@ -406,7 +483,15 @@ export function getTurnPolicy(session) {
   const quarry = roleGroups(session, "quarry").map(group => group.id);
   const others = session.groups.filter(group => !quarry.includes(group.id)).map(group => group.id);
   if (type === "race") {
-    return Object.freeze({ mode: "initiative", quarryFirst: false, initiativeRequired: true, suggestedOrder: [...session.roundState.initiativeOrder] });
+    const entries = raceInitiativeEntries(session);
+    return Object.freeze({
+      mode: "initiative",
+      quarryFirst: false,
+      initiativeRequired: entries.length > 0,
+      suggestedOrder: [...session.roundState.initiativeOrder],
+      currentParticipantId: nextRaceParticipantId(session),
+      entries: entries.map(item => Object.freeze({ ...item }))
+    });
   }
   if (["pursuit", "escape"].includes(type)) {
     return Object.freeze({ mode: "quarryFirst", quarryFirst: true, initiativeRequired: false, suggestedOrder: [...quarry, ...others] });
@@ -486,11 +571,16 @@ export function createChaseRulesEngine({ registries = null, cardResolver = null,
       phase: "active",
       actedParticipantIds: [],
       skippedParticipantIds: [],
-      initiativeOrder: initiativeOrder ? uniqueStrings(initiativeOrder) : [],
+      initiativeOrder: [],
       startedAt: nowIso(),
       endedAt: null
     };
-    if (!initiativeOrder) next.roundState.initiativeOrder = getTurnPolicy(createChaseSession(next)).suggestedOrder;
+    const provisional = createChaseSession(next);
+    if (provisional.blueprintSnapshot?.settings?.chaseType === "race") {
+      next.roundState.initiativeOrder = normalizeRaceInitiativeOrder(provisional, initiativeOrder);
+    } else {
+      next.roundState.initiativeOrder = initiativeOrder ? uniqueStrings(initiativeOrder) : getTurnPolicy(provisional).suggestedOrder;
+    }
     next.events = [...(next.events ?? []), event("roundStarted", next, { round: next.round, initiativeOrder: next.roundState.initiativeOrder })];
     next.updatedAt = nowIso();
     let started = createChaseSession(next);
@@ -517,7 +607,7 @@ export function createChaseRulesEngine({ registries = null, cardResolver = null,
       node: cloneData(node),
       card: cloneData(card),
       progress: group.position.progress,
-      requiredPoints: card.obstacle.requiredPoints,
+      requiredPoints: effectiveObstaclePoints(card, group),
       cleared: isNodeCleared(session, node.id, runtimeGroupId),
       separated: group.participantIds.length === 1
     });
@@ -563,7 +653,7 @@ export function createChaseRulesEngine({ registries = null, cardResolver = null,
     const approach = findApproach(card, approachId);
     const allConsequences = consequencesFor(card, approach, degree);
     const delta = pointDeltaForConsequences(allConsequences, degree);
-    const requiredPoints = card.obstacle.requiredPoints;
+    const requiredPoints = effectiveObstaclePoints(card, group);
     const separatedSuccess = group.participantIds.length === 1 && ["success", "criticalSuccess"].includes(degree);
 
     let changed = updateGroupProgress(session, runtimeGroupId, delta);
@@ -702,7 +792,7 @@ export function createChaseRulesEngine({ registries = null, cardResolver = null,
     next.events = [...(next.events ?? []), event("automaticContribution", next, { runtimeGroupId, participantId, nodeId: node.id, cardId: card.id, points: amount, label })];
     next = createChaseSession(next);
 
-    const requiredPoints = card.obstacle.requiredPoints;
+    const requiredPoints = effectiveObstaclePoints(card, group);
     const obstacleCleared = getRuntimeGroup(next, runtimeGroupId).position.progress >= requiredPoints;
     let routeChoiceRequired = false;
     let traversedEdgeIds = [];
@@ -810,8 +900,9 @@ export function createChaseRulesEngine({ registries = null, cardResolver = null,
 
       const { card } = resolveCard(resolveCardRef, next, runtimeGroupId);
       const copy = cloneData(next);
-      getRuntimeGroup(copy, runtimeGroupId).position.progress = card.obstacle.requiredPoints;
-      next = markNodeCleared(createChaseSession(copy), node.id, runtimeGroupId, card.obstacle.requiredPoints);
+      const requiredPoints = effectiveObstaclePoints(card, group);
+      getRuntimeGroup(copy, runtimeGroupId).position.progress = requiredPoints;
+      next = markNodeCleared(createChaseSession(copy), node.id, runtimeGroupId, requiredPoints);
       const route = advanceFromClearedCard(next, runtimeGroupId, routeEngine, { context, edgeId });
       next = route.session;
       traversedEdgeIds.push(...route.traversedEdgeIds);
@@ -870,14 +961,28 @@ export function createChaseRulesEngine({ registries = null, cardResolver = null,
     const steadyAdvances = [];
 
     if (autoSkipUnacted) {
-      for (const runtimeGroup of [...next.groups]) {
-        const current = getRuntimeGroup(next, runtimeGroup.id);
-        if (!current || current.completed || current.rules.paceMode !== "roll") continue;
-        for (const participantId of current.participantIds) {
+      if (next.blueprintSnapshot?.settings?.chaseType === "race") {
+        // A race has a strict participant-level initiative order. Auto-skipping must
+        // follow that same order, otherwise the first group in storage could try to
+        // skip ahead of the participant whose initiative turn is actually next.
+        for (const participantId of next.roundState.initiativeOrder ?? []) {
           if (next.roundState.actedParticipantIds.includes(participantId)) continue;
+          const current = next.groups.find(group => group.rules?.paceMode === "roll" && group.participantIds?.includes(participantId));
+          if (!current || current.completed) continue;
           const result = skipParticipantTurn(next, { runtimeGroupId: current.id, participantId, allowNoObstacle: true });
           next = result.session;
           skipped.push({ runtimeGroupId: current.id, participantId, penaltyApplied: result.penaltyApplied });
+        }
+      } else {
+        for (const runtimeGroup of [...next.groups]) {
+          const current = getRuntimeGroup(next, runtimeGroup.id);
+          if (!current || current.completed || current.rules.paceMode !== "roll") continue;
+          for (const participantId of current.participantIds) {
+            if (next.roundState.actedParticipantIds.includes(participantId)) continue;
+            const result = skipParticipantTurn(next, { runtimeGroupId: current.id, participantId, allowNoObstacle: true });
+            next = result.session;
+            skipped.push({ runtimeGroupId: current.id, participantId, penaltyApplied: result.penaltyApplied });
+          }
         }
       }
     }
@@ -1027,6 +1132,9 @@ export function createChaseRulesEngine({ registries = null, cardResolver = null,
     configureGroupPace,
     beginRound,
     canGroupAct: runtimeGroupCanAct,
+    canParticipantAct: participantCanAct,
+    getRaceInitiativeEntries: session => raceInitiativeEntries(session).map(item => Object.freeze({ ...item })),
+    getNextRaceParticipantId: nextRaceParticipantId,
     endRound,
     currentObstacle,
     resolveCheck,

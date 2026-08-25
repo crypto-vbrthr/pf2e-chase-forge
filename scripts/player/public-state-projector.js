@@ -166,6 +166,7 @@ export async function projectChasePublicState(api, session, {
   for (const runtimeGroup of session.groups ?? []) {
     const definition = resolveBlueprintGroup(session, runtimeGroup);
     const groupTurnAllowed = api?.rules?.canGroupAct?.(session, runtimeGroup.id) ?? true;
+    const race = session.blueprintSnapshot?.settings?.chaseType === "race";
     if (definition?.public === false) continue;
     const node = currentNode(session, runtimeGroup);
     let card = null;
@@ -193,7 +194,9 @@ export async function projectChasePublicState(api, session, {
         skipped: session.roundState?.skippedParticipantIds?.includes?.(participantId) === true,
         controlled: owned
       });
-      if (owned && activeRound && groupTurnAllowed && runtimeGroup.rules?.paceMode === "roll" && !runtimeGroup.completed && !acted && card && !cleared) {
+      const participantTurnAllowed = api?.rules?.canParticipantAct?.(session, runtimeGroup.id, participantId)
+        ?? (activeRound && groupTurnAllowed && runtimeGroup.rules?.paceMode === "roll" && !runtimeGroup.completed && !acted);
+      if (owned && participantTurnAllowed && card && !cleared) {
         for (const approach of card.approaches ?? []) {
           if (!approach.statistic || approach.type !== "check") continue;
           const ready = (approach.dc?.mode ?? "gm") !== "gm" || storedGmDc(session, card.id, approach.id) !== null;
@@ -249,6 +252,7 @@ export async function projectChasePublicState(api, session, {
       participants,
       routeChoiceAvailable,
       turnBlocked: activeRound && runtimeGroup.rules?.paceMode === "roll" && !runtimeGroup.completed && !groupTurnAllowed,
+      turnBlockedReason: race ? "initiative" : "quarry",
       routes: groupControlled ? safeTransitions : []
     });
   }
@@ -289,6 +293,14 @@ export async function projectChasePublicState(api, session, {
       weather: cloneData(session.blueprintSnapshot?.settings?.weather ?? null),
       chaseImage: cloneData(chaseImage),
       terminalSummary: cloneData(terminalSummary),
+      initiative: session.blueprintSnapshot?.settings?.chaseType === "race" ? {
+        required: (api?.rules?.getRaceInitiativeEntries?.(session)?.length ?? 0) > 0,
+        currentParticipantId: api?.rules?.getNextRaceParticipantId?.(session) ?? null,
+        order: (session.roundState?.initiativeOrder ?? []).map(participantId => {
+          const participant = resolveParticipant(session, participantId) ?? { id: participantId, name: participantId };
+          return { participantId, name: participant.name || participantId, acted: session.roundState?.actedParticipantIds?.includes?.(participantId) === true };
+        })
+      } : null,
       projectedForUserId: user?.id ?? null
     }
   });

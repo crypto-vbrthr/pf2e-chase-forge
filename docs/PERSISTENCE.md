@@ -1,4 +1,4 @@
-# Protected Persistence - dev.6
+# Protected Persistence - dev.17
 
 ## Security boundary
 
@@ -21,7 +21,14 @@ updatedAt
 metadata
 ```
 
-Every successful mutation increments `revision`. Mutations are serialized through an in-process transaction queue before the normalized state is written back to the protected JournalEntry.
+Every successful mutation increments `revision`. Mutations are serialized through an in-process transaction queue before the normalized state is written back to the protected JournalEntry. Dev.17 additionally performs best-effort optimistic concurrency checks across GM clients: a transaction saves only against the revision it read, stamps a unique write token, verifies the observed write, and retries a bounded number of times after a detected conflict. Foundry Journal writes are not an atomic distributed compare-and-swap, so this is collision hardening rather than a claim of perfect cross-client locking.
+
+
+## Multi-GM optimistic concurrency (dev.17)
+
+Each transaction reads a persistence `revision`, applies its mutation to a fresh draft, increments the revision, and writes `metadata.persistence.lastWriteToken`. Stores receive the expected prior revision. A stale revision or an observed post-write token/revision mismatch raises `PERSISTENCE_REVISION_CONFLICT`; the persistence service reloads current state and retries up to four attempts.
+
+The in-memory store provides deterministic compare-and-save behavior for tests. The Foundry Journal vault performs pre-write revision checking and post-write token confirmation. This substantially reduces accidental lost updates when more than one GM edits Chase data, while remaining explicitly best-effort because the Foundry document API itself does not expose a server-side atomic CAS primitive.
 
 ## Blueprint repository
 
@@ -42,7 +49,7 @@ ChaseSession.<id>
 ChaseResult.<id>
 ```
 
-They are storage-location independent. Dev.14 uses the same stable Blueprint identity in the Journal bridge; Campaign Forge integration remains separate.
+They are storage-location independent. The Journal bridge and Campaign Forge Integration v2 both reference the same stable Chase identities; neither becomes a second canonical Chase data store.
 
 ## Content snapshots
 

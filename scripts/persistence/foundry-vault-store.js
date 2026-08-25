@@ -167,14 +167,32 @@ export class FoundryChaseVaultStore {
     return cloneData(validation.state);
   }
 
-  async save(state) {
+  async save(state, { expectedRevision = null, writeToken = null } = {}) {
     requireGm();
     if (!this._initialized || !this._currentVaultIsPresent()) await this.initialize();
     const validation = validatePersistenceState(state);
     if (!validation.valid) throw new ChasePersistenceError("Refusing to save invalid Chase Forge persistence state.", { code: "INVALID_PERSISTENCE_STATE", details: validation.errors });
+
+    const current = normalizePersistenceState(cloneData(storedState(this._vault) ?? createDefaultPersistenceState()));
+    if (expectedRevision !== null && Number(current.revision) !== Number(expectedRevision)) {
+      throw new ChasePersistenceError("Chase Forge persistence changed before this transaction could be saved.", {
+        code: "PERSISTENCE_REVISION_CONFLICT",
+        details: { expectedRevision, actualRevision: current.revision }
+      });
+    }
+
     await this._vault.setFlag(MODULE_ID, PERSISTENCE_STORAGE.FLAG_STATE, cloneData(validation.state));
-    await this._writeBackup(validation.state);
-    return cloneData(validation.state);
+    const confirmed = normalizePersistenceState(cloneData(storedState(this._vault) ?? createDefaultPersistenceState()));
+    const expectedToken = writeToken ?? validation.state.metadata?.persistence?.lastWriteToken ?? null;
+    const confirmedToken = confirmed.metadata?.persistence?.lastWriteToken ?? null;
+    if (Number(confirmed.revision) !== Number(validation.state.revision) || (expectedToken && confirmedToken !== expectedToken)) {
+      throw new ChasePersistenceError("Chase Forge persistence was overwritten by another GM while saving.", {
+        code: "PERSISTENCE_REVISION_CONFLICT",
+        details: { expectedRevision: validation.state.revision, actualRevision: confirmed.revision, expectedToken, confirmedToken }
+      });
+    }
+    await this._writeBackup(confirmed);
+    return cloneData(confirmed);
   }
 
   getStatus() {

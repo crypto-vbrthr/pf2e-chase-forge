@@ -1836,3 +1836,42 @@
   opacity: 1;
   font-size: .92em;
 }
+
+/* dev.17 race initiative workflow */
+.chase-runner-initiative {
+  margin-bottom: 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--chase-accent);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--chase-accent) 7%, var(--chase-panel));
+}
+.chase-runner-initiative h3 { margin: 0 0 6px; }
+.chase-runner-initiative p { margin: 4px 0 8px; opacity: .82; }
+.chase-runner-initiative-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 7px; }
+.chase-runner-initiative-row { display: grid; grid-template-columns: minmax(0, 1fr) 88px; gap: 8px; align-items: center; padding: 7px 8px; border: 1px solid var(--chase-border); border-radius: 6px; }
+.chase-runner-initiative-row span { min-width: 0; }
+.chase-runner-initiative-row small { display: block; opacity: .66; }
+.chase-runner-initiative-row input { width: 100%; text-align: center; }
+.chase-runner-initiative-order { display: flex; flex-wrap: wrap; gap: 6px; }
+.chase-runner-initiative-chip { display: inline-flex; gap: 4px; align-items: baseline; padding: 4px 8px; border: 1px solid var(--chase-border); border-radius: 999px; }
+.chase-runner-initiative-chip.current { border-color: var(--chase-accent); box-shadow: 0 0 0 1px var(--chase-accent) inset; font-weight: 700; }
+.chase-runner-initiative-chip.acted { opacity: .55; }
+.chase-runner-initiative-chip small { opacity: .7; }
+
+.chase-player-initiative {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  padding: 8px 10px;
+  border: 1px solid var(--chase-accent);
+  border-radius: 7px;
+  background: color-mix(in srgb, var(--chase-accent) 7%, var(--chase-panel));
+}
+
+.chase-point-scaling-hint {
+  display: block;
+  margin-top: 0.2rem;
+  font-size: 0.72rem;
+  opacity: 0.72;
+  line-height: 1.2;
+}

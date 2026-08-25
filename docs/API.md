@@ -1,4 +1,4 @@
-# PF2E Chase Forge Public API - dev.16
+# PF2E Chase Forge Public API - dev.17
 
 ## Access
 
@@ -6,14 +6,14 @@
 const forge = game.modules.get("pf2e-chase-forge")?.api;
 ```
 
-Current public API version: `16`  
+Current public API version: `17`  
 Extension Contract version: `1`  
 Basic Builder Contract version: `1`  
 Branching Builder Contract version: `1`
 
-Dev.16 hardens Campaign Forge runtime/lifecycle integration and raises the public API to `16`. Campaign Integration Contract v2 adds exact-link reopen/resume semantics plus explicit forced-new starts. Session Lifecycle Hook Contract v1 and persisted schema versions remain unchanged.
+Dev.17 hardens final PF2e chase rules and runtime behavior and raises the public API to `17`. Race initiative is now participant-level and enforced, automatically scalable obstacles resolve their Chase Point requirement per rolling group, and persistence adds optimistic multi-GM conflict detection/retry. Campaign Integration Contract v2, Session Lifecycle Hook Contract v1, and persisted schema versions remain unchanged.
 
-## Current dev.14 capabilities
+## Current dev.17 capabilities
 
 ```text
 chaseLibrary
@@ -37,9 +37,14 @@ playerView
 sessionSync
 playerIntents
 chatWorkflow
+campaignForgeBridge
+campaignPreparedChases
+campaignDirectStart
+campaignResultReturn
+campaignRunStatus
 ```
 
-`gmRunner` and `playerView` are true in normal Foundry initialization. `sessionSync` and `playerIntents` expose the module-socket bridge that keeps player-safe projections synchronized while the GM remains authoritative. Campaign Forge integration remains false.
+`gmRunner` and `playerView` are true in normal Foundry initialization. `sessionSync` and `playerIntents` expose the module-socket bridge that keeps player-safe projections synchronized while the GM remains authoritative. `campaignForgeBridge` is always exposed; `campaignForgeAvailable` reflects whether a compatible Campaign Forge is currently active.
 
 
 
@@ -226,7 +231,7 @@ Public obstacle messages exclude GM notes and exact DCs by contract.
 
 ## Schemas
 
-No core schema versions changed in dev.14:
+No core schema versions changed in dev.17:
 
 ```text
 forge.schemas.blueprint === 2
@@ -354,20 +359,20 @@ forge.packs.get("core:cards");
 
 The API contract version is unchanged in dev.12 because this uses the existing card/pack registry interfaces.
 
-## Campaign Forge Integration v1
+## Campaign Forge Integration v2
 
 ```js
 forge.integrations.campaignForge.listPrepared();
 forge.integrations.campaignForge.getContext(kind, targetId);
 forge.integrations.campaignForge.open(kind, targetId);
 forge.integrations.campaignForge.openNew();
-forge.integrations.campaignForge.start(kind, targetId, { campaign });
+forge.integrations.campaignForge.start(kind, targetId, { campaign, forceNew });
 forge.integrations.campaignForge.getResult(sessionId);
 forge.integrations.campaignForge.getLatestResult(kind, targetId, { entryId, linkId });
 forge.integrations.campaignForge.getLatestRun(kind, targetId, { entryId, linkId });
 ```
 
-The bridge is GM-only. `kind` is `blueprint` for editable world Blueprints or `library` for immutable registered Library content. Campaign provenance is stored only on the generated Session/Result. Chase Forge never writes Campaign Forge persistence directly unless the GM explicitly calls `linkToCampaignEntry()`.
+The bridge is GM-only. `kind` is `blueprint` for editable world Blueprints or `library` for immutable registered Library content. Contract v2 reopens/resumes the non-terminal Session belonging to the same Campaign `entryId + linkId`; `forceNew: true` deliberately starts an additional independent Session. Campaign provenance is stored only on generated Sessions/Results, and Chase Forge does not own Campaign Forge progression state.
 
 Lifecycle hook names are exposed through `forge.hooks` and include `sessionCreated`, `sessionStarted`, `sessionPaused`, `sessionResumed`, `sessionCompleted`, `sessionAborted`, and `sessionDeleted`. Hook payloads use `pf2e-chase-forge/session-lifecycle` v1. Dev.16 adds backward-compatible top-level `outcome` and `terminal` fields; `getLatestRun()` provides the corresponding persisted live Session summary without fabricating an abort result.
 

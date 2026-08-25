@@ -22,6 +22,7 @@ import {
   listBranchGroups,
   updateBuilderCardByRef
 } from "../builder/branching-builder-model.js";
+import { obstaclePointScalingModeForIndex, rollingGroupSizeForBlueprint, stampRecommendedPointScaling } from "../rules/chase-guidelines.js";
 
 export const CHASE_GENERATOR_CONTRACT_VERSION = 1;
 export function localizeChaseTemplate(templateInput) {
@@ -64,12 +65,10 @@ function canonicalContextTags(values) {
 
 const GENERATOR_DIFFICULTY_ADJUSTMENTS = Object.freeze({ easy: -2, moderate: 0, hard: 2, extreme: 5, custom: 0 });
 
-function prepareSelectedCard(cardInput, { templateId, requiredPoints, difficulty = "moderate" } = {}) {
+function prepareSelectedCard(cardInput, { templateId, groupSize = 1, pointScalingMode = "groupMinus1", difficulty = "moderate" } = {}) {
   const localized = localizeChaseCard(cardInput);
-  const next = cloneData(localized);
-  if (next.obstacle?.scalable !== false && Number.isFinite(Number(requiredPoints))) {
-    next.obstacle.requiredPoints = Math.max(1, Math.trunc(Number(requiredPoints)));
-  }
+  let next = cloneData(localized);
+  if (next.obstacle?.scalable !== false) next = stampRecommendedPointScaling(next, { groupSize, mode: pointScalingMode });
   const profileAdjustment = GENERATOR_DIFFICULTY_ADJUSTMENTS[difficulty] ?? 0;
   if (profileAdjustment) {
     next.approaches = (next.approaches ?? []).map(approach => ({
@@ -316,20 +315,20 @@ export function generateChaseFromTemplate(templateInput, cards = [], options = {
   const uniqueCardSlots = mainlineCount + branchCount * 2;
   const selection = selectGenerationCards(template, cards, { ...options, count: uniqueCardSlots });
   const selectedQueue = [...selection.selected];
-  const largestGroup = Math.max(1, ...(options.sourceBlueprint?.groups ?? []).map(group => group.participants?.length ?? 0));
-  const requiredPoints = Math.max(1, largestGroup - 1);
+  const sourceBlueprint = options.sourceBlueprint ? createChaseBlueprint(options.sourceBlueprint) : null;
+  const rollingGroupSize = rollingGroupSizeForBlueprint(sourceBlueprint ?? { groups: [] });
   let fallbackCount = 0;
   const takeCard = index => {
+    const pointScalingMode = obstaclePointScalingModeForIndex(index);
     const card = selectedQueue.shift();
-    if (card) return prepareSelectedCard(card, { templateId: template.id, requiredPoints, difficulty: settings.difficulty });
+    if (card) return prepareSelectedCard(card, { templateId: template.id, groupSize: rollingGroupSize, pointScalingMode, difficulty: settings.difficulty });
     fallbackCount += 1;
-    return createChaseCard({
-      ...generationFallbackCard(index, requiredPoints, template.generator?.fallbackNamePrefix ?? "Generated Obstacle"),
-      metadata: { builderCreated: true, generatorFallback: true, generatorTemplateId: template.id }
-    });
+    const fallback = generationFallbackCard(index, 1, template.generator?.fallbackNamePrefix ?? "Generated Obstacle");
+    return createChaseCard(stampRecommendedPointScaling({
+      ...fallback,
+      metadata: { ...(fallback.metadata ?? {}), builderCreated: true, generatorFallback: true, generatorTemplateId: template.id }
+    }, { groupSize: rollingGroupSize, mode: pointScalingMode }));
   };
-
-  const sourceBlueprint = options.sourceBlueprint ? createChaseBlueprint(options.sourceBlueprint) : null;
   const inputName = String(options.name ?? sourceBlueprint?.name ?? "").trim();
   const name = inputName || template.name;
   let blueprint = createBasicBuilderDraft({

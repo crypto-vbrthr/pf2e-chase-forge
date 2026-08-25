@@ -556,5 +556,16 @@
   "PF2E_CHASE_FORGE.Builder.RemoveBranchConfirm": "Really delete this branch? All cards within its branch routes will also be removed.",
   "PF2E_CHASE_FORGE.Campaign.Opened": "{name} is already running and was opened.",
   "PF2E_CHASE_FORGE.Campaign.Resumed": "{name} was resumed.",
-  "PF2E_CHASE_FORGE.Campaign.RunnerOpenFailedExisting": "{name} is already running, but the GM Runner could not be opened."
+  "PF2E_CHASE_FORGE.Campaign.RunnerOpenFailedExisting": "{name} is already running, but the GM Runner could not be opened.",
+  "PF2E_CHASE_FORGE.Runner.RaceInitiative": "Race Initiative",
+  "PF2E_CHASE_FORGE.Runner.RaceInitiativeHint": "Enter initiative values for every participant who rolls this round. The order is fixed when the round begins.",
+  "PF2E_CHASE_FORGE.Runner.RaceSteadyOnly": "All groups use steady pace; no initiative entry is required for this round.",
+  "PF2E_CHASE_FORGE.Runner.Initiative": "Initiative",
+  "PF2E_CHASE_FORGE.Runner.RaceInitiativeMissing": "Enter an initiative value for every rolling participant.",
+  "PF2E_CHASE_FORGE.Runner.WaitingForInitiative": "Waiting for initiative",
+  "PF2E_CHASE_FORGE.Player.InitiativeTurn": "Current turn:",
+  "PF2E_CHASE_FORGE.Player.InitiativeWaiting": "Initiative for the next round is being prepared.",
+  "PF2E_CHASE_FORGE.Player.WaitingForInitiative": "Another participant acts before you.",
+  "PF2E_CHASE_FORGE.Builder.PointScalingGroupMinus1": "Automatic: group size − 1",
+  "PF2E_CHASE_FORGE.Builder.PointScalingGroupMinus2": "Automatic: group size − 2"
 }

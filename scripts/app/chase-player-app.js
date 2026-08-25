@@ -101,9 +101,12 @@ function getAppClass() {
       const rollActions = actions.filter(action => action.type === "roll");
       const routeActions = actions.filter(action => action.type === "route");
       const proposalActions = actions.filter(action => action.type === "propose");
+      const initiative = cloneData(state.metadata?.initiative ?? null);
+      const currentInitiative = initiative?.order?.find?.(entry => entry.participantId === initiative.currentParticipantId) ?? null;
       const groups = (state.groups ?? []).map(group => ({
         ...cloneData(group),
         hasObstacle: Boolean(group.obstacle),
+        waitingForInitiative: group.turnBlockedReason === "initiative",
         isControlled: group.participants?.some?.(participant => participant.controlled) === true,
         myRollActions: rollActions.filter(action => action.runtimeGroupId === group.runtimeGroupId),
         canPropose: proposalActions.some(action => action.runtimeGroupId === group.runtimeGroupId),
@@ -125,6 +128,8 @@ function getAppClass() {
         personalEffects: cloneData(state.personalEffects ?? []),
         chaseImage: cloneData(state.metadata?.chaseImage ?? null),
         terminalSummary: cloneData(state.metadata?.terminalSummary ?? null),
+        initiative,
+        currentInitiative,
         terminalOutcomeLabel: state.metadata?.terminalSummary?.outcome ? i18n(`PF2E_CHASE_FORGE.Outcome.${state.metadata.terminalSummary.outcome}`, state.metadata.terminalSummary.outcome) : null,
         terminal: ["completed", "aborted"].includes(state.status),
         pending: this._pending

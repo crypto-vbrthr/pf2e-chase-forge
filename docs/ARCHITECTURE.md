@@ -2,7 +2,7 @@
 
 ## Baseline
 
-Version `0.1.0-dev.14` adds Journal Integration on top of the centralized Visual System, Core Card Library, and template-driven generator layers while keeping Journal references separate from canonical Chase data. UI, transport, persistence, route traversal, PF2e rules, consequences, and integrations remain separate layers. The synchronized GM/Player runtime surfaces from dev.9 remain authoritative and are reused for interactive route choices.
+Version `0.1.0-dev.17.3` keeps the layered Chase architecture while completing final PF2e rules/runtime hardening. UI, transport, persistence, route traversal, PF2e rules, consequences, Journal integration, Campaign Forge integration, and optional Forge Suite bridges remain separate layers. The synchronized GM/Player runtime surfaces remain authoritative for route choices, race initiative, and group-aware Chase Point requirements. Builder ApplicationV2 renders additionally re-assert editability after runtime lifecycle refreshes so stale DOM `disabled` state cannot leak from a prior read-only render.
 
 ```text
 External Chase Add-ons
@@ -118,7 +118,7 @@ ChaseResult.*
 
 Critical Forge remains optional and is discovered through its public Effect API. Missing optional effects degrade to manual fallback.
 
-Campaign Forge remains a later milestone. Journal Integration is now implemented through stable custom Journal references and does not move canonical Chase data into ordinary Journal pages.
+Campaign Forge Integration Contract v2 is implemented as an optional bridge. Campaign Forge stores references/provenance while Chase Forge remains authoritative for Blueprints, Library definitions, Sessions, and Results. Journal Integration likewise uses stable custom references and does not move canonical Chase data into ordinary Journal pages.
 
 
 ## Core Card content layer

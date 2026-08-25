@@ -556,5 +556,16 @@
   "PF2E_CHASE_FORGE.Builder.RemoveBranchConfirm": "Diese Gabelung wirklich löschen? Alle Karten innerhalb ihrer Zweige werden ebenfalls entfernt.",
   "PF2E_CHASE_FORGE.Campaign.Opened": "{name} läuft bereits und wurde geöffnet.",
   "PF2E_CHASE_FORGE.Campaign.Resumed": "{name} wurde fortgesetzt.",
-  "PF2E_CHASE_FORGE.Campaign.RunnerOpenFailedExisting": "{name} läuft bereits, aber der GM-Runner konnte nicht geöffnet werden."
+  "PF2E_CHASE_FORGE.Campaign.RunnerOpenFailedExisting": "{name} läuft bereits, aber der GM-Runner konnte nicht geöffnet werden.",
+  "PF2E_CHASE_FORGE.Runner.RaceInitiative": "Initiative im Wettrennen",
+  "PF2E_CHASE_FORGE.Runner.RaceInitiativeHint": "Trage die Initiativewerte aller Beteiligten ein, die in dieser Runde würfeln. Die Reihenfolge wird beim Rundenstart festgelegt.",
+  "PF2E_CHASE_FORGE.Runner.RaceSteadyOnly": "Alle Gruppen verwenden konstantes Tempo; für diese Runde ist keine Initiativeeingabe nötig.",
+  "PF2E_CHASE_FORGE.Runner.Initiative": "Initiative",
+  "PF2E_CHASE_FORGE.Runner.RaceInitiativeMissing": "Bitte für alle würfelnden Beteiligten einen Initiativewert eintragen.",
+  "PF2E_CHASE_FORGE.Runner.WaitingForInitiative": "Wartet auf Initiative",
+  "PF2E_CHASE_FORGE.Player.InitiativeTurn": "Am Zug:",
+  "PF2E_CHASE_FORGE.Player.InitiativeWaiting": "Die Initiative für die nächste Runde wird vorbereitet.",
+  "PF2E_CHASE_FORGE.Player.WaitingForInitiative": "Ein anderer Beteiligter ist zuerst an der Reihe.",
+  "PF2E_CHASE_FORGE.Builder.PointScalingGroupMinus1": "Automatisch: Gruppengröße − 1",
+  "PF2E_CHASE_FORGE.Builder.PointScalingGroupMinus2": "Automatisch: Gruppengröße − 2"
 }

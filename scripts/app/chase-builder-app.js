@@ -37,6 +37,7 @@ import {
 import { cloneData, createId, nowIso } from "../data/utils.js";
 import { localizeChaseCard, localizeSkillLabel } from "../content/content-localization.js";
 import { openFoundryImagePicker } from "../images/foundry-image-picker.js";
+import { obstaclePointScalingModeForIndex, obstaclePointsForScalingMode, rollingGroupSizeForBlueprint, stampRecommendedPointScaling } from "../rules/chase-guidelines.js";
 
 let builderAppClass = null;
 let openBuilderApp = null;
@@ -761,6 +762,11 @@ function getAppClass() {
           imagePreviewAlt: resolvedCardImages.get(item.ref)?.alt || item.card.image?.alt || item.card.name || "",
           imageResolved: resolvedCardImages.get(item.ref) ?? null,
           imageProviderOptions: imageProviderOptions.map(option => ({ ...option, selected: option.value === (item.card.image?.providerId ?? "") })),
+          pointScalingLabel: item.card.metadata?.chasePointScaling?.mode === "groupMinus2"
+            ? i18n("PF2E_CHASE_FORGE.Builder.PointScalingGroupMinus2", "Automatisch: Gruppengröße − 2")
+            : (item.card.metadata?.chasePointScaling?.mode === "groupMinus1"
+              ? i18n("PF2E_CHASE_FORGE.Builder.PointScalingGroupMinus1", "Automatisch: Gruppengröße − 1")
+              : null),
           approaches: (item.card.approaches ?? []).map((approach, approachIndex) => ({
             ...approach,
             approachIndex,
@@ -951,16 +957,57 @@ function getAppClass() {
         logBuilderLayoutDiagnostics(this, "render+500ms");
       }, 500);
 
-      this._applyLibraryReadOnlyUi(root);
+      this._synchronizeEditorControlState(root, context);
       this._bindParticipantDropZones(root);
     }
 
-    _applyLibraryReadOnlyUi(root = this.element) {
-      if (!root || !this._libraryBlueprintId) return;
+    _synchronizeEditorControlState(root = this.element, context = null) {
+      if (!root) return false;
       const editor = root.querySelector?.(".chase-builder-editor-scroll");
-      if (!editor) return;
-      editor.classList?.add?.("chase-builder-read-only");
-      for (const control of editor.querySelectorAll?.("input, textarea, select, button") ?? []) control.disabled = true;
+      if (!editor) return false;
+
+      // ApplicationV2 can preserve DOM nodes across forced renders. A control
+      // which was disabled by a previous read-only/non-editable render can
+      // therefore remain disabled even after the next render context is
+      // editable again. This is particularly visible when the Runner refreshes
+      // the already-open Builder after a Session is aborted/completed.
+      // Re-assert the authoritative Builder state after every render instead of
+      // relying on the template diff alone to clear DOM properties.
+      const librarySelected = context?.librarySelected ?? Boolean(this._libraryBlueprintId);
+      const editable = context?.editable ?? (isBuilderEditableBlueprint(this._draft) && !librarySelected);
+      const locked = librarySelected || !editable;
+
+      editor.classList?.toggle?.("chase-builder-read-only", Boolean(librarySelected));
+      for (const control of editor.querySelectorAll?.("input, textarea, select") ?? []) {
+        control.disabled = locked;
+      }
+
+      // These controls are disabled solely by global Builder editability in the
+      // Handlebars template. Re-synchronize them as well while leaving
+      // structurally disabled controls (move first/last card, protected branch
+      // source deletion, etc.) untouched.
+      const editabilityActions = [
+        "duplicateBlueprint",
+        "saveBlueprint",
+        "applyWeatherForge",
+        "resetGroups",
+        "removeParticipant",
+        "addSelectedTokens",
+        "selectCardImageCandidate"
+      ];
+      for (const action of editabilityActions) {
+        for (const control of root.querySelectorAll?.(`[data-action="${action}"]`) ?? []) {
+          control.disabled = locked;
+        }
+      }
+      return true;
+    }
+
+    _applyLibraryReadOnlyUi(root = this.element) {
+      return this._synchronizeEditorControlState(root, {
+        editable: isBuilderEditableBlueprint(this._draft) && !this._libraryBlueprintId,
+        librarySelected: Boolean(this._libraryBlueprintId)
+      });
     }
 
     _bindParticipantDropZones(root = this.element) {
@@ -1110,8 +1157,16 @@ function getAppClass() {
         card.description = cardElement.querySelector('[data-card-field="description"]')?.value ?? "";
         card.gmNotes = cardElement.querySelector('[data-card-field="gmNotes"]')?.value ?? "";
         card.tags = csv(cardElement.querySelector('[data-card-field="tags"]')?.value);
-        card.obstacle.requiredPoints = Math.max(1, Math.trunc(Number(cardElement.querySelector('[data-card-field="requiredPoints"]')?.value) || 1));
+        const pointsInput = cardElement.querySelector('[data-card-field="requiredPoints"]');
+        const priorRequiredPoints = Math.max(1, Math.trunc(Number(pointsInput?.dataset?.originalRequiredPoints ?? card.obstacle.requiredPoints) || 1));
+        const enteredRequiredPoints = Math.max(1, Math.trunc(Number(pointsInput?.value) || 1));
         card.obstacle.scalable = cardElement.querySelector('[data-card-field="scalable"]')?.checked !== false;
+        const pointScalingMode = card.metadata?.chasePointScaling?.mode ?? null;
+        const keptAutomaticValue = card.obstacle.scalable && pointScalingMode && enteredRequiredPoints === priorRequiredPoints;
+        card.obstacle.requiredPoints = keptAutomaticValue
+          ? obstaclePointsForScalingMode(rollingGroupSizeForBlueprint(next), pointScalingMode)
+          : enteredRequiredPoints;
+        if (!keptAutomaticValue && card.metadata?.chasePointScaling) delete card.metadata.chasePointScaling;
         card.image.mode = cardElement.querySelector('[data-card-field="imageMode"]')?.value || "none";
         card.image.path = cardElement.querySelector('[data-card-field="imagePath"]')?.value?.trim() || null;
         card.image.alt = cardElement.querySelector('[data-card-field="imageAlt"]')?.value ?? "";
@@ -1249,6 +1304,7 @@ function getAppClass() {
         if (!actor && !["Token", "TokenDocument"].includes(document?.documentName)) throw new Error("Unsupported document");
         const participant = participantFromDocument(document, { ownerUserIds: resolveOwnerUserIds(actor) });
         this._syncDraftFromForm();
+        this._captureScrollPosition();
         this._draft = addParticipantToBasicBlueprint(this._draft, zone.dataset.groupId, participant);
         await this.render({ force: true });
       } catch (error) {
@@ -1656,10 +1712,12 @@ function getAppClass() {
         notify("warn", i18n("PF2E_CHASE_FORGE.Builder.CardUnavailable", "Diese Karte ist nicht mehr verfügbar."));
         return;
       }
-      const card = localizeChaseCard(rawCard);
+      let card = localizeChaseCard(rawCard);
       if (card.obstacle?.scalable !== false) {
-        const largestGroup = Math.max(1, ...(this._draft.groups ?? []).map(group => group.participants?.length ?? 0));
-        card.obstacle.requiredPoints = Math.max(1, largestGroup - 1);
+        card = stampRecommendedPointScaling(card, {
+          groupSize: rollingGroupSizeForBlueprint(this._draft),
+          mode: obstaclePointScalingModeForIndex(listEditableCards(this._draft).length)
+        });
       }
       const result = isBranchingBuilderBlueprint(this._draft)
         ? appendMainlineCard(this._draft, card, { originCardRef: rawCard.id })
@@ -1817,6 +1875,7 @@ function getAppClass() {
 
     static async _actionAddSelectedTokens(_event, target) {
       this._syncDraftFromForm();
+      this._captureScrollPosition();
       const groupId = target.dataset.groupId;
       const controlled = globalThis.canvas?.tokens?.controlled ?? [];
       if (controlled.length === 0) {
@@ -1834,6 +1893,7 @@ function getAppClass() {
 
     static async _actionRemoveParticipant(_event, target) {
       this._syncDraftFromForm();
+      this._captureScrollPosition();
       this._draft = removeParticipantFromBasicBlueprint(this._draft, target.dataset.groupId, target.dataset.participantId);
       return this.render({ force: true });
     }

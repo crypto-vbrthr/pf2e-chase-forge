@@ -17,6 +17,7 @@ import {
 import { buildGraphIndex } from "../data/graph.js";
 import { cloneData, createId, nowIso, uniqueStrings } from "../data/utils.js";
 import { validateChaseBlueprint } from "../data/validators.js";
+import { obstaclePointScalingModeForIndex, rollingGroupSizeForBlueprint, stampRecommendedPointScaling } from "../rules/chase-guidelines.js";
 
 export const BASIC_BUILDER_CONTRACT_VERSION = 1;
 
@@ -88,9 +89,9 @@ export function createBasicApproach(input = {}) {
   };
 }
 
-export function createManualChaseCard({ requiredPoints = 1, name = "Neues Hindernis" } = {}) {
+export function createManualChaseCard({ requiredPoints = 1, name = "Neues Hindernis", pointScalingMode = null, pointScalingGroupSize = 1 } = {}) {
   const id = createId("builder-card");
-  return createChaseCard({
+  const card = {
     id,
     source: builderSource(),
     type: "obstacle",
@@ -103,7 +104,10 @@ export function createManualChaseCard({ requiredPoints = 1, name = "Neues Hinder
     outcomes: emptyOutcomes(),
     image: { mode: "none", path: null, providerId: null, imageId: null, alt: "", candidates: [] },
     metadata: { builderCreated: true }
-  });
+  };
+  return createChaseCard(pointScalingMode
+    ? stampRecommendedPointScaling(card, { groupSize: pointScalingGroupSize, mode: pointScalingMode })
+    : card);
 }
 
 function cardRecordFromCard(blueprint, inputCard, { originCardRef = null } = {}) {
@@ -316,9 +320,19 @@ export function addCardToBasicBlueprint(input, card, { index = null, originCardR
 
 export function addManualCardToBasicBlueprint(input, options = {}) {
   const blueprint = createChaseBlueprint(input);
-  const largestGroup = Math.max(1, ...(blueprint.groups ?? []).map(group => group.participants?.length ?? 0));
-  const defaultPoints = Math.max(1, largestGroup - 1);
-  return addCardToBasicBlueprint(blueprint, createManualChaseCard({ requiredPoints: options.requiredPoints ?? defaultPoints, name: options.name }), { index: options.index });
+  const cards = listBasicCards(blueprint);
+  const index = options.index === null || options.index === undefined ? cards.length : Math.max(0, Math.min(cards.length, Math.trunc(Number(options.index) || 0)));
+  const groupSize = rollingGroupSizeForBlueprint(blueprint);
+  const pointScalingMode = options.requiredPoints === undefined || options.requiredPoints === null
+    ? obstaclePointScalingModeForIndex(index)
+    : null;
+  const defaultPoints = pointScalingMode ? 1 : Math.max(1, Math.trunc(Number(options.requiredPoints) || 1));
+  return addCardToBasicBlueprint(blueprint, createManualChaseCard({
+    requiredPoints: defaultPoints,
+    name: options.name,
+    pointScalingMode,
+    pointScalingGroupSize: groupSize
+  }), { index });
 }
 
 export function removeCardFromBasicBlueprint(input, index) {

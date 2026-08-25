@@ -91,8 +91,10 @@ test("Core Card generation localizes card text, recognizes German environment al
     ];
     const generated = generator.generate("core:classic-pursuit", { seed: "core-city", sourceBlueprint: source, partyLevel: 5, environmentTags: ["Stadt"], difficulty: "hard" });
     assert.equal(generated.report.fallbackCards, 0);
-    assert.ok(generated.blueprint.contentSnapshots.cards.every(record => record.data.obstacle.requiredPoints === 3));
-    assert.ok(generated.blueprint.contentSnapshots.cards.every(record => record.data.approaches.every(approach => approach.dc.difficultyAdjustment === 2)));
+    const generatedCards = generated.blueprint.contentSnapshots.cards.map(record => record.data);
+    assert.deepEqual(generatedCards.map(card => card.obstacle.requiredPoints), generatedCards.map((_, index) => index % 2 === 0 ? 3 : 2));
+    assert.deepEqual(generatedCards.map(card => card.metadata?.chasePointScaling?.mode), generatedCards.map((_, index) => index % 2 === 0 ? "groupMinus1" : "groupMinus2"));
+    assert.ok(generatedCards.every(card => card.approaches.every(approach => approach.dc.difficultyAdjustment === 2)));
   } finally {
     if (previousGame === undefined) delete globalThis.game; else globalThis.game = previousGame;
   }
@@ -168,7 +170,7 @@ test("public API exposes generator contract, registered templates, inspection, g
     cards: [card("street", { tags: ["city"] })]
   });
   const api = createPublicApi({ registries });
-  assert.equal(api.version, 16);
+  assert.equal(api.version, 17);
   assert.equal(api.contracts.generator, 1);
   assert.equal(api.getCapabilities().generatorTemplates, true);
   assert.equal(api.getCapabilities().seededGeneration, true);

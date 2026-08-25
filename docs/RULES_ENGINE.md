@@ -1,6 +1,6 @@
 # PF2E Chase Rules Engine - Contract v1
 
-`0.1.0-dev.4` adds the PF2e-specific rules layer. It consumes validated Chase Cards and a `ChaseSession`, while the Route Graph Engine remains system-neutral.
+The PF2e-specific rules layer consumes validated Chase Cards and a `ChaseSession`, while the Route Graph Engine remains system-neutral. Dev.17 hardens race initiative and group-aware automatic Chase Point scaling without changing persisted schemas.
 
 ## Responsibilities
 
@@ -32,6 +32,12 @@ criticalFailure -1
 If a card explicitly supplies one or more `chasePoints` consequences for the resolved degree, those values replace the default point delta for that result.
 
 Progress is clamped to zero. When required points are reached, the obstacle is immediately marked cleared and route advancement begins. Excess points are not carried to the next card.
+
+### Automatic scalable obstacle thresholds (dev.17)
+
+Builder/generator-created scalable obstacles can carry `metadata.chasePointScaling.mode` with either `groupMinus1` or `groupMinus2`. The generator alternates these modes so roughly half the obstacles use each GM Core recommendation, minimum 1 point.
+
+The stored `obstacle.requiredPoints` is a reference value for editing/display. At runtime, `currentObstacle()` and Chase Point resolution calculate the effective requirement from the size of the **rolling runtime group**. This means two differently sized parties can roll against the same card without being forced to share the larger party's threshold. Steady-pace groups do not inflate the Builder/generator reference group size. A GM-entered custom value without scaling metadata remains fixed.
 
 ## Rounds
 
@@ -89,7 +95,9 @@ Reaching an ending before the configured `roundLimit` wins. At the end/start bou
 
 ### Race
 
-Race order is initiative-driven. The first competitor group reaching an ending is a winner. The engine can represent multiple simultaneous winners if the supplied state calls for it.
+Race order is participant-level initiative-driven. At the beginning of each race round, every participant belonging to a `roll`-pace competitor must appear exactly once in `roundState.initiativeOrder`. The engine rejects out-of-order actions with `INITIATIVE_TURN_BLOCKED`; the next eligible participant is exposed through `getTurnPolicy()` / `getNextRaceParticipantId()`.
+
+Competitor groups using `steady` pace do not enter initiative and advance through the normal steady-pacing step. End-of-round automatic skips are resolved in initiative order. The first competitor group reaching an ending is a winner; the engine can represent multiple simultaneous winners if the supplied state calls for it.
 
 ## PF2e DC helpers
 

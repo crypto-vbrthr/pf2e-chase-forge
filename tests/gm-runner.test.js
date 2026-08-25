@@ -116,7 +116,7 @@ test("Runner UI service is GM-only and reuses one ApplicationV2 per session", as
 test("public API advertises GM Runner only when a runner UI is supplied", async () => {
   const ui = { openRunner: async ({ sessionId }) => sessionId, closeRunner: () => true, getOpenRunner: () => null, getOpenRunners: () => [] };
   const api = createPublicApi({ ui });
-  assert.equal(api.version, 16);
+  assert.equal(api.version, 17);
   assert.equal(api.contracts.gmRunner, 1);
   assert.equal(api.contracts.chatPresenter, 1);
   assert.equal(api.getCapabilities().gmRunner, true);
@@ -138,4 +138,38 @@ test("Runner lifecycle refreshes the open Builder session list after abort/finis
   assert.match(source, /async function refreshOpenBuilder/);
   assert.match(source, /abortSession\(this\.sessionId\)[\s\S]*refreshOpenBuilder\(this\.chaseApi\)/);
   assert.match(source, /_saveOrFinish[\s\S]*refreshOpenBuilder\(this\.chaseApi\)/);
+});
+
+test("completion dialog escapes imported or user-authored HTML before interpolation", async () => {
+  const source = await readFile(new URL("../scripts/app/chase-runner-app.js", import.meta.url), "utf8");
+  assert.match(source, /function escapeHtml\(value\)/);
+  assert.match(source, /escapeHtml\(summary\.image\.path\)/);
+  assert.match(source, /summary\.winnerNames\.map\(escapeHtml\)/);
+  assert.match(source, /escapeHtml\(summary\.endingDescription\)/);
+  assert.match(source, /escapeHtml\(summary\?\.outcomeLabel/);
+});
+
+test("race Runner captures participant initiative values before beginning the round", async () => {
+  const source = await readFile(new URL("../scripts/app/chase-runner-app.js", import.meta.url), "utf8");
+  const template = await readFile(new URL("../templates/chase-runner.hbs", import.meta.url), "utf8");
+  assert.match(template, /data-race-initiative-row/);
+  assert.match(template, /data-race-initiative-value/);
+  assert.match(source, /querySelectorAll\?\.\("\[data-race-initiative-row\]"\)/);
+  assert.match(source, /beginRound\(session, \{ initiativeOrder \}\)/);
+});
+
+test("Runner abort uses Foundry DialogV2 confirmation to avoid native-modal keyboard focus loss", async () => {
+  const source = await readFile(new URL("../scripts/app/chase-runner-app.js", import.meta.url), "utf8");
+  const helperStart = source.indexOf("async function confirmAbortSession()");
+  const helperEnd = source.indexOf("function optionLabel", helperStart);
+  const actionStart = source.indexOf("static async _actionAbortSession()");
+  const actionEnd = source.indexOf("static async _actionPostObstacle", actionStart);
+  assert.ok(helperStart >= 0 && helperEnd > helperStart);
+  assert.ok(actionStart >= 0 && actionEnd > actionStart);
+  const helper = source.slice(helperStart, helperEnd);
+  const action = source.slice(actionStart, actionEnd);
+  assert.match(helper, /DialogV2\?\.confirm/);
+  assert.match(helper, /modal:\s*true/);
+  assert.match(action, /await confirmAbortSession\(\)/);
+  assert.doesNotMatch(action, /globalThis\.confirm/);
 });

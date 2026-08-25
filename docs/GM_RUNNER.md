@@ -1,6 +1,6 @@
 # GM Chase Runner Contract v1
 
-`0.1.0-dev.8` adds the first playable GM runtime surface for Chase Forge.
+The GM Runner is the playable GM runtime surface for Chase Forge. Dev.17 adds participant-level race initiative and displays the effective per-group Chase Point requirement.
 
 ## Scope
 
@@ -24,6 +24,12 @@ The Runner supports:
 ## Authority
 
 `ChaseSession` remains the canonical authority. The GM Runner never stores independent rules state. It reloads the persisted session before every action and persists each result after resolution.
+
+## Race initiative (dev.17)
+
+For `race` chases, the Runner displays an initiative field for every participant in a `roll`-pace competitor group before each round begins. The submitted values are sorted into `roundState.initiativeOrder`; only the current participant can resolve a roll, automatic contribution, or skipped turn. Steady-pace competitors are not entered into initiative and advance through the normal steady-pacing step.
+
+The rules engine remains authoritative: the Runner UI can hide/disable an action, but an out-of-order request is independently rejected by the rules layer.
 
 ## PF2e rolls
 

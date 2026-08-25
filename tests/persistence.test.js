@@ -158,3 +158,33 @@ test("reference diagnostics fail clearly when a card has neither live content no
   assert.equal(diagnostics.valid, false);
   assert.ok(diagnostics.issues.some(issue => issue.code === "MISSING_CARD"));
 });
+
+test("persistence retries a transaction after an optimistic revision conflict", async () => {
+  const base = createMemoryChaseStore();
+  let saveCalls = 0;
+  const store = {
+    async initialize() { return base.initialize(); },
+    async load() { return base.load(); },
+    async save(state, options = {}) {
+      saveCalls += 1;
+      if (saveCalls === 1) {
+        // Simulate another GM committing revision +1 after this client read its draft.
+        base.state = { ...base.state, revision: Number(base.state.revision ?? 0) + 1 };
+      }
+      return base.save(state, options);
+    },
+    getStatus() { return base.getStatus(); }
+  };
+
+  const registries = createRegistryService();
+  registries.registerPack(MODULE_ID, { id: "core", label: "Core", cards: [sampleCard()], templates: [] });
+  const route = createRouteGraphEngine();
+  const rules = createChaseRulesEngine({ registries, routeEngine: route });
+  const persistence = createChasePersistenceService({ store, routeEngine: route, rulesEngine: rules, registries });
+
+  const created = await persistence.blueprints.create(sampleBlueprint());
+  assert.equal(created.id, sampleBlueprint().id);
+  assert.equal(saveCalls, 2);
+  assert.equal((await persistence.blueprints.list()).length, 1);
+  assert.equal((await base.load()).revision, 2);
+});

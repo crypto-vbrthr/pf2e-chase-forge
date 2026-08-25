@@ -69,6 +69,33 @@
       </section>
     {{/if}}
 
+    {{#if race}}
+      <section class="chase-runner-initiative">
+        <h3><i class="fa-solid fa-list-ol"></i> {{localize "PF2E_CHASE_FORGE.Runner.RaceInitiative"}}</h3>
+        {{#if canBeginRound}}
+          {{#if raceInitiativeRequired}}
+            <p>{{localize "PF2E_CHASE_FORGE.Runner.RaceInitiativeHint"}}</p>
+            <div class="chase-runner-initiative-grid">
+              {{#each initiativeEntries as |entry|}}
+                <label class="chase-runner-initiative-row" data-race-initiative-row data-participant-id="{{entry.participantId}}">
+                  <span><strong>{{entry.participantName}}</strong><small>{{entry.groupName}}</small></span>
+                  <input type="number" data-race-initiative-value step="1" placeholder="{{localize 'PF2E_CHASE_FORGE.Runner.Initiative'}}">
+                </label>
+              {{/each}}
+            </div>
+          {{else}}
+            <p>{{localize "PF2E_CHASE_FORGE.Runner.RaceSteadyOnly"}}</p>
+          {{/if}}
+        {{else if initiativeOrderDisplay.length}}
+          <div class="chase-runner-initiative-order">
+            {{#each initiativeOrderDisplay as |entry|}}
+              <span class="chase-runner-initiative-chip {{#if entry.current}}current{{/if}} {{#if entry.acted}}acted{{/if}}"><b>{{entry.order}}.</b> {{entry.participantName}}{{#if entry.groupName}} <small>· {{entry.groupName}}</small>{{/if}}</span>
+            {{/each}}
+          </div>
+        {{/if}}
+      </section>
+    {{/if}}
+
     <div class="chase-runner-groups">
       {{#each groups as |group|}}
         <section class="chase-runner-group">
@@ -77,7 +104,7 @@
               <h3>{{group.definition.name}}</h3>
               <div class="chase-runner-meta"><span>{{group.roleLabel}}</span><span>{{group.paceLabel}}</span><span>{{group.statusLabel}}</span>{{#if group.obstacleIndex}}<span>{{localize "PF2E_CHASE_FORGE.Runner.Position"}} {{group.obstacleIndex}}</span>{{/if}}</div>
             </div>
-            {{#if group.turnBlocked}}<span class="chase-runner-pill turn-wait"><i class="fa-solid fa-hourglass-half"></i> {{localize "PF2E_CHASE_FORGE.Runner.WaitingForQuarry"}}</span>{{/if}}
+            {{#if group.turnBlocked}}<span class="chase-runner-pill turn-wait"><i class="fa-solid fa-hourglass-half"></i> {{#if group.waitingForInitiative}}{{localize "PF2E_CHASE_FORGE.Runner.WaitingForInitiative"}}{{else}}{{localize "PF2E_CHASE_FORGE.Runner.WaitingForQuarry"}}{{/if}}</span>{{/if}}
             {{#if group.obstacle}}
               <button type="button" data-action="postObstacle" data-runtime-group-id="{{group.runtime.id}}"><i class="fa-solid fa-message"></i> {{localize "PF2E_CHASE_FORGE.Runner.PostChat"}}</button>
             {{/if}}

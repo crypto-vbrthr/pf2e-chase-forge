@@ -50,15 +50,33 @@ export function createChasePersistenceService({ store = createMemoryChaseStore()
 
   async function transact(mutator) {
     const operation = async () => {
-      const state = await read();
-      const draft = cloneData(state);
-      const result = await mutator(draft);
-      draft.revision = state.revision + 1;
-      draft.updatedAt = nowIso();
-      const validation = validatePersistenceState(draft);
-      if (!validation.valid) throw persistenceError("INVALID_PERSISTENCE_STATE", "Refusing to persist invalid Chase Forge state.", validation.errors);
-      await store.save(validation.state);
-      return cloneData(result);
+      const maxAttempts = 4;
+      let lastConflict = null;
+      for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+        const state = await read();
+        const draft = cloneData(state);
+        const result = await mutator(draft);
+        const writeToken = createId("write");
+        draft.revision = state.revision + 1;
+        draft.updatedAt = nowIso();
+        draft.metadata ??= {};
+        draft.metadata.persistence = {
+          ...(draft.metadata.persistence ?? {}),
+          lastWriteToken: writeToken,
+          lastWriterUserId: globalThis.game?.user?.id ?? null,
+          lastWriteAt: draft.updatedAt
+        };
+        const validation = validatePersistenceState(draft);
+        if (!validation.valid) throw persistenceError("INVALID_PERSISTENCE_STATE", "Refusing to persist invalid Chase Forge state.", validation.errors);
+        try {
+          await store.save(validation.state, { expectedRevision: state.revision, writeToken });
+          return cloneData(result);
+        } catch (error) {
+          if (error?.code !== "PERSISTENCE_REVISION_CONFLICT" || attempt >= maxAttempts) throw error;
+          lastConflict = error;
+        }
+      }
+      throw lastConflict ?? persistenceError("PERSISTENCE_REVISION_CONFLICT", "Chase Forge persistence changed while the transaction was being saved.");
     };
     const pending = queue.then(operation, operation);
     queue = pending.then(() => undefined, () => undefined);

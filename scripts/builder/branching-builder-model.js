@@ -4,6 +4,7 @@ import { buildGraphIndex, topologicalSort } from "../data/graph.js";
 import { cloneData, createId, nowIso } from "../data/utils.js";
 import { validateChaseBlueprint } from "../data/validators.js";
 import { createBasicApproach, createManualChaseCard, isBasicLinearBlueprint } from "./basic-builder-model.js";
+import { obstaclePointScalingModeForIndex, rollingGroupSizeForBlueprint } from "../rules/chase-guidelines.js";
 
 export const BRANCHING_BUILDER_CONTRACT_VERSION = 1;
 
@@ -199,10 +200,18 @@ export function addBranchAfterCard(input, sourceNodeId, {
   const rightNodeId = createId("node-card");
   const mergeNodeId = createId("node-merge");
 
-  const largestGroup = Math.max(1, ...(next.groups ?? []).map(group => group.participants?.length ?? 0));
-  const requiredPoints = Math.max(1, largestGroup - 1);
-  const leftRecord = createCardRecord(next, createManualChaseCard({ requiredPoints, name: leftCardName }), { nodeId: leftNodeId, branchGroupId });
-  const rightRecord = createCardRecord(next, createManualChaseCard({ requiredPoints, name: rightCardName }), { nodeId: rightNodeId, branchGroupId });
+  const groupSize = rollingGroupSizeForBlueprint(next);
+  const cardCount = listBranchingCards(next).length;
+  const leftRecord = createCardRecord(next, createManualChaseCard({
+    name: leftCardName,
+    pointScalingMode: obstaclePointScalingModeForIndex(cardCount),
+    pointScalingGroupSize: groupSize
+  }), { nodeId: leftNodeId, branchGroupId });
+  const rightRecord = createCardRecord(next, createManualChaseCard({
+    name: rightCardName,
+    pointScalingMode: obstaclePointScalingModeForIndex(cardCount + 1),
+    pointScalingGroupSize: groupSize
+  }), { nodeId: rightNodeId, branchGroupId });
   next.contentSnapshots.cards.push(leftRecord, rightRecord);
 
   next.graph.nodes.push(
@@ -252,8 +261,12 @@ export function appendCardToBranchRoute(input, edgeId, { name = "Weiteres Hinder
   const tailNode = nodeById.get(tailEdge.from);
   if (!tailNode) throw new Error("Branch route tail is invalid.");
   const newNodeId = createId("node-card");
-  const largestGroup = Math.max(1, ...(next.groups ?? []).map(group => group.participants?.length ?? 0));
-  const record = createCardRecord(next, createManualChaseCard({ requiredPoints: Math.max(1, largestGroup - 1), name }), { nodeId: newNodeId, branchGroupId });
+  const cardCount = listBranchingCards(next).length;
+  const record = createCardRecord(next, createManualChaseCard({
+    name,
+    pointScalingMode: obstaclePointScalingModeForIndex(cardCount),
+    pointScalingGroupSize: rollingGroupSizeForBlueprint(next)
+  }), { nodeId: newNodeId, branchGroupId });
   next.contentSnapshots.cards.push(record);
   next.graph.nodes.push(createChaseNode({ id: newNodeId, type: "card", label: name, cardRef: record.ref, metadata: { branchGroupId, branchLane: lane } }));
   next.graph.edges = next.graph.edges.filter(edge => edge.id !== tailEdge.id);
@@ -430,9 +443,16 @@ export function insertCardRelativeToBuilderCard(input, targetCardRef, card, { po
 
 export function insertManualCardRelativeToBuilderCard(input, targetCardRef, { position = "after", name = "Neues Hindernis", requiredPoints = null } = {}) {
   const blueprint = createChaseBlueprint(input);
-  const largestGroup = Math.max(1, ...(blueprint.groups ?? []).map(group => group.participants?.length ?? 0));
-  const points = requiredPoints ?? Math.max(1, largestGroup - 1);
-  return insertCardRelativeToBuilderCard(blueprint, targetCardRef, createManualChaseCard({ requiredPoints: points, name }), { position });
+  const cardCount = listEditableCards(blueprint).length;
+  const pointScalingMode = requiredPoints === null || requiredPoints === undefined
+    ? obstaclePointScalingModeForIndex(cardCount)
+    : null;
+  return insertCardRelativeToBuilderCard(blueprint, targetCardRef, createManualChaseCard({
+    requiredPoints: requiredPoints ?? 1,
+    name,
+    pointScalingMode,
+    pointScalingGroupSize: rollingGroupSizeForBlueprint(blueprint)
+  }), { position });
 }
 
 export function removeBuilderCardByRef(input, cardRef) {
@@ -570,8 +590,16 @@ export function appendMainlineCard(input, card, { originCardRef = null } = {}) {
 
 export function appendMainlineManualCard(input, options = {}) {
   const blueprint = createChaseBlueprint(input);
-  const largestGroup = Math.max(1, ...(blueprint.groups ?? []).map(group => group.participants?.length ?? 0));
-  return appendMainlineCard(blueprint, createManualChaseCard({ requiredPoints: options.requiredPoints ?? Math.max(1, largestGroup - 1), name: options.name ?? "Neues Hindernis" }), options);
+  const cardCount = listEditableCards(blueprint).length;
+  const pointScalingMode = options.requiredPoints === null || options.requiredPoints === undefined
+    ? obstaclePointScalingModeForIndex(cardCount)
+    : null;
+  return appendMainlineCard(blueprint, createManualChaseCard({
+    requiredPoints: options.requiredPoints ?? 1,
+    name: options.name ?? "Neues Hindernis",
+    pointScalingMode,
+    pointScalingGroupSize: rollingGroupSizeForBlueprint(blueprint)
+  }), options);
 }
 
 export function validateBranchingBuilderBlueprint(input, { forStart = false } = {}) {

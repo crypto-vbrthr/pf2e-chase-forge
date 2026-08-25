@@ -1,13 +1,21 @@
 # PF2E Chase Forge
 
-**Version:** 0.1.0-dev.16.8  
+**Version:** 0.1.0-dev.17.3  
 **Foundry VTT:** 14  
 **System:** Pathfinder 2e
 
-PF2E Chase Forge is a modular Pathfinder 2e chase framework for Foundry VTT. `0.1.0-dev.16.8` improves the Campaign Forge runtime workflow so a linked campaign chase can be reopened or resumed without accidentally creating a duplicate Session.
+PF2E Chase Forge is a modular Pathfinder 2e chase framework for Foundry VTT. `0.1.0-dev.17.3` fixes the remaining post-abort text-input focus issue. The GM Runner now uses Foundry's managed ApplicationV2 confirmation dialog for aborting a Chase instead of a native browser confirmation, avoiding the Electron focus state that could block keyboard input in the Builder until Foundry lost and regained OS focus.
 
 The underlying architecture remains intact: DAG route graphs, synchronized GM/Player runtime views, add-on registries, template-based generation, the 72-card Core Library, the shared Visual System, PF2e chase rules, consequence orchestration, optional Critical Forge / Effect Forge integration, Weather Forge prefill, and protected restart-safe Blueprint/Session persistence.
 
+
+## dev.17 Final Rules, Balance & Runtime Hardening
+
+Race chases now use a real participant-level initiative order each round. The GM Runner collects initiative values for every rolling competitor, the rules engine rejects actions outside that order, and synchronized player views identify whose initiative turn is current. Steady-pace NPC competitors remain outside the roll order and continue to advance through the normal steady-pacing model.
+
+Automatically scalable obstacles now follow the GM Core guideline instead of using one blanket threshold. Generated/new obstacles alternate between **group size − 1** and **group size − 2** Chase Points (minimum 1), and the runtime resolves that requirement independently for each rolling group. This keeps asymmetrical chases fair when both sides roll. If the GM edits a Chase Point value manually, that obstacle becomes a fixed custom requirement instead of being silently rescaled.
+
+Persistence now uses best-effort optimistic revision checks and write tokens to detect stale or observed competing GM writes, retrying a bounded number of times with fresh state. This hardens multi-GM use without pretending Foundry document writes provide an atomic distributed lock. Completion-dialog HTML is escaped, and dedicated regression tests verify ApplicationV2 action wiring across Builder, GM Runner, and Player View.
 
 ## dev.16.8 Campaign Session Reopen & Resume
 

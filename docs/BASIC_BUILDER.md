@@ -72,6 +72,12 @@ Route entry edges carry editable labels/descriptions and visibility (`public`, `
 
 Nested branch creation inside a branch lane is deliberately unsupported in dev.10. Likewise, arbitrary graphs created outside the Builder-managed shape may be opened and started but are protected from Builder rewriting.
 
+## Automatic Chase Point scaling (dev.17)
+
+New manually created obstacles and scalable Core/Generator cards can carry an automatic scaling mode. The Builder alternates `groupMinus1` and `groupMinus2` as cards are created, matching the GM Core guideline that roughly half the obstacles use each threshold (minimum 1). The numeric field shows a reference value based on the largest group that actually rolls, and the inspector labels the active automatic mode.
+
+At runtime the requirement is recalculated independently for each rolling group. If the GM edits the numeric Chase Point field, the automatic scaling metadata is removed and that card becomes a fixed custom threshold.
+
 ## Participants
 
 Default group layouts:

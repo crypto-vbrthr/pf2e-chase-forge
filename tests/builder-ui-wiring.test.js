@@ -290,7 +290,9 @@ test("Builder groups registered Chase Cards by source/category for the Core Card
   assert.match(template, /<optgroup label="\{\{label\}\}">/);
   assert.match(source, /localizeChaseCard/);
   assert.match(source, /registeredCardGroupMap/);
-  assert.match(source, /card\.obstacle\.requiredPoints = Math\.max\(1, largestGroup - 1\)/);
+  assert.match(source, /stampRecommendedPointScaling/);
+  assert.match(source, /rollingGroupSizeForBlueprint/);
+  assert.match(source, /obstaclePointScalingModeForIndex/);
 });
 
 test("Builder exposes template generation and seeded reroll controls", async () => {
@@ -411,4 +413,88 @@ test("empty branch lanes expose an inline add-obstacle action", async () => {
   const actionStart = source.indexOf("static async _actionAppendBranchCard");
   const actionEnd = source.indexOf("static async _actionRemoveBranchGroup", actionStart);
   assert.match(source.slice(actionStart, actionEnd), /this\._captureScrollPosition\(\)/);
+});
+
+
+test("participant mutations preserve Builder scroll position before re-render", async () => {
+  const source = await readFile(new URL("../scripts/app/chase-builder-app.js", import.meta.url), "utf8");
+
+  const dropStart = source.indexOf("async _handleDrop(event, explicitZone = null)");
+  const dropEnd = source.indexOf("async _journalTarget()", dropStart);
+  const dropBlock = source.slice(dropStart, dropEnd);
+  assert.match(dropBlock, /_syncDraftFromForm\(\);\s*this\._captureScrollPosition\(\);\s*this\._draft = addParticipantToBasicBlueprint/s);
+
+  const addStart = source.indexOf("static async _actionAddSelectedTokens");
+  const addEnd = source.indexOf("static async _actionRemoveParticipant", addStart);
+  const addBlock = source.slice(addStart, addEnd);
+  assert.match(addBlock, /_syncDraftFromForm\(\);\s*this\._captureScrollPosition\(\);/s);
+
+  const removeStart = source.indexOf("static async _actionRemoveParticipant");
+  const removeEnd = source.indexOf("static async _actionResetGroups", removeStart);
+  const removeBlock = source.slice(removeStart, removeEnd);
+  assert.match(removeBlock, /_syncDraftFromForm\(\);\s*this\._captureScrollPosition\(\);/s);
+});
+
+test("Builder re-enables editable controls after a forced ApplicationV2 refresh", async () => {
+  const previousFoundry = globalThis.foundry;
+  const previousGame = globalThis.game;
+  const previousUi = globalThis.ui;
+  class ApplicationV2 {
+    constructor(options = {}) { this.options = options; this.renderCalls = 0; this.element = null; }
+    async render() { this.renderCalls += 1; return this; }
+    async close() { return this; }
+    async _prepareContext() { return {}; }
+    async _onRender() {}
+  }
+  const HandlebarsApplicationMixin = Base => class extends Base {};
+  globalThis.foundry = { applications: { api: { ApplicationV2, HandlebarsApplicationMixin, DialogV2: { confirm: async () => true } } } };
+  globalThis.game = { user: { isGM: true }, i18n: { localize: key => key, format: key => key } };
+  globalThis.ui = { notifications: { info() {}, warn() {}, error() {} } };
+  try {
+    const { createChaseBuilderUiService } = await import("../scripts/app/chase-builder-app.js");
+    const fakeApi = { persistence: { blueprints: {} } };
+    const service = createChaseBuilderUiService({ getApi: () => fakeApi });
+    const app = await service.openBuilder();
+
+    const fields = [{ disabled: true }, { disabled: true }, { disabled: true }];
+    const actionControls = new Map([
+      ["duplicateBlueprint", [{ disabled: true }]],
+      ["saveBlueprint", [{ disabled: true }]],
+      ["resetGroups", [{ disabled: true }]]
+    ]);
+    const classes = new Set(["chase-builder-read-only"]);
+    const editor = {
+      classList: {
+        toggle(name, force) { if (force) classes.add(name); else classes.delete(name); }
+      },
+      querySelectorAll(selector) {
+        if (selector === "input, textarea, select") return fields;
+        return [];
+      }
+    };
+    const root = {
+      querySelector(selector) { return selector === ".chase-builder-editor-scroll" ? editor : null; },
+      querySelectorAll(selector) {
+        const match = selector.match(/^\[data-action="([^"]+)"\]$/);
+        return match ? (actionControls.get(match[1]) ?? []) : [];
+      }
+    };
+
+    assert.equal(app._synchronizeEditorControlState(root, { editable: true, librarySelected: false }), true);
+    assert.deepEqual(fields.map(control => control.disabled), [false, false, false]);
+    assert.equal(actionControls.get("saveBlueprint")[0].disabled, false);
+    assert.equal(actionControls.get("duplicateBlueprint")[0].disabled, false);
+    assert.equal(actionControls.get("resetGroups")[0].disabled, false);
+    assert.equal(classes.has("chase-builder-read-only"), false);
+
+    app._synchronizeEditorControlState(root, { editable: false, librarySelected: true });
+    assert.deepEqual(fields.map(control => control.disabled), [true, true, true]);
+    assert.equal(actionControls.get("saveBlueprint")[0].disabled, true);
+    assert.equal(classes.has("chase-builder-read-only"), true);
+    await service.closeBuilder();
+  } finally {
+    if (previousFoundry === undefined) delete globalThis.foundry; else globalThis.foundry = previousFoundry;
+    if (previousGame === undefined) delete globalThis.game; else globalThis.game = previousGame;
+    if (previousUi === undefined) delete globalThis.ui; else globalThis.ui = previousUi;
+  }
 });

@@ -1,6 +1,6 @@
 # Player Chase View & Session Synchronization
 
-`0.1.0-dev.9` adds the first player-facing Chase Forge runtime UI.
+The Player Chase View is the player-facing synchronized runtime UI. Dev.17 projects race initiative state without exposing GM-only Chase data.
 
 ## Security boundary
 
@@ -39,6 +39,10 @@ new player-safe state
 ## Player rolls
 
 A Player View roll button calls the normal PF2e Actor statistic on the player client without supplying the hidden DC. The GM receives only the selected Session/group/participant/approach IDs plus the resulting total and natural d20 value. The GM reloads the canonical Session, resolves the actual DC, and applies Chase Point and consequence logic.
+
+## Race initiative (dev.17)
+
+For race Sessions the public projection includes only the public participant names, initiative order, acted state, and current participant id needed to explain turn order. Roll actions are projected only for the participant whose initiative turn is current. The authority GM revalidates that order before accepting the action, so a modified player client cannot act early.
 
 ## Route choices
 
