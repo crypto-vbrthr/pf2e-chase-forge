@@ -767,6 +767,12 @@ function getAppClass() {
             : (item.card.metadata?.chasePointScaling?.mode === "groupMinus1"
               ? i18n("PF2E_CHASE_FORGE.Builder.PointScalingGroupMinus1", "Automatisch: Gruppengröße − 1")
               : null),
+          pointScalingOptions: [
+            { value: "fixed", label: i18n("PF2E_CHASE_FORGE.Builder.PointScalingFixed", "Fester Wert"), selected: !["groupMinus1", "groupMinus2"].includes(item.card.metadata?.chasePointScaling?.mode) },
+            { value: "groupMinus1", label: i18n("PF2E_CHASE_FORGE.Builder.PointScalingModeGroupMinus1", "Gruppengröße − 1"), selected: item.card.metadata?.chasePointScaling?.mode === "groupMinus1" },
+            { value: "groupMinus2", label: i18n("PF2E_CHASE_FORGE.Builder.PointScalingModeGroupMinus2", "Gruppengröße − 2"), selected: item.card.metadata?.chasePointScaling?.mode === "groupMinus2" }
+          ],
+          pointScalingAutomatic: ["groupMinus1", "groupMinus2"].includes(item.card.metadata?.chasePointScaling?.mode),
           approaches: (item.card.approaches ?? []).map((approach, approachIndex) => ({
             ...approach,
             approachIndex,
@@ -958,7 +964,26 @@ function getAppClass() {
       }, 500);
 
       this._synchronizeEditorControlState(root, context);
+      this._bindPointScalingControls(root);
       this._bindParticipantDropZones(root);
+    }
+
+    _bindPointScalingControls(root = this.element) {
+      for (const select of root?.querySelectorAll?.('[data-card-field="pointScalingMode"]') ?? []) {
+        if (select.dataset.chaseScalingBound === "true") continue;
+        select.dataset.chaseScalingBound = "true";
+        const update = () => {
+          const cardElement = select.closest?.('[data-builder-card]');
+          const pointsInput = cardElement?.querySelector?.('[data-card-field="requiredPoints"]');
+          if (!pointsInput) return;
+          const automatic = ["groupMinus1", "groupMinus2"].includes(select.value);
+          if (automatic) pointsInput.value = String(obstaclePointsForScalingMode(rollingGroupSizeForBlueprint(this._draft), select.value));
+          pointsInput.readOnly = automatic;
+          pointsInput.classList?.toggle?.("chase-readonly-derived", automatic);
+        };
+        select.addEventListener?.("change", update);
+        update();
+      }
     }
 
     _synchronizeEditorControlState(root = this.element, context = null) {
@@ -1158,15 +1183,18 @@ function getAppClass() {
         card.gmNotes = cardElement.querySelector('[data-card-field="gmNotes"]')?.value ?? "";
         card.tags = csv(cardElement.querySelector('[data-card-field="tags"]')?.value);
         const pointsInput = cardElement.querySelector('[data-card-field="requiredPoints"]');
-        const priorRequiredPoints = Math.max(1, Math.trunc(Number(pointsInput?.dataset?.originalRequiredPoints ?? card.obstacle.requiredPoints) || 1));
         const enteredRequiredPoints = Math.max(1, Math.trunc(Number(pointsInput?.value) || 1));
-        card.obstacle.scalable = cardElement.querySelector('[data-card-field="scalable"]')?.checked !== false;
-        const pointScalingMode = card.metadata?.chasePointScaling?.mode ?? null;
-        const keptAutomaticValue = card.obstacle.scalable && pointScalingMode && enteredRequiredPoints === priorRequiredPoints;
-        card.obstacle.requiredPoints = keptAutomaticValue
-          ? obstaclePointsForScalingMode(rollingGroupSizeForBlueprint(next), pointScalingMode)
-          : enteredRequiredPoints;
-        if (!keptAutomaticValue && card.metadata?.chasePointScaling) delete card.metadata.chasePointScaling;
+        const requestedScalingMode = cardElement.querySelector('[data-card-field="pointScalingMode"]')?.value ?? "fixed";
+        const pointScalingMode = ["groupMinus1", "groupMinus2"].includes(requestedScalingMode) ? requestedScalingMode : null;
+        card.obstacle.scalable = Boolean(pointScalingMode);
+        card.metadata ??= {};
+        if (pointScalingMode) {
+          card.metadata.chasePointScaling = { mode: pointScalingMode };
+          card.obstacle.requiredPoints = obstaclePointsForScalingMode(rollingGroupSizeForBlueprint(next), pointScalingMode);
+        } else {
+          card.obstacle.requiredPoints = enteredRequiredPoints;
+          if (card.metadata.chasePointScaling) delete card.metadata.chasePointScaling;
+        }
         card.image.mode = cardElement.querySelector('[data-card-field="imageMode"]')?.value || "none";
         card.image.path = cardElement.querySelector('[data-card-field="imagePath"]')?.value?.trim() || null;
         card.image.alt = cardElement.querySelector('[data-card-field="imageAlt"]')?.value ?? "";

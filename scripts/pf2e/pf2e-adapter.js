@@ -41,6 +41,27 @@ export class Pf2eChaseAdapter {
     return statistic;
   }
 
+  getStatisticModifier(actor, slug) {
+    const statistic = this.getStatistic(actor, slug);
+    for (const candidate of [
+      statistic?.mod,
+      statistic?.modifier,
+      statistic?.check?.mod,
+      statistic?.check?.modifier,
+      statistic?.check?.totalModifier,
+      statistic?.totalModifier
+    ]) {
+      const value = Number(candidate);
+      if (Number.isFinite(value)) return value;
+    }
+    return null;
+  }
+
+  async resolveStatisticModifier({ actor = null, actorUuid = null, statistic } = {}) {
+    const resolvedActor = actor ?? await this.resolveActor(actorUuid);
+    return this.getStatisticModifier(resolvedActor, statistic);
+  }
+
   async rollStatistic({ actor = null, actorUuid = null, statistic, dc = null, label = null, extraRollOptions = [], event = null } = {}) {
     const resolvedActor = actor ?? await this.resolveActor(actorUuid);
     const resolvedStatistic = this.getStatistic(resolvedActor, statistic);

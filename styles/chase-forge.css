@@ -1875,3 +1875,14 @@
   opacity: 0.72;
   line-height: 1.2;
 }
+
+.chase-skill-modifier {
+  display: inline-block;
+  margin-inline-start: 0.3em;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  opacity: 0.9;
+}
+.chase-readonly-derived {
+  opacity: 0.8;
+}

@@ -41,3 +41,11 @@ test("PF2e adapter fails explicitly when no statistic exists", () => {
   const adapter = createPf2eChaseAdapter({ fromUuid: async () => null });
   assert.throws(() => adapter.getStatistic({ getStatistic: () => null }, "athletics"), error => error instanceof ChasePf2eError && error.code === "STATISTIC_NOT_FOUND");
 });
+
+
+test("PF2e adapter exposes the numeric statistic modifier for Chase approach previews", () => {
+  const adapter = createPf2eChaseAdapter({ fromUuid: async () => null });
+  assert.equal(adapter.getStatisticModifier({ getStatistic: () => ({ mod: 12 }) }, "athletics"), 12);
+  assert.equal(adapter.getStatisticModifier({ getStatistic: () => ({ check: { modifier: -2 } }) }, "stealth"), -2);
+  assert.equal(adapter.getStatisticModifier({ getStatistic: () => ({ check: { roll() {} } }) }, "acrobatics"), null);
+});

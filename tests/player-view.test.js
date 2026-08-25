@@ -126,3 +126,13 @@ test("Player UI service reuses one ApplicationV2 per session", async () => {
     if (previousGame === undefined) delete globalThis.game; else globalThis.game = previousGame;
   }
 });
+
+
+test("Player View resolves and displays the controlled actor's PF2e approach modifier", async () => {
+  const source = await readFile(new URL("../scripts/app/chase-player-app.js", import.meta.url), "utf8");
+  const template = await readFile(new URL("../templates/chase-player.hbs", import.meta.url), "utf8");
+  assert.match(source, /enrichRollActionsWithModifiers/);
+  assert.match(source, /getStatisticModifier/);
+  assert.match(template, /action\.modifierLabel/);
+  assert.match(template, /chase-skill-modifier/);
+});

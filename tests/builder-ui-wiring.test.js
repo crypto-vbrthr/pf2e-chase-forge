@@ -56,6 +56,8 @@ test("Builder template and localization resources are packaged", async () => {
   assert.match(template, /data-action="copyJournalLink"/);
   assert.match(template, /data-participant-drop/);
   assert.match(template, /data-builder-card/);
+  assert.match(template, /data-card-field="pointScalingMode"/);
+  assert.doesNotMatch(template, /data-card-field="scalable"/);
   assert.match(template, /data-action="applyWeatherForge"/);
   assert.match(template, /data-action="addBranchAfterCard"/);
   assert.match(template, /data-action="appendBranchCard"/);
@@ -83,6 +85,8 @@ test("Builder template and localization resources are packaged", async () => {
   assert.equal(en["PF2E_CHASE_FORGE.Builder.Title"].length > 0, true);
   assert.equal(de["PF2E_CHASE_FORGE.Builder.WeatherForgeApply"].length > 0, true);
   assert.equal(en["PF2E_CHASE_FORGE.Builder.WeatherForgeApply"].length > 0, true);
+  assert.equal(de["PF2E_CHASE_FORGE.Builder.PointScalingMode"].length > 0, true);
+  assert.equal(en["PF2E_CHASE_FORGE.Builder.PointScalingMode"].length > 0, true);
   assert.equal(de["PF2E_CHASE_FORGE.Journal.CopyLink"].length > 0, true);
   assert.equal(en["PF2E_CHASE_FORGE.Journal.CopyLink"].length > 0, true);
 });

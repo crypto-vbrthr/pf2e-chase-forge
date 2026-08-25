@@ -155,9 +155,9 @@
                   </div>
                   {{#if participant.canAct}}
                     <div class="chase-runner-participant-actions">
-                      {{#each group.approaches as |approach|}}
+                      {{#each participant.approaches as |approach|}}
                         {{#if approach.statistic}}
-                          <button type="button" data-action="rollApproach" data-runtime-group-id="{{group.runtime.id}}" data-participant-id="{{participant.id}}" data-approach-id="{{approach.id}}"><i class="fa-solid fa-dice-d20"></i> {{approach.label}}</button>
+                          <button type="button" data-action="rollApproach" data-runtime-group-id="{{group.runtime.id}}" data-participant-id="{{participant.id}}" data-approach-id="{{approach.id}}"><i class="fa-solid fa-dice-d20"></i> {{approach.label}}{{#if approach.modifierLabel}} <span class="chase-skill-modifier">{{approach.modifierLabel}}</span>{{/if}}</button>
                         {{/if}}
                       {{/each}}
                       {{#if group.approaches.length}}

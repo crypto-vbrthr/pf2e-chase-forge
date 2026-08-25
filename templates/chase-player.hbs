@@ -73,7 +73,7 @@
                     {{#each group.myRollActions as |action|}}
                       <button type="button" data-action="rollApproach" data-runtime-group-id="{{action.runtimeGroupId}}" data-participant-id="{{action.participantId}}" data-approach-id="{{action.approach.id}}" {{#if ../../pending}}disabled{{/if}}>
                         <i class="fa-solid fa-dice-d20"></i>
-                        <span><strong>{{action.approach.label}}</strong>{{#if action.approach.description}}<small>{{action.approach.description}}</small>{{/if}}</span>
+                        <span><strong>{{action.approach.label}}{{#if action.modifierLabel}} <span class="chase-skill-modifier">{{action.modifierLabel}}</span>{{/if}}</strong>{{#if action.approach.description}}<small>{{action.approach.description}}</small>{{/if}}</span>
                       </button>
                     {{/each}}
                   </div>

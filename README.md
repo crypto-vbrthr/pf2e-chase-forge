@@ -1,10 +1,10 @@
 # PF2E Chase Forge
 
-**Version:** 0.1.0-dev.17.3  
+**Version:** 0.1.0-dev.17.4  
 **Foundry VTT:** 14  
 **System:** Pathfinder 2e
 
-PF2E Chase Forge is a modular Pathfinder 2e chase framework for Foundry VTT. `0.1.0-dev.17.3` fixes the remaining post-abort text-input focus issue. The GM Runner now uses Foundry's managed ApplicationV2 confirmation dialog for aborting a Chase instead of a native browser confirmation, avoiding the Electron focus state that could block keyboard input in the Builder until Foundry lost and regained OS focus.
+PF2E Chase Forge is a modular Pathfinder 2e chase framework for Foundry VTT. `0.1.0-dev.17.4` makes Chase Point scaling explicit in the card editor and adds live PF2e statistic modifiers to the skill buttons used during a Chase. Fixed and group-size-based Chase Point requirements can now be selected directly instead of being hidden in card metadata.
 
 The underlying architecture remains intact: DAG route graphs, synchronized GM/Player runtime views, add-on registries, template-based generation, the 72-card Core Library, the shared Visual System, PF2e chase rules, consequence orchestration, optional Critical Forge / Effect Forge integration, Weather Forge prefill, and protected restart-safe Blueprint/Session persistence.
 

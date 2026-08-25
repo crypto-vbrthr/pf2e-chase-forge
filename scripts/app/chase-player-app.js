@@ -35,6 +35,40 @@ function rollTotal(roll) {
   return null;
 }
 
+function signedModifier(value) {
+  const amount = Number(value);
+  if (!Number.isFinite(amount)) return null;
+  return amount >= 0 ? `+${amount}` : String(amount);
+}
+
+async function enrichRollActionsWithModifiers(api, actions = []) {
+  const actorCache = new Map();
+  const modifierCache = new Map();
+  const enriched = [];
+  for (const action of actions) {
+    const copy = cloneData(action);
+    const actorUuid = action?.actorUuid ?? null;
+    const statistic = action?.approach?.statistic ?? null;
+    let modifier = null;
+    if (actorUuid && statistic) {
+      const cacheKey = `${actorUuid}::${statistic}`;
+      if (modifierCache.has(cacheKey)) modifier = modifierCache.get(cacheKey);
+      else {
+        try {
+          let actor = actorCache.get(actorUuid);
+          if (!actor) { actor = await api?.pf2e?.adapter?.resolveActor?.(actorUuid); actorCache.set(actorUuid, actor); }
+          modifier = api?.pf2e?.adapter?.getStatisticModifier?.(actor, statistic);
+        } catch { modifier = null; }
+        modifierCache.set(cacheKey, modifier);
+      }
+    }
+    copy.statisticModifier = Number.isFinite(Number(modifier)) ? Number(modifier) : null;
+    copy.modifierLabel = signedModifier(copy.statisticModifier);
+    enriched.push(copy);
+  }
+  return enriched;
+}
+
 function weatherLabel(weather) {
   if (!weather) return null;
   if (typeof weather === "string") return weather;
@@ -98,7 +132,7 @@ function getAppClass() {
       const state = this._state ?? playerStates.get(this.sessionId) ?? null;
       if (!state) return { missing: true, sessionId: this.sessionId };
       const actions = state.availableActions ?? [];
-      const rollActions = actions.filter(action => action.type === "roll");
+      const rollActions = await enrichRollActionsWithModifiers(this.chaseApi, actions.filter(action => action.type === "roll"));
       const routeActions = actions.filter(action => action.type === "route");
       const proposalActions = actions.filter(action => action.type === "propose");
       const initiative = cloneData(state.metadata?.initiative ?? null);

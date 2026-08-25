@@ -1,3 +1,11 @@
+## 0.1.0-dev.17.4 – Point Scaling Controls & Skill Modifier Display
+
+- Replaced the ambiguous “points may scale later” checkbox in the card inspector with an explicit Chase Point Scaling selector: fixed, group size − 1, or group size − 2.
+- Automatic Chase Point values are shown as derived/read-only values and remain group-specific at runtime.
+- GM Runner approach buttons now show the acting participant’s PF2e statistic modifier when available.
+- Player approach buttons now show the controlled actor’s PF2e statistic modifier when available.
+- Added PF2e adapter helpers for safely resolving statistic modifiers without reimplementing PF2e roll math.
+
 ## 0.1.0-dev.17.3 – Runner Abort Focus Hotfix
 
 - Replaced the GM Runner's native browser `window.confirm()` abort prompt with Foundry's ApplicationV2 `DialogV2.confirm()` when available.

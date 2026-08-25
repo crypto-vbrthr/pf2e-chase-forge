@@ -567,5 +567,10 @@
   "PF2E_CHASE_FORGE.Player.InitiativeWaiting": "Initiative for the next round is being prepared.",
   "PF2E_CHASE_FORGE.Player.WaitingForInitiative": "Another participant acts before you.",
   "PF2E_CHASE_FORGE.Builder.PointScalingGroupMinus1": "Automatic: group size − 1",
-  "PF2E_CHASE_FORGE.Builder.PointScalingGroupMinus2": "Automatic: group size − 2"
+  "PF2E_CHASE_FORGE.Builder.PointScalingGroupMinus2": "Automatic: group size − 2",
+  "PF2E_CHASE_FORGE.Builder.PointScalingMode": "Chase Point Scaling",
+  "PF2E_CHASE_FORGE.Builder.PointScalingModeHint": "Automatic values are calculated separately for each rolling group from its participant count.",
+  "PF2E_CHASE_FORGE.Builder.PointScalingFixed": "Fixed value",
+  "PF2E_CHASE_FORGE.Builder.PointScalingModeGroupMinus1": "Group size − 1",
+  "PF2E_CHASE_FORGE.Builder.PointScalingModeGroupMinus2": "Group size − 2"
 }

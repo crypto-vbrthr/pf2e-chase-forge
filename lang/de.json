@@ -567,5 +567,10 @@
   "PF2E_CHASE_FORGE.Player.InitiativeWaiting": "Die Initiative für die nächste Runde wird vorbereitet.",
   "PF2E_CHASE_FORGE.Player.WaitingForInitiative": "Ein anderer Beteiligter ist zuerst an der Reihe.",
   "PF2E_CHASE_FORGE.Builder.PointScalingGroupMinus1": "Automatisch: Gruppengröße − 1",
-  "PF2E_CHASE_FORGE.Builder.PointScalingGroupMinus2": "Automatisch: Gruppengröße − 2"
+  "PF2E_CHASE_FORGE.Builder.PointScalingGroupMinus2": "Automatisch: Gruppengröße − 2",
+  "PF2E_CHASE_FORGE.Builder.PointScalingMode": "VP-Skalierung",
+  "PF2E_CHASE_FORGE.Builder.PointScalingModeHint": "Automatische Werte werden für jede würfelnde Gruppe anhand ihrer Beteiligtenzahl berechnet.",
+  "PF2E_CHASE_FORGE.Builder.PointScalingFixed": "Fester Wert",
+  "PF2E_CHASE_FORGE.Builder.PointScalingModeGroupMinus1": "Gruppengröße − 1",
+  "PF2E_CHASE_FORGE.Builder.PointScalingModeGroupMinus2": "Gruppengröße − 2"
 }

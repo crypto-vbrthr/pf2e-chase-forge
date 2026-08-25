@@ -145,6 +145,29 @@ function signedPoints(value) {
   return amount > 0 ? `+${amount}` : String(amount);
 }
 
+function signedModifier(value) {
+  const amount = Number(value);
+  if (!Number.isFinite(amount)) return null;
+  return amount >= 0 ? `+${amount}` : String(amount);
+}
+
+async function participantApproachModifiers(api, participant, approaches) {
+  const actorUuid = participant?.uuid ?? participant?.metadata?.actorUuid ?? null;
+  if (!actorUuid) return new Map();
+  let actor = null;
+  try { actor = await api?.pf2e?.adapter?.resolveActor?.(actorUuid); }
+  catch { return new Map(); }
+  const result = new Map();
+  for (const approach of approaches ?? []) {
+    if (!approach?.statistic) continue;
+    try {
+      const modifier = api?.pf2e?.adapter?.getStatisticModifier?.(actor, approach.statistic);
+      if (Number.isFinite(Number(modifier))) result.set(approach.id, Number(modifier));
+    } catch { /* Statistic not present on this actor. */ }
+  }
+  return result;
+}
+
 function lastParticipantResult(session, runtimeGroupId, participantId) {
   const currentRound = Number(session?.round ?? 0);
   const record = [...(session?.events ?? [])].reverse().find(item =>
@@ -352,20 +375,26 @@ function getAppClass() {
           };
         });
         const groupTurnAllowed = this.chaseApi.rules.canGroupAct?.(session, runtimeGroup.id) ?? true;
-        const participants = runtimeGroup.participantIds.map(participantId => {
+        const participants = [];
+        for (const participantId of runtimeGroup.participantIds) {
           const participant = resolveParticipant(session, participantId) ?? { id: participantId, name: participantId, uuid: null, image: null };
           const participantTurnAllowed = this.chaseApi.rules.canParticipantAct?.(session, runtimeGroup.id, participantId)
             ?? (activeRound && groupTurnAllowed && runtimeGroup.rules.paceMode === "roll" && !runtimeGroup.completed && !session.roundState.actedParticipantIds.includes(participantId));
-          return {
+          const modifiers = await participantApproachModifiers(this.chaseApi, participant, approaches);
+          participants.push({
             ...cloneData(participant),
             acted: session.roundState.actedParticipantIds.includes(participantId),
             skipped: session.roundState.skippedParticipantIds.includes(participantId),
             canAct: Boolean(participantTurnAllowed),
             lastResult: lastParticipantResult(session, runtimeGroup.id, participantId),
             degreeOptions: degreeOptions("success"),
+            approaches: approaches.map(approach => {
+              const statisticModifier = modifiers.get(approach.id);
+              return { ...cloneData(approach), statisticModifier, modifierLabel: signedModifier(statisticModifier) };
+            }),
             manualApproaches: approaches.map(approach => ({ value: approach.id, label: approach.label || approach.statistic || approach.id }))
-          };
-        });
+          });
+        }
         let transitions = [];
         try { transitions = this.chaseApi.route.availableTransitions(session, runtimeGroup.id).map(item => ({ edgeId: item.edge.id, label: routeLabel(session, item.edge), type: item.edge.type, visibility: item.edge.visibility })); }
         catch { transitions = []; }

@@ -599,7 +599,7 @@
                     </label>
                     <label class="small-number">
                       <span>{{localize "PF2E_CHASE_FORGE.Builder.RequiredPoints"}}</span>
-                      <input type="number" data-card-field="requiredPoints" data-original-required-points="{{selectedCard.card.obstacle.requiredPoints}}" data-point-scaling-mode="{{selectedCard.card.metadata.chasePointScaling.mode}}" min="1" value="{{selectedCard.card.obstacle.requiredPoints}}" {{#unless selectedCard.editable}}disabled{{/unless}}>
+                      <input type="number" data-card-field="requiredPoints" min="1" value="{{selectedCard.card.obstacle.requiredPoints}}" {{#if selectedCard.card.pointScalingAutomatic}}readonly{{/if}} {{#unless selectedCard.editable}}disabled{{/unless}}>
                       {{#if selectedCard.card.pointScalingLabel}}<small class="chase-point-scaling-hint">{{selectedCard.card.pointScalingLabel}}</small>{{/if}}
                     </label>
                     <label class="wide">
@@ -614,9 +614,12 @@
                       <span>{{localize "PF2E_CHASE_FORGE.Builder.CardTags"}}</span>
                       <input type="text" data-card-field="tags" value="{{selectedCard.card.tagsText}}" {{#unless selectedCard.editable}}disabled{{/unless}}>
                     </label>
-                    <label class="chase-builder-checkbox bottom">
-                      <input type="checkbox" data-card-field="scalable" {{#if selectedCard.card.obstacle.scalable}}checked{{/if}} {{#unless selectedCard.editable}}disabled{{/unless}}>
-                      <span>{{localize "PF2E_CHASE_FORGE.Builder.ScalablePoints"}}</span>
+                    <label>
+                      <span>{{localize "PF2E_CHASE_FORGE.Builder.PointScalingMode"}}</span>
+                      <select data-card-field="pointScalingMode" {{#unless selectedCard.editable}}disabled{{/unless}}>
+                        {{#each selectedCard.card.pointScalingOptions}}<option value="{{value}}" {{#if selected}}selected{{/if}}>{{label}}</option>{{/each}}
+                      </select>
+                      <small>{{localize "PF2E_CHASE_FORGE.Builder.PointScalingModeHint"}}</small>
                     </label>
                     <label>
                       <span>{{localize "PF2E_CHASE_FORGE.Builder.CardImageMode"}}</span>
