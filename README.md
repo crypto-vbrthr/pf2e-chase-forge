@@ -1,12 +1,90 @@
 # PF2E Chase Forge
 
-**Version:** 0.1.0-dev.9.1.4  
+**Version:** 0.1.0-dev.10.2  
 **Foundry VTT:** 14  
 **System:** Pathfinder 2e
 
-PF2E Chase Forge is a modular Pathfinder 2e chase framework for Foundry VTT. `0.1.0-dev.9.1.4` keeps the synchronized **Player Chase View**, enables Foundry module-socket transport for reliable GM→player delivery, and keeps the Builder command bar visible while scrolling, so players receive a dedicated chase window with images, obstacle text, progress, PF2e roll buttons, route choices, and a free-form action proposal flow while the GM remains authoritative over the persisted Chase Session.
+PF2E Chase Forge is a modular Pathfinder 2e chase framework for Foundry VTT. `0.1.0-dev.10.2` introduces a compact **visual route diagram and card inspector** so linear routes, route splits, branch lanes, merges, and prepared library chases are much easier to read and edit at a glance.
 
-The underlying dev.1-dev.6 architecture remains intact: DAG route graphs, add-on registries, PF2e chase rules, consequence orchestration, optional Critical Forge / Effect Forge integration, and protected restart-safe Blueprint/Session persistence.
+The underlying architecture remains intact: DAG route graphs, synchronized GM/Player runtime views, add-on registries, PF2e chase rules, consequence orchestration, optional Critical Forge / Effect Forge integration, Weather Forge prefill, and protected restart-safe Blueprint/Session persistence.
+
+
+## dev.10.2 Visual Route Diagram & Card Inspector
+
+The Route section now behaves more like an activity diagram than a stack of large forms. Every Chase Card is represented by a compact clickable node that contains only the card name and an optional image thumbnail. Clicking the node opens the complete card editor in the inspector on the right.
+
+Managed route splits are drawn immediately after the obstacle that creates the decision:
+
+```text
+                 [ Rooftops ]
+               ↗              ↘
+[ Marketplace ] ◆              ◇ -> [ North Gate ]
+               ↘              ↗
+                 [ Alleys ]
+```
+
+The filled diamond marks the route decision and the hollow diamond marks the merge. Both are clickable and open the Branch Inspector, where the GM can edit route labels, descriptions, visibility, extend branch paths, or remove the split. Branch cards remain fully editable through the same card inspector used by the mainline.
+
+Prepared Library chases remain read-only. Builder-managed library Blueprints can nevertheless be browsed through the same diagram and inspector, so large add-on chase libraries do not need a separate preview workflow.
+
+The Builder also now synchronizes branching form edits before changing the selected diagram node or running another action. This closes a dev.10 gap where edits made to branching card/route controls could otherwise be lost.
+
+## dev.10.1 New Chase & Prepared Chase Libraries
+
+The Builder now has an explicit **New Chase** action in both the sidebar and sticky toolbar. Prepared chase content is separated into two ownership classes:
+
+- **My Chases** are persisted world Blueprints and are fully editable.
+- **Library** chases are supplied by Chase Forge Core or an add-on content pack and are read-only source content.
+
+Library entries are grouped by their source pack, so multiple scenario libraries can coexist without becoming one giant undifferentiated list. Selecting a Library chase opens it as a read-only preview. The GM can then either:
+
+- **Start** it immediately. Chase Forge creates an independent `ChaseSession` with its own Blueprint snapshot. Runtime changes belong only to that Session and never modify the Library source.
+- **Copy to My Chases**. Chase Forge assigns a fresh world Blueprint id, removes the read-only library marker, records the source in `metadata.libraryOrigin`, and saves a fully editable copy.
+
+Add-on packs may now publish full prepared chases:
+
+```js
+extension.registerPack({
+  id: "urban-pursuits",
+  label: "Urban Pursuits",
+  cards: [],
+  templates: [],
+  blueprints: [/* complete ChaseBlueprint definitions */],
+  imageProviders: []
+});
+```
+
+Public library access:
+
+```js
+forge.library.list();
+forge.library.get("my-addon:prepared-chase");
+forge.library.has("my-addon:prepared-chase");
+```
+
+Library sources remain controlled by their owning module. Updating or disabling an add-on cannot silently turn its source content into mutable world data; world copies and already-created Session snapshots remain separate objects.
+
+## dev.10 Branching & Interactive Route Decisions
+
+The Builder can now turn an ordinary linear prepared chase into a managed branching route. On an eligible mainline obstacle, the GM can add a route split. Chase Forge creates two branch paths and a merge node that reconnects both paths to the original continuation.
+
+Current dev.10 branch workflow:
+
+- add a split after an eligible mainline Chase Card;
+- edit the label and description of each route;
+- mark a route as `public`, `discoverable`, or `hidden`;
+- edit the generated branch obstacles with the same card/approach fields used elsewhere in the Builder;
+- append additional manual obstacles to either branch path;
+- continue adding normal mainline obstacles after the merge;
+- create multiple sequential branch blocks along the main route;
+- remove a managed branch block and reconnect the original route;
+- save, reopen, start, and run the branched Blueprint through the existing persistence and Runner layers.
+
+When the active group clears the obstacle immediately before a visible split, the Rules Engine stops automatic advancement because a route decision is required. The Player Chase View then shows the legal visible choices as buttons. The player's selection is sent as an authoritative route intent to the GM, validated against the current Session, persisted, and republished.
+
+`discoverable` and `hidden` routes are not exposed merely because they exist in the Blueprint. They appear only after the existing route state/GM controls make them available. Both paths can then converge at the generated merge node and continue along the shared mainline.
+
+Dev.10 intentionally keeps branch authoring constrained to a safe **split → path(s) → merge** structure. Nested branches inside branch lanes and a completely free-form graphical graph canvas are later Route Builder work.
 
 
 ## dev.9.1.3 Player socket & sticky toolbar hotfix
@@ -180,15 +258,23 @@ forge.builder.validate(...)
 forge.builder.summary(...)
 ```
 
-## Linear Builder boundary
+## Builder route boundary
 
-`dev.7` deliberately edits only linear route graphs:
+The original Basic Builder still represents the simple case:
 
 ```text
 Start -> Card -> Card -> Card -> End
 ```
 
-The core Route Graph Engine already supports branches, shortcuts, merges, conditions, and multiple endings. A Blueprint using those features is recognized as an advanced route. The Basic Builder will not rewrite it. Full visual branching/editing is reserved for the later advanced Route Builder milestone.
+Dev.10 adds a managed Branching Builder shape:
+
+```text
+                 -> Route A Card -> ... ->
+Start -> Card ->                         Merge -> Mainline -> End
+                 -> Route B Card -> ... ->
+```
+
+A first branch converts the prepared Blueprint from `metadata.builder.mode = basic` to `branching` and sets `settings.routeComplexity = branched`. Managed branch cards are edited through stable card references. The Builder can return to Basic mode when the final branch block is removed. Arbitrary foreign/free-form graphs remain protected from Builder rewriting. Nested branches inside branch lanes are intentionally not supported in dev.10.
 
 ## Protected persistence
 
@@ -214,7 +300,7 @@ Critical Forge / Effect Forge remains optional. When present, Chase Forge can ap
 const forge = game.modules.get("pf2e-chase-forge")?.api;
 ```
 
-Current API version: `9`.
+Current API version: `10`.
 
 Important surfaces:
 
@@ -257,7 +343,7 @@ See:
 
 ## Deliberately not implemented yet
 
-- visual branch/merge Route Builder;
+- free-form graphical route canvas and nested branch editing;
 - generator and large Core Card library;
 - full Image Provider UI;
 - Journal embedding;
@@ -269,7 +355,7 @@ See:
 npm test
 ```
 
-The dev.9 suite covers the full earlier baseline plus player-safe state projection, player ownership filtering, hidden-DC/hidden-route privacy, Player View UI wiring, deterministic GM authority selection, and module-socket state/intent synchronization.
+The dev.10 suite covers the full earlier baseline plus managed split/merge authoring, branch-route visibility, branch-path extension, mainline continuation after merges, Branching Builder validation, and the existing player-safe authoritative route-decision flow.
 
 ## Builder layout diagnostics (dev.7.4.1)
 

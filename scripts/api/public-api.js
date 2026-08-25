@@ -69,6 +69,25 @@ import {
   updateBasicCard,
   validateBasicBuilderBlueprint
 } from "../builder/basic-builder-model.js";
+import {
+  BRANCHING_BUILDER_CONTRACT_VERSION,
+  addApproachToBuilderCard,
+  addBranchAfterCard,
+  appendCardToBranchRoute,
+  appendMainlineCard,
+  appendMainlineManualCard,
+  convertToBranchingBuilder,
+  isBranchingBuilderBlueprint,
+  isBuilderEditableBlueprint,
+  listBranchGroups,
+  listBranchingCards,
+  listEditableCards,
+  removeApproachFromBuilderCard,
+  removeBranchGroup,
+  updateBranchRoute,
+  updateBuilderCardByRef,
+  validateBranchingBuilderBlueprint
+} from "../builder/branching-builder-model.js";
 
 function contentApi(registries) {
   return {
@@ -81,6 +100,11 @@ function contentApi(registries) {
       get: (id, options = {}) => registries.getTemplate(id, options),
       list: (options = {}) => registries.listTemplates(options),
       has: (id, options = {}) => Boolean(registries.getTemplate(id, options))
+    }),
+    library: Object.freeze({
+      get: (id, options = {}) => registries.getLibraryBlueprint(id, options),
+      list: (options = {}) => registries.listLibraryBlueprints(options),
+      has: (id, options = {}) => Boolean(registries.getLibraryBlueprint(id, options))
     }),
     packs: Object.freeze({
       get: id => registries.getPack(id),
@@ -152,6 +176,8 @@ export function createPublicApi({ registries = createRegistryService(), persiste
       extensionApi: true,
       transactionalPackRegistration: true,
       contentPackActivation: true,
+      chaseLibrary: true,
+      readOnlyLibraryBlueprints: true,
       imageProviders: true,
       routeGraphEngine: true,
       deterministicRouteResolution: true,
@@ -172,6 +198,8 @@ export function createPublicApi({ registries = createRegistryService(), persiste
       contentSnapshots: true,
       sessionLifecycle: true,
       basicBuilder: true,
+      branchingBuilder: true,
+      interactiveRouteDecisions: true,
       builderUi: Boolean(ui?.openBuilder),
       gmRunner: Boolean(ui?.openRunner),
       chatWorkflow: true,
@@ -281,24 +309,41 @@ export function createPublicApi({ registries = createRegistryService(), persiste
     }),
     builder: Object.freeze({
       contractVersion: BASIC_BUILDER_CONTRACT_VERSION,
+      branchingContractVersion: BRANCHING_BUILDER_CONTRACT_VERSION,
       createDraft: createBasicBuilderDraft,
       createManualCard: createManualChaseCard,
       createApproach: createBasicApproach,
-      isEditable: isBasicLinearBlueprint,
-      listCards: listBasicCards,
+      isEditable: isBuilderEditableBlueprint,
+      isLinear: isBasicLinearBlueprint,
+      isBranching: isBranchingBuilderBlueprint,
+      listCards: listEditableCards,
+      listLinearCards: listBasicCards,
+      listBranchingCards,
+      listBranchGroups,
       rebuildLinearGraph: rebuildBasicLinearGraph,
+      convertToBranching: convertToBranchingBuilder,
+      addBranchAfterCard,
+      appendBranchCard: appendCardToBranchRoute,
+      appendMainlineCard,
+      appendMainlineManualCard,
+      updateBranchRoute,
+      removeBranch: removeBranchGroup,
       addCard: addCardToBasicBlueprint,
       addManualCard: addManualCardToBasicBlueprint,
       updateCard: updateBasicCard,
+      updateCardByRef: updateBuilderCardByRef,
       removeCard: removeCardFromBasicBlueprint,
       moveCard: moveCardInBasicBlueprint,
       addApproach: addApproachToBasicCard,
+      addApproachByRef: addApproachToBuilderCard,
       removeApproach: removeApproachFromBasicCard,
+      removeApproachByRef: removeApproachFromBuilderCard,
       addParticipant: addParticipantToBasicBlueprint,
       removeParticipant: removeParticipantFromBasicBlueprint,
       participantFromDocument,
       resetGroupsForType: replaceBasicGroupsForChaseType,
-      validate: validateBasicBuilderBlueprint,
+      validate: input => isBranchingBuilderBlueprint(input) ? validateBranchingBuilderBlueprint(input) : validateBasicBuilderBlueprint(input),
+      validateBranching: validateBranchingBuilderBlueprint,
       summary: basicBuilderSummary
     }),
     ui: Object.freeze({
@@ -327,6 +372,7 @@ export function createPublicApi({ registries = createRegistryService(), persiste
     sessionManager,
     cards: content.cards,
     templates: content.templates,
+    library: content.library,
     packs: content.packs,
     images: content.images,
     extensions,

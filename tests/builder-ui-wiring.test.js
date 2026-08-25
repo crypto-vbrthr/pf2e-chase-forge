@@ -55,6 +55,9 @@ test("Builder template and localization resources are packaged", async () => {
   assert.match(template, /data-participant-drop/);
   assert.match(template, /data-builder-card/);
   assert.match(template, /data-action="applyWeatherForge"/);
+  assert.match(template, /data-action="addBranchAfterCard"/);
+  assert.match(template, /data-action="appendBranchCard"/);
+  assert.match(template, /data-branch-edge/);
   assert.doesNotMatch(template, /\(concat\s/);
   assert.match(css, /\.chase-builder-shell/);
   assert.match(css, /\.pf2e-chase-forge\.chase-forge-builder\s*\{[^}]*display:\s*flex !important;[^}]*overflow:\s*hidden !important;/s);
@@ -63,6 +66,14 @@ test("Builder template and localization resources are packaged", async () => {
   assert.match(css, /\.pf2e-chase-forge\.chase-forge-builder \.chase-builder-main\s*\{[^}]*display:\s*flex !important;[^}]*height:\s*auto !important;[^}]*overflow:\s*visible !important;/s);
   assert.match(css, /\.pf2e-chase-forge\.chase-forge-builder \.chase-builder-editor-scroll\s*\{[^}]*flex:\s*0 0 auto !important;[^}]*height:\s*auto !important;[^}]*overflow:\s*visible !important;/s);
   assert.match(css, /\.chase-builder-toolbar\s*\{[^}]*position:\s*sticky !important;[^}]*top:\s*0 !important;[^}]*z-index:\s*20;/s);
+  assert.match(css, /\.chase-builder-branch-routes/);
+  assert.match(template, /data-action="selectRouteCard"/);
+  assert.match(template, /data-action="selectBranchGroup"/);
+  assert.match(template, /chase-route-workspace/);
+  assert.match(template, /chase-route-inspector/);
+  assert.match(css, /\.chase-route-workspace/);
+  assert.match(css, /\.chase-route-card-node/);
+  assert.match(css, /\.chase-route-decision-node/);
   assert.match(css, /\.chase-builder-editor-scroll::\-webkit-scrollbar,[^}]*\.chase-builder-sidebar::\-webkit-scrollbar\s*\{[^}]*width:\s*12px;/s);
   assert.equal(de["PF2E_CHASE_FORGE.Builder.Title"].length > 0, true);
   assert.equal(en["PF2E_CHASE_FORGE.Builder.Title"].length > 0, true);
@@ -200,13 +211,36 @@ test("participant drop UUID resolver supports Actor and Scene Token payloads", a
 });
 
 
-test("manual card action keeps the Builder draft as a ChaseBlueprint instead of the add-card result wrapper", async () => {
+test("manual card action keeps the Builder draft as a ChaseBlueprint in linear and branching modes", async () => {
   const source = await readFile(new URL("../scripts/app/chase-builder-app.js", import.meta.url), "utf8");
-  assert.match(source, /this\._draft = addManualCardToBasicBlueprint\(this\._draft\)\.blueprint;/);
+  assert.match(source, /isBranchingBuilderBlueprint\(this\._draft\)/);
+  assert.match(source, /appendMainlineManualCard\(this\._draft\)/);
+  assert.match(source, /addManualCardToBasicBlueprint\(this\._draft\)/);
+  assert.match(source, /this\._draft = result\.blueprint/);
+  assert.match(source, /this\._selectedInspector = result\.ref/);
   assert.doesNotMatch(source, /this\._draft = addManualCardToBasicBlueprint\(this\._draft\);/);
   assert.match(source, /this\._draft\.settings\?\.weather\?\.source\?\.moduleId/);
 });
 
+
+test("visual route selection preserves the Builder window scroll position while opening the inspector", async () => {
+  const source = await readFile(new URL("../scripts/app/chase-builder-app.js", import.meta.url), "utf8");
+  assert.match(source, /_captureScrollPosition\(\)/);
+  assert.match(source, /_restoreCapturedScrollPosition\(\)/);
+  assert.match(source, /scroller\.scrollTop = top/);
+  assert.match(source, /this\._captureScrollPosition\(\);\n\s*return this\.render\(\{ force: true \}\);/);
+});
+
+test("Builder form synchronization keeps branching drafts editable through the visual inspector", async () => {
+  const source = await readFile(new URL("../scripts/app/chase-builder-app.js", import.meta.url), "utf8");
+  const syncStart = source.indexOf("_syncDraftFromForm() {");
+  const syncEnd = source.indexOf("async _save({ silent = false } = {})", syncStart);
+  const syncBlock = source.slice(syncStart, syncEnd);
+  assert.match(syncBlock, /isBuilderEditableBlueprint\(this\._draft\)/);
+  assert.match(syncBlock, /const branchingDraft = isBranchingBuilderBlueprint\(this\._draft\)/);
+  assert.match(syncBlock, /querySelectorAll\("\[data-branch-edge\]"\)/);
+  assert.doesNotMatch(syncBlock, /!isBasicLinearBlueprint\(this\._draft\)/);
+});
 
 test("Builder save derives editability locally before validation", async () => {
   const source = await readFile(new URL("../scripts/app/chase-builder-app.js", import.meta.url), "utf8");
@@ -215,6 +249,27 @@ test("Builder save derives editability locally before validation", async () => {
   const saveEnd = source.indexOf("async _confirmDelete()", saveStart);
   assert.notEqual(saveEnd, -1);
   const saveBlock = source.slice(saveStart, saveEnd);
-  assert.match(saveBlock, /const editable = isBasicLinearBlueprint\(this\._draft\);/);
-  assert.match(saveBlock, /const validation = editable \? validateBasicBuilderBlueprint\(this\._draft\) : this\.chaseApi\.validation\.blueprint\(this\._draft\);/);
+  assert.match(saveBlock, /const linearEditable = isBasicLinearBlueprint\(this\._draft\);/);
+  assert.match(saveBlock, /const branchingEditable = isBranchingBuilderBlueprint\(this\._draft\);/);
+  assert.match(saveBlock, /validateBranchingBuilderBlueprint/);
+});
+
+test("Builder exposes a permanent New Chase action and separates world Chases from read-only library Chases", async () => {
+  const template = await readFile(new URL("../templates/chase-builder.hbs", import.meta.url), "utf8");
+  const source = await readFile(new URL("../scripts/app/chase-builder-app.js", import.meta.url), "utf8");
+  const de = JSON.parse(await readFile(new URL("../lang/de.json", import.meta.url), "utf8"));
+
+  assert.match(template, /data-action="newBlueprint"/);
+  assert.match(template, /data-action="loadLibraryBlueprint"/);
+  assert.match(template, /data-action="copyLibraryBlueprint"/);
+  assert.match(template, /PF2E_CHASE_FORGE\.Builder\.MyChases/);
+  assert.match(template, /PF2E_CHASE_FORGE\.Builder\.Library/);
+  assert.match(template, /chase-builder-library-group/);
+  assert.match(template, /LibraryChasesShort/);
+  assert.match(source, /_libraryBlueprintId/);
+  assert.match(source, /_worldCopyFromLibrary/);
+  assert.match(source, /metadata\.libraryOrigin/);
+  assert.match(source, /sessionManager\.createSession\(saved/);
+  assert.equal(de["PF2E_CHASE_FORGE.Builder.NewChase"], "Neue Verfolgungsjagd");
+  assert.equal(de["PF2E_CHASE_FORGE.Builder.CopyFromLibrary"], "Als eigene Chase übernehmen");
 });

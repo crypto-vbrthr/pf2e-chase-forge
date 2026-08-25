@@ -1,8 +1,28 @@
-# Basic Chase Builder - dev.7
+# Chase Builder - Basic + Branching + Libraries - dev.10.2
 
 ## Purpose
 
-The Basic Chase Builder is the first GM-facing Chase Forge application. It prepares linear `ChaseBlueprint` records while keeping the full route, rules, persistence, and extension layers independent from the UI.
+The Chase Builder began as the linear Basic Builder in dev.7. Dev.10 adds managed Branching Builder routes. Dev.10.1 adds an explicit New Chase workflow and separates editable world Blueprints from read-only prepared Chase libraries supplied by Core/add-on packs. Dev.10.2 replaces the expanded card stack with a visual route diagram plus a click-to-open card/branch inspector.
+
+
+## Visual route diagram and inspector
+
+The Builder renders its managed route graph as a compact activity-diagram style view. Mainline cards are small nodes with name plus optional image thumbnail. Selecting a card opens the complete editable card form in the Inspector. A branch group is inserted immediately after its `sourceNodeId`, renders its branch lanes side by side, and ends in an explicit merge node before the mainline continuation.
+
+The diagram is a deterministic view over the existing DAG; it does not store pixel coordinates and does not change the Blueprint schema. Card/branch selection is UI-only state. Prepared Library Blueprints remain read-only in the Inspector.
+
+Before changing the selected node or executing another Builder action, the current Inspector form is synchronized back into the draft. This applies to both Basic and Branching Builder Blueprints.
+
+## Ownership and Library workflow
+
+The Builder sidebar has two content areas:
+
+- **My Chases**: world-persisted Blueprints owned by the GM/world and fully editable.
+- **Library**: complete Blueprints registered by Chase Forge Core or add-on packs. They are grouped by source pack and are read-only.
+
+A selected Library chase can be started directly. The resulting `ChaseSession` contains an independent Blueprint snapshot, so Runner/runtime changes never mutate the source. **Copy to My Chases** creates a fresh world Blueprint id and records the source in `metadata.libraryOrigin`.
+
+The permanent **New Chase** button discards the current unsaved draft and opens a fresh Builder draft with optional Weather Forge prefill.
 
 ## Data ownership
 
@@ -37,17 +57,13 @@ Start -> Card A -> Card B -> ... -> End
 
 Card order is represented both by the graph and by the Builder-owned snapshot list. Any add/remove/reorder operation rebuilds the linear graph while preserving card snapshot identities and card-node identities.
 
-## Advanced Blueprint safety
+## Managed branching contract
 
-A Blueprint is not Basic-Builder-editable if it contains:
+Dev.10 can convert a Basic Builder route to a managed Branching Builder route when the GM adds a split after an eligible mainline card. The Builder creates two branch entry edges, one initial card per path, and a merge node that reconnects to the former continuation. Either branch path can receive more manual obstacle cards before the merge. Mainline cards can continue after the merge and multiple sequential branch blocks are supported.
 
-- choice nodes;
-- merge nodes;
-- multiple endings;
-- non-normal route edges;
-- branching or other non-linear topology.
+Route entry edges carry editable labels/descriptions and visibility (`public`, `discoverable`, `hidden`). The Player View sees only routes projected as currently legal and visible. Removing a branch deletes its managed branch cards/merge and reconnects the source directly to the continuation. If no branch blocks remain, the Blueprint returns to Basic/linear Builder mode.
 
-Such a Blueprint may be opened for visibility and started if it is already persisted and valid. dev.7 refuses to rebuild or save it through the Basic Builder.
+Nested branch creation inside a branch lane is deliberately unsupported in dev.10. Likewise, arbitrary graphs created outside the Builder-managed shape may be opened and started but are protected from Builder rewriting.
 
 ## Participants
 
@@ -102,6 +118,14 @@ forge.builder.addCard(...)
 forge.builder.updateCard(...)
 forge.builder.moveCard(...)
 forge.builder.validate(...)
+
+forge.builder.branchingContractVersion === 1
+forge.builder.addBranchAfterCard(...)
+forge.builder.appendBranchCard(...)
+forge.builder.appendMainlineManualCard(...)
+forge.builder.updateBranchRoute(...)
+forge.builder.removeBranch(...)
+forge.builder.validateBranching(...)
 
 await forge.ui.openBuilder();
 await forge.ui.openBuilder({ blueprintId });

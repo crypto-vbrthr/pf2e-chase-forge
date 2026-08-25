@@ -1,13 +1,14 @@
 import { MODULE_ID, SCHEMA_VERSIONS } from "../core/constants.js";
 import { ChaseRegistryError, ChaseValidationError } from "../core/errors.js";
-import { normalizeChaseCard, normalizeChasePack, normalizeChaseTemplate } from "../data/normalizers.js";
+import { normalizeChaseBlueprint, normalizeChaseCard, normalizeChasePack, normalizeChaseTemplate } from "../data/normalizers.js";
 import { cloneData, isPlainObject } from "../data/utils.js";
-import { validateChaseCard, validateChasePack, validateChaseTemplate } from "../data/validators.js";
+import { validateChaseBlueprint, validateChaseCard, validateChasePack, validateChaseTemplate } from "../data/validators.js";
 import { ChaseCardRegistry } from "./card-registry.js";
 import { ImageProviderRegistry, normalizeImageProvider } from "./image-provider-registry.js";
 import { ChasePackRegistry, MemoryPackStateStore } from "./pack-registry.js";
 import { normalizeOwnedResourceId } from "./registry-utils.js";
 import { ChaseTemplateRegistry } from "./template-registry.js";
+import { ChaseLibraryBlueprintRegistry } from "./library-blueprint-registry.js";
 
 function assertValid(result, label, { code = "CHASE_RESOURCE_INVALID", details = {} } = {}) {
   if (result.valid) return;
@@ -34,6 +35,7 @@ export class ChaseRegistryService {
   constructor({ stateStore = new MemoryPackStateStore() } = {}) {
     this.cards = new ChaseCardRegistry();
     this.templates = new ChaseTemplateRegistry();
+    this.libraryBlueprints = new ChaseLibraryBlueprintRegistry();
     this.packs = new ChasePackRegistry({ stateStore });
     this.images = new ImageProviderRegistry();
   }
@@ -42,6 +44,7 @@ export class ChaseRegistryService {
     return {
       cards: this.cards.snapshot(),
       templates: this.templates.snapshot(),
+      libraryBlueprints: this.libraryBlueprints.snapshot(),
       packs: this.packs.snapshot(),
       images: this.images.snapshot()
     };
@@ -50,6 +53,7 @@ export class ChaseRegistryService {
   restore(snapshot) {
     this.cards.restore(snapshot.cards);
     this.templates.restore(snapshot.templates);
+    this.libraryBlueprints.restore(snapshot.libraryBlueprints ?? new Map());
     this.packs.restore(snapshot.packs);
     this.images.restore(snapshot.images);
   }
@@ -84,6 +88,27 @@ export class ChaseRegistryService {
       return template;
     });
 
+    const libraryBlueprints = (Array.isArray(rawPack.blueprints) ? rawPack.blueprints : []).map(raw => {
+      const id = normalizeOwnedResourceId(owner, raw?.id, { allowCoreAlias: true });
+      const blueprint = normalizeChaseBlueprint({
+        ...raw,
+        id,
+        source: { moduleId: owner, packId: pack.id, version: pack.version },
+        metadata: {
+          ...(raw?.metadata ?? {}),
+          library: {
+            ...(raw?.metadata?.library ?? {}),
+            readOnly: true,
+            sourceModule: owner,
+            packId: pack.id,
+            sourceVersion: pack.version
+          }
+        }
+      });
+      assertValid(validateChaseBlueprint(blueprint), `Chase Library Blueprint '${id}'`, { code: "CHASE_LIBRARY_BLUEPRINT_INVALID", details: { blueprintId: id } });
+      return blueprint;
+    });
+
     const imageProviders = (Array.isArray(rawPack.imageProviders) ? rawPack.imageProviders : []).map(raw => {
       const id = normalizeOwnedResourceId(owner, raw?.id, { allowCoreAlias: true });
       return normalizeImageProvider({ ...raw, id });
@@ -91,12 +116,14 @@ export class ChaseRegistryService {
 
     assertUnique(cards.map(card => card.id), "card id");
     assertUnique(templates.map(template => template.id), "template id");
+    assertUnique(libraryBlueprints.map(blueprint => blueprint.id), "library blueprint id");
     assertUnique(imageProviders.map(provider => provider.id), "image provider id");
 
     const validationPack = {
       ...pack,
       cards,
-      templates
+      templates,
+      blueprints: libraryBlueprints
     };
     assertValid(validateChasePack(validationPack), `Chase Pack '${pack.id}'`, { code: "CHASE_PACK_INVALID", details: { packId: pack.id } });
 
@@ -111,23 +138,25 @@ export class ChaseRegistryService {
       sourceModule: owner,
       cardIds: cards.map(card => card.id),
       templateIds: templates.map(template => template.id),
+      blueprintIds: libraryBlueprints.map(blueprint => blueprint.id),
       imageProviderIds: imageProviders.map(provider => provider.id),
       metadata: cloneData(pack.metadata)
     };
 
-    return { pack: summary, cards, templates, imageProviders };
+    return { pack: summary, cards, templates, libraryBlueprints, imageProviders };
   }
 
   #removePackResources(owner, packId) {
     return {
       cards: this.cards.unregisterByPack(packId, owner),
       templates: this.templates.unregisterByPack(packId, owner),
+      libraryBlueprints: this.libraryBlueprints.unregisterByPack(packId, owner),
       imageProviders: this.images.unregisterByPack(packId, owner)
     };
   }
 
   #registerPreparedPack(owner, prepared, { replace = false } = {}) {
-    const { pack, cards, templates, imageProviders } = prepared;
+    const { pack, cards, templates, libraryBlueprints, imageProviders } = prepared;
     const existing = this.packs.get(pack.id);
     if (existing) {
       this.packs.assertCanRegister(pack.id, owner, { replace });
@@ -140,11 +169,13 @@ export class ChaseRegistryService {
     this.packs.assertCanRegister(pack.id, owner, { replace: false });
     for (const card of cards) this.cards.assertCanRegister(card.id, owner, { replace: false });
     for (const template of templates) this.templates.assertCanRegister(template.id, owner, { replace: false });
+    for (const blueprint of libraryBlueprints) this.libraryBlueprints.assertCanRegister(blueprint.id, owner, { replace: false });
     for (const provider of imageProviders) this.images.assertCanRegister(provider.id, owner, { replace: false });
 
     const registeredPack = this.packs.register(pack, { owner, replace: false });
     cards.forEach(card => this.cards.register(card, { owner, packId: pack.id }));
     templates.forEach(template => this.templates.register(template, { owner, packId: pack.id }));
+    libraryBlueprints.forEach(blueprint => this.libraryBlueprints.register(blueprint, { owner, packId: pack.id }));
     imageProviders.forEach(provider => this.images.register(provider, { owner, packId: pack.id }));
     return registeredPack;
   }
@@ -195,21 +226,24 @@ export class ChaseRegistryService {
     const snapshot = this.snapshot();
     try {
       const packs = this.packs.list({ owner }).map(pack => pack.id);
-      const removed = { cards: 0, templates: 0, imageProviders: 0 };
+      const removed = { cards: 0, templates: 0, libraryBlueprints: 0, imageProviders: 0 };
       for (const packId of packs) {
         const counts = this.#removePackResources(owner, packId);
         removed.cards += counts.cards;
         removed.templates += counts.templates;
+        removed.libraryBlueprints += counts.libraryBlueprints;
         removed.imageProviders += counts.imageProviders;
       }
       const removedPacks = this.packs.unregisterAll(owner);
       removed.cards += this.cards.unregisterAll(owner);
       removed.templates += this.templates.unregisterAll(owner);
+      removed.libraryBlueprints += this.libraryBlueprints.unregisterAll(owner);
       removed.imageProviders += this.images.unregisterAll(owner);
       return {
         packs: removedPacks,
         cards: removed.cards,
         templates: removed.templates,
+        libraryBlueprints: removed.libraryBlueprints,
         imageProviders: removed.imageProviders
       };
     } catch (error) {
@@ -223,6 +257,7 @@ export class ChaseRegistryService {
       packs: this.packs.list({ owner }),
       cards: this.cards.list({ owner }),
       templates: this.templates.list({ owner }),
+      libraryBlueprints: this.libraryBlueprints.list({ owner }),
       imageProviders: this.images.list({ owner })
     };
   }
@@ -252,6 +287,19 @@ export class ChaseRegistryService {
 
   getTemplate(id, { includeDisabled = false } = {}) {
     const entry = this.templates.getEntry(id);
+    if (!entry || (!includeDisabled && !this.#resourceEnabled(entry))) return null;
+    return entry.resource;
+  }
+
+
+  listLibraryBlueprints({ includeDisabled = false, owner = null, packId = null } = {}) {
+    return this.libraryBlueprints.listEntries({ owner, packId })
+      .filter(entry => includeDisabled || this.#resourceEnabled(entry))
+      .map(entry => entry.resource);
+  }
+
+  getLibraryBlueprint(id, { includeDisabled = false } = {}) {
+    const entry = this.libraryBlueprints.getEntry(id);
     if (!entry || (!includeDisabled && !this.#resourceEnabled(entry))) return null;
     return entry.resource;
   }
@@ -301,6 +349,7 @@ export class ChaseRegistryService {
       packs: this.packs.size,
       cards: this.cards.size,
       templates: this.templates.size,
+      libraryBlueprints: this.libraryBlueprints.size,
       imageProviders: this.images.size,
       enabledPacks: this.packs.list({ includeDisabled: false }).length
     });

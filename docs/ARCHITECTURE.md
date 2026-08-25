@@ -2,7 +2,7 @@
 
 ## Baseline
 
-Version `0.1.0-dev.9` adds synchronized GM and Player runtime surfaces while keeping UI, transport, persistence, route traversal, PF2e rules, consequences, and integrations as separate layers.
+Version `0.1.0-dev.10` adds managed split/merge authoring to the Builder while keeping UI, transport, persistence, route traversal, PF2e rules, consequences, and integrations as separate layers. The synchronized GM/Player runtime surfaces from dev.9 remain authoritative and are reused for interactive route choices.
 
 ```text
 External Chase Add-ons

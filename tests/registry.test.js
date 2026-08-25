@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { createRegistryService } from "../scripts/registries/registry-service.js";
 import { createChaseTemplate } from "../scripts/data/factories.js";
-import { sampleCard } from "./helpers.js";
+import { sampleBlueprint, sampleCard } from "./helpers.js";
 
 function sampleTemplate(overrides = {}) {
   return createChaseTemplate({
@@ -36,6 +36,7 @@ function samplePack(overrides = {}) {
     version: "1.0.0",
     cards: [sampleCard({ id: "market-crowd" })],
     templates: [sampleTemplate()],
+    blueprints: [],
     imageProviders: [sampleProvider()],
     ...overrides
   };
@@ -99,6 +100,7 @@ test("external modules cannot register resources into a foreign namespace", () =
     packs: 0,
     cards: 0,
     templates: 0,
+    libraryBlueprints: 0,
     imageProviders: 0,
     enabledPacks: 0
   });
@@ -188,9 +190,46 @@ test("core owner may use the reserved core namespace while extensions may not", 
 });
 
 
+test("packs can register read-only prepared Chase Blueprints into the library", () => {
+  const registries = createRegistryService();
+  const pack = registries.registerPack("urban-addon", samplePack({
+    blueprints: [sampleBlueprint(undefined, { id: "midnight-courier", name: "The Midnight Courier" })]
+  }));
+
+  assert.deepEqual(pack.blueprintIds, ["urban-addon:midnight-courier"]);
+  const blueprint = registries.getLibraryBlueprint("urban-addon:midnight-courier");
+  assert.equal(blueprint.name, "The Midnight Courier");
+  assert.equal(blueprint.source.moduleId, "urban-addon");
+  assert.equal(blueprint.source.packId, "urban-addon:urban");
+  assert.equal(blueprint.source.version, "1.0.0");
+  assert.equal(blueprint.metadata.library.readOnly, true);
+  assert.equal(blueprint.metadata.library.sourceModule, "urban-addon");
+  assert.equal(registries.getStats().libraryBlueprints, 1);
+});
+
+test("library Blueprints follow pack activation and are removed with their pack", async () => {
+  const registries = createRegistryService();
+  registries.registerPack("urban-addon", samplePack({
+    enabledByDefault: false,
+    blueprints: [sampleBlueprint(undefined, { id: "midnight-courier" })]
+  }));
+
+  assert.equal(registries.getLibraryBlueprint("urban-addon:midnight-courier"), null);
+  assert.ok(registries.getLibraryBlueprint("urban-addon:midnight-courier", { includeDisabled: true }));
+  assert.equal(registries.listLibraryBlueprints().length, 0);
+
+  await registries.setPackEnabled("urban-addon:urban", true);
+  assert.equal(registries.listLibraryBlueprints().length, 1);
+
+  assert.equal(registries.unregisterPack("urban-addon", "urban"), true);
+  assert.equal(registries.getLibraryBlueprint("urban-addon:midnight-courier", { includeDisabled: true }), null);
+  assert.equal(registries.getStats().libraryBlueprints, 0);
+});
+
+
 test("unregisterAll reports removed resource counts", () => {
   const registries = createRegistryService();
   registries.registerPack("urban-addon", samplePack());
   const removed = registries.unregisterAll("urban-addon");
-  assert.deepEqual(removed, { packs: 1, cards: 1, templates: 1, imageProviders: 1 });
+  assert.deepEqual(removed, { packs: 1, cards: 1, templates: 1, libraryBlueprints: 0, imageProviders: 1 });
 });

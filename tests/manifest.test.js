@@ -27,8 +27,8 @@ test("manifest targets Foundry 14 and PF2e", () => {
   assert.ok(moduleJson.styles.includes("styles/chase-forge.css"));
 });
 
-test("dev.9 contract versions are explicit", () => {
-  assert.equal(API_VERSION, 9);
+test("dev.10.2 contract versions are explicit", () => {
+  assert.equal(API_VERSION, 11);
   assert.equal(EXTENSION_CONTRACT_VERSION, 1);
   assert.deepEqual(SCHEMA_VERSIONS, {
     card: 1,

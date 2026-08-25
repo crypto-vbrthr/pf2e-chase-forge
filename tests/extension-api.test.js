@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { createPublicApi } from "../scripts/api/public-api.js";
-import { sampleCard } from "./helpers.js";
+import { sampleBlueprint, sampleCard } from "./helpers.js";
 
 function pack(id = "street") {
   return {
@@ -116,6 +116,31 @@ test("synthetic add-on can register after receiving the public API", () => {
 });
 
 
+test("add-ons can publish prepared read-only Chases through the public library API", () => {
+  const api = createPublicApi();
+  const extension = api.extensions.forModule("scenario-addon", {
+    version: "1.4.0",
+    requirements: { capabilities: ["registries.libraryBlueprints"] }
+  });
+
+  extension.registerPack({
+    id: "prepared",
+    label: "Prepared Pursuits",
+    cards: [],
+    templates: [],
+    blueprints: [sampleBlueprint(undefined, { id: "clocktower-run", name: "Clocktower Run" })],
+    imageProviders: []
+  });
+
+  assert.equal(extension.listLibraryBlueprints().length, 1);
+  assert.equal(api.library.has("scenario-addon:clocktower-run"), true);
+  const libraryChase = api.library.get("scenario-addon:clocktower-run");
+  assert.equal(libraryChase.name, "Clocktower Run");
+  assert.equal(libraryChase.metadata.library.readOnly, true);
+  assert.equal(libraryChase.source.moduleId, "scenario-addon");
+});
+
+
 test("extension version is inherited by packs that omit their own version", () => {
   const api = createPublicApi();
   const extension = api.extensions.forModule("versioned-addon", { version: "2.3.4" });
@@ -132,4 +157,25 @@ test("dev.5 exposes route, rules, and consequence capabilities to compatibility 
     capabilities: ["routing.traversal", "routing.conditions", "routing.multiGroup"]
   });
   assert.equal(report.compatible, true, JSON.stringify(report.issues));
+});
+
+test("starting from a Library Blueprint creates an independent Session snapshot", async () => {
+  const api = createPublicApi();
+  const extension = api.extensions.forModule("library-session-addon");
+  extension.registerPack({
+    id: "scenarios",
+    label: "Scenario Library",
+    cards: [],
+    templates: [],
+    blueprints: [sampleBlueprint(undefined, { id: "roof-run", name: "Roof Run" })],
+    imageProviders: []
+  });
+
+  const library = api.library.get("library-session-addon:roof-run");
+  const session = await api.sessionManager.createSession(library, { sessionId: "library-session" });
+  session.blueprintSnapshot.name = "Changed Runtime Copy";
+  await api.sessionManager.saveSession(session);
+
+  assert.equal(api.library.get("library-session-addon:roof-run").name, "Roof Run");
+  assert.equal((await api.sessionManager.getSession("library-session")).blueprintSnapshot.name, "Changed Runtime Copy");
 });

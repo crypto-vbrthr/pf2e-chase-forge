@@ -478,6 +478,15 @@ export function validateChasePack(pack) {
       result.warnings.forEach(warning => c.warn(warning.code, `templates[${index}].${warning.path}`, warning.message, warning.details));
     });
   }
+  if (!Array.isArray(pack.blueprints)) c.error("PACK_BLUEPRINTS", "blueprints", "Pack blueprints must be an array.");
+  else {
+    validateUniqueIds(pack.blueprints, c, "blueprints");
+    pack.blueprints.forEach((blueprint, index) => {
+      const result = validateChaseBlueprint(blueprint);
+      if (!result.valid) c.error("PACK_BLUEPRINT_INVALID", `blueprints[${index}]`, `Library Blueprint '${blueprint?.id ?? index}' is invalid.`, { errors: result.errors });
+      result.warnings.forEach(warning => c.warn(warning.code, `blueprints[${index}].${warning.path}`, warning.message, warning.details));
+    });
+  }
   if (!Number.isFinite(pack.priority)) c.error("PACK_PRIORITY", "priority", "Pack priority must be a finite number.");
   return c.result();
 }

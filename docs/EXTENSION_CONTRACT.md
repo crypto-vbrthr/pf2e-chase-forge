@@ -21,6 +21,7 @@ const extension = forge.extensions.forModule("my-chase-addon", {
     schemas: {
       card: ">=1",
       template: ">=1",
+      blueprint: ">=2",
       pack: ">=1"
     },
     capabilities: [
@@ -45,6 +46,7 @@ getPack()
 listPacks()
 listCards()
 listTemplates()
+listLibraryBlueprints()
 listImageProviders()
 setPackEnabled()
 listRegistrations()
@@ -64,6 +66,7 @@ extension.registerPack({
   enabledByDefault: true,
   cards: [/* Chase Card definitions */],
   templates: [/* Chase Template definitions */],
+  blueprints: [/* complete prepared ChaseBlueprint definitions */],
   imageProviders: [
     {
       id: "urban-images",
@@ -120,11 +123,12 @@ A failed registration leaves all registries unchanged. This includes:
 
 ## Compatibility
 
-Available capability names through dev.7:
+Available capability names include:
 
 ```text
 registries.cards
 registries.templates
+registries.libraryBlueprints
 registries.packs
 registries.imageProviders
 packs.activation

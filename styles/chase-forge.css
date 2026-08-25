@@ -914,3 +914,554 @@
   .chase-player-toolbar { position: static; }
 }
 .chase-player-dc-wait { margin: 9px 0; padding: 7px 9px; border: 1px dashed var(--chase-accent); border-radius: 6px; opacity: .82; }
+
+/* dev.10 branching route editor */
+.chase-builder-branch-banner {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  padding: 0.75rem 0.9rem;
+  margin: 0.5rem 0 0.75rem;
+  border: 1px solid var(--color-border-highlight, #805ad5);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--color-bg-option, #201b27) 88%, #805ad5 12%);
+}
+.chase-builder-branch-banner > i { font-size: 1.4rem; }
+.chase-builder-branch-banner div { display: flex; flex-direction: column; gap: 0.2rem; }
+.chase-builder-branch-banner span { opacity: 0.8; }
+.chase-builder-branch-groups { display: grid; gap: 0.8rem; margin-bottom: 1rem; }
+.chase-builder-branch-group {
+  border: 1px solid var(--color-border-light-primary, #6b5d74);
+  border-radius: 8px;
+  padding: 0.75rem;
+  background: rgba(0,0,0,0.12);
+}
+.chase-builder-branch-group > header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.65rem;
+}
+.chase-builder-branch-group > header > div { display: flex; flex-direction: column; gap: 0.15rem; }
+.chase-builder-branch-group > header span { opacity: 0.75; font-size: 0.9em; }
+.chase-builder-branch-routes { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.75rem; }
+.chase-builder-branch-route {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 12rem;
+  gap: 0.55rem;
+  padding: 0.7rem;
+  border: 1px solid color-mix(in srgb, var(--color-border-light-primary, #6b5d74) 70%, transparent);
+  border-radius: 7px;
+  background: rgba(255,255,255,0.025);
+}
+.chase-builder-branch-route label { display: flex; flex-direction: column; gap: 0.2rem; }
+.chase-builder-branch-route label.wide { grid-column: 1 / -1; }
+.chase-builder-branch-path { grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: center; gap: 0.35rem; opacity: 0.9; }
+.chase-builder-branch-path span { padding: 0.15rem 0.4rem; border-radius: 999px; background: rgba(128,90,213,0.16); }
+.chase-builder-branch-route > button { grid-column: 1 / -1; justify-self: start; }
+.chase-builder-card-actions .branch { border-color: color-mix(in srgb, #805ad5 65%, var(--color-border-light-primary, #6b5d74)); }
+@media (max-width: 1000px) {
+  .chase-builder-branch-routes { grid-template-columns: 1fr; }
+}
+
+/* 0.1.0-dev.10.1: explicit creation action and read-only Chase library */
+.chase-builder-new-button {
+  width: 100%;
+  margin: 0 0 12px;
+  border-color: var(--chase-success) !important;
+  font-weight: 700;
+}
+
+.chase-builder-new-toolbar {
+  border-color: var(--chase-success) !important;
+}
+
+.chase-builder-sidebar-section {
+  display: grid;
+  gap: 6px;
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--chase-border);
+}
+
+.chase-builder-sidebar-section > h3 {
+  margin: 0;
+  font-size: 1em;
+}
+
+.chase-builder-sidebar-section > p {
+  margin: 0 0 5px;
+  font-size: .8em;
+  opacity: .68;
+}
+
+.chase-builder-library-section {
+  margin-top: 16px;
+}
+
+.chase-library-row .chase-blueprint-row-title i {
+  margin-right: 5px;
+  opacity: .72;
+}
+
+.chase-blueprint-row-source {
+  font-size: .74em;
+  opacity: .62;
+}
+
+.chase-builder-empty.compact {
+  min-height: 42px;
+  border: 1px dashed color-mix(in srgb, var(--chase-border) 72%, transparent);
+  border-radius: 6px;
+  padding: 6px;
+}
+
+.chase-builder-banner.info,
+.chase-builder-library-banner {
+  border-color: color-mix(in srgb, var(--chase-accent) 70%, var(--chase-border));
+  background: color-mix(in srgb, var(--chase-accent) 7%, transparent);
+}
+
+.chase-builder-editor-scroll.chase-builder-read-only input,
+.chase-builder-editor-scroll.chase-builder-read-only textarea,
+.chase-builder-editor-scroll.chase-builder-read-only select,
+.chase-builder-editor-scroll.chase-builder-read-only button {
+  cursor: not-allowed;
+}
+
+.chase-builder-library-groups {
+  display: grid;
+  gap: 0.6rem;
+}
+
+.chase-builder-library-group {
+  display: grid;
+  gap: 0.35rem;
+  padding: 0.45rem;
+  border: 1px solid var(--color-border-light-2, rgba(255,255,255,0.12));
+  border-radius: 6px;
+  background: rgba(255,255,255,0.025);
+}
+
+.chase-builder-library-group-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0 0.15rem;
+}
+
+.chase-builder-library-group-header > span {
+  font-weight: 700;
+}
+
+.chase-builder-library-group-header small {
+  opacity: 0.72;
+  white-space: nowrap;
+}
+
+/* 0.1.0-dev.10.2: visual route diagram and click-to-open card/branch inspector */
+.chase-builder-route-section {
+  overflow: visible;
+}
+
+.chase-route-workspace {
+  display: grid;
+  grid-template-columns: minmax(360px, 0.92fr) minmax(420px, 1.08fr);
+  gap: 14px;
+  align-items: start;
+}
+
+.chase-route-diagram-panel,
+.chase-route-inspector {
+  min-width: 0;
+  border: 1px solid var(--chase-border);
+  border-radius: 9px;
+  background: color-mix(in srgb, var(--chase-panel) 72%, transparent);
+}
+
+.chase-route-diagram-panel {
+  padding: 12px;
+}
+
+.chase-route-diagram-heading,
+.chase-route-inspector-title {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.chase-route-diagram-heading {
+  padding-bottom: 10px;
+  margin-bottom: 10px;
+  border-bottom: 1px solid var(--chase-border);
+}
+
+.chase-route-diagram-heading > div {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.chase-route-diagram-heading span,
+.chase-route-inspector-hint {
+  font-size: .84em;
+  opacity: .76;
+}
+
+.chase-route-diagram-count {
+  flex: 0 0 auto;
+  padding: 3px 7px;
+  border: 1px solid var(--chase-border);
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.chase-route-diagram {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  min-width: 0;
+}
+
+.chase-route-flow-line,
+.chase-route-lane-line {
+  display: grid;
+  place-items: center;
+  min-height: 26px;
+  opacity: .56;
+}
+
+.chase-route-flow-line::before,
+.chase-route-lane-line::before {
+  content: "";
+  position: absolute;
+  width: 1px;
+  height: 18px;
+  background: var(--chase-border);
+}
+
+.chase-route-flow-line,
+.chase-route-lane-line {
+  position: relative;
+}
+
+.chase-route-flow-line i,
+.chase-route-lane-line i {
+  position: relative;
+  z-index: 1;
+  margin-top: 12px;
+  font-size: .72em;
+}
+
+.chase-route-card-node {
+  display: grid !important;
+  grid-template-columns: 58px minmax(0, 1fr);
+  align-items: stretch;
+  gap: 9px;
+  width: min(100%, 290px) !important;
+  min-height: 72px;
+  margin: 0 auto;
+  padding: 5px !important;
+  text-align: left;
+  border: 1px solid var(--chase-border) !important;
+  border-radius: 8px !important;
+  background: var(--chase-panel-soft) !important;
+  overflow: hidden;
+}
+
+.chase-route-card-node:hover,
+.chase-route-card-node.selected,
+.chase-route-decision-node:hover,
+.chase-route-decision-node.selected,
+.chase-route-merge-node:hover,
+.chase-route-merge-node.selected,
+.chase-route-lane-head:hover {
+  border-color: var(--chase-accent) !important;
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--chase-accent) 35%, transparent);
+}
+
+.chase-route-card-thumb {
+  display: grid;
+  place-items: center;
+  width: 58px;
+  min-height: 60px;
+  overflow: hidden;
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--chase-panel) 74%, transparent);
+}
+
+.chase-route-card-thumb img {
+  width: 100%;
+  height: 100%;
+  min-height: 60px;
+  object-fit: cover;
+  border: 0;
+}
+
+.chase-route-card-thumb.placeholder {
+  opacity: .58;
+  font-size: 1.15rem;
+}
+
+.chase-route-card-copy {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 4px;
+  min-width: 0;
+}
+
+.chase-route-card-copy strong,
+.chase-route-card-copy small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.chase-route-card-copy strong {
+  white-space: normal;
+  line-height: 1.18;
+}
+
+.chase-route-card-copy small {
+  opacity: .72;
+  white-space: nowrap;
+}
+
+.chase-route-inline-branch {
+  align-self: center;
+  width: auto !important;
+  margin-top: 6px;
+  padding: 3px 8px !important;
+  min-height: 26px !important;
+  font-size: .78em;
+  border-style: dashed !important;
+}
+
+.chase-route-branch-block {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 9px;
+  padding: 5px 8px;
+  border: 1px solid color-mix(in srgb, var(--chase-border) 75%, transparent);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--chase-panel-soft) 46%, transparent);
+}
+
+.chase-route-branch-block.selected {
+  border-color: color-mix(in srgb, var(--chase-accent) 72%, var(--chase-border));
+}
+
+.chase-route-decision-node,
+.chase-route-merge-node {
+  align-self: center;
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: auto !important;
+  min-width: 158px;
+  min-height: 34px;
+  padding: 4px 9px !important;
+  border: 1px solid var(--chase-border) !important;
+  border-radius: 999px !important;
+  background: var(--chase-panel) !important;
+}
+
+.chase-route-diamond {
+  display: grid;
+  place-items: center;
+  width: 25px;
+  height: 25px;
+  transform: rotate(45deg);
+  border: 1px solid var(--chase-accent);
+  background: color-mix(in srgb, var(--chase-accent) 18%, var(--chase-panel));
+  border-radius: 3px;
+}
+
+.chase-route-diamond > i {
+  transform: rotate(-45deg);
+  font-size: .75em;
+}
+
+.chase-route-diamond.hollow {
+  background: transparent;
+}
+
+.chase-route-branch-lanes {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(150px, 1fr));
+  gap: 10px;
+  padding: 5px 0;
+}
+
+.chase-route-branch-lanes::before,
+.chase-route-branch-lanes::after {
+  content: "";
+  position: absolute;
+  left: 25%;
+  right: 25%;
+  height: 1px;
+  background: var(--chase-border);
+}
+
+.chase-route-branch-lanes::before { top: 0; }
+.chase-route-branch-lanes::after { bottom: 0; }
+
+.chase-route-lane {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.chase-route-lane-head {
+  display: flex !important;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  width: 100% !important;
+  min-height: 44px;
+  padding: 5px 7px !important;
+  border: 1px solid var(--chase-border) !important;
+  border-radius: 7px !important;
+  background: color-mix(in srgb, var(--chase-panel) 78%, transparent) !important;
+  text-align: center;
+}
+
+.chase-route-lane-head small {
+  opacity: .7;
+}
+
+.chase-route-lane .chase-route-card-node {
+  width: 100% !important;
+  grid-template-columns: 44px minmax(0, 1fr);
+  min-height: 62px;
+}
+
+.chase-route-lane .chase-route-card-thumb {
+  width: 44px;
+  min-height: 50px;
+}
+
+.chase-route-lane .chase-route-card-thumb img {
+  min-height: 50px;
+}
+
+.chase-route-lane-empty {
+  display: grid;
+  place-items: center;
+  min-height: 48px;
+  border: 1px dashed var(--chase-border);
+  border-radius: 7px;
+  opacity: .66;
+  font-size: .83em;
+}
+
+.chase-route-inspector {
+  position: sticky;
+  top: 66px;
+  max-height: calc(100vh - 110px);
+  overflow-y: auto;
+  padding: 12px;
+  scrollbar-gutter: stable;
+}
+
+.chase-route-inspector .chase-builder-card {
+  border: 0;
+  padding: 0;
+  background: transparent;
+}
+
+.chase-route-inspector-title {
+  padding-bottom: 9px;
+  margin-bottom: 10px;
+  border-bottom: 1px solid var(--chase-border);
+}
+
+.chase-route-inspector-title h4 {
+  margin: 2px 0 0;
+  font-size: 1.08rem;
+}
+
+.chase-route-inspector-title small {
+  display: block;
+  margin-top: 3px;
+  opacity: .72;
+}
+
+.chase-route-inspector-preview {
+  height: 150px;
+  margin-bottom: 10px;
+  overflow: hidden;
+  border: 1px solid var(--chase-border);
+  border-radius: 8px;
+}
+
+.chase-route-inspector-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border: 0;
+}
+
+.chase-route-inspector .chase-builder-origin {
+  margin: 5px 0 8px;
+}
+
+.chase-route-inspector .chase-builder-approach {
+  grid-template-columns: repeat(2, minmax(120px, 1fr));
+}
+
+.chase-route-inspector-routes {
+  display: grid;
+  gap: 10px;
+}
+
+.chase-route-inspector-routes .chase-builder-branch-route {
+  grid-template-columns: minmax(0, 1fr) minmax(130px, .8fr);
+}
+
+.chase-route-inspector-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 220px;
+  text-align: center;
+  opacity: .7;
+}
+
+.chase-route-inspector-empty i {
+  font-size: 1.7rem;
+}
+
+.chase-builder-empty.compact-diagram {
+  min-height: 82px;
+  margin: 4px 0 12px;
+}
+
+@media (max-width: 1120px) {
+  .chase-route-workspace {
+    grid-template-columns: 1fr;
+  }
+  .chase-route-inspector {
+    position: static;
+    max-height: none;
+  }
+}
+
+@media (max-width: 700px) {
+  .chase-route-branch-lanes {
+    grid-template-columns: 1fr;
+  }
+  .chase-route-branch-lanes::before,
+  .chase-route-branch-lanes::after {
+    display: none;
+  }
+}

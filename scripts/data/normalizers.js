@@ -461,6 +461,7 @@ export function normalizeChasePack(input = {}) {
     enabledByDefault: pack.enabledByDefault !== false,
     cards: (Array.isArray(pack.cards) ? pack.cards : []).map(normalizeChaseCard),
     templates: (Array.isArray(pack.templates) ? pack.templates : []).map(normalizeChaseTemplate),
+    blueprints: (Array.isArray(pack.blueprints) ? pack.blueprints : []).map(normalizeChaseBlueprint),
     metadata: isPlainObject(pack.metadata) ? cloneData(pack.metadata) : {}
   };
 }

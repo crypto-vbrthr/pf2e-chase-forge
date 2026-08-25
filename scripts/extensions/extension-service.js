@@ -140,6 +140,7 @@ export function createChaseForgeExtensionApi(registries, sourceModule, {
     listPacks: (options = {}) => registries.listPacks({ ...options, owner }),
     listCards: (options = {}) => registries.listCards({ ...options, owner }),
     listTemplates: (options = {}) => registries.listTemplates({ ...options, owner }),
+    listLibraryBlueprints: (options = {}) => registries.listLibraryBlueprints({ ...options, owner }),
     listImageProviders: (options = {}) => registries.listImageProviders({ ...options, owner }),
     setPackEnabled: (packId, enabled) => asyncOperation(owner, "pack", enabled ? "enable" : "disable", [packId], async () => {
       const ownedId = normalizeOwnedResourceId(owner, packId, { allowCoreAlias: true });

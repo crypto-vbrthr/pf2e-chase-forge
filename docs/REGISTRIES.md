@@ -2,10 +2,11 @@
 
 ## Overview
 
-`0.1.0-dev.2` introduced four runtime registries; they remain unchanged in dev.6:
+`0.1.0-dev.2` introduced the content registry architecture. Dev.10.1 adds a fifth content surface for complete prepared chases:
 
 - Card Registry
 - Template Registry
+- **Chase Library Blueprint Registry**
 - Pack Registry
 - Image Provider Registry
 
@@ -22,6 +23,9 @@ forge.cards.get("my-addon:card-id");
 forge.templates.list();
 forge.templates.get("my-addon:template-id");
 
+forge.library.list();
+forge.library.get("my-addon:prepared-chase");
+
 forge.packs.list();
 forge.packs.get("my-addon:pack-id");
 forge.packs.isEnabled("my-addon:pack-id");
@@ -37,6 +41,7 @@ Normal content reads exclude disabled packs. Management code can opt into disabl
 ```js
 forge.cards.list({ includeDisabled: true });
 forge.templates.list({ includeDisabled: true });
+forge.library.list({ includeDisabled: true });
 forge.images.providers.list({ includeDisabled: true });
 ```
 
@@ -57,12 +62,13 @@ A registered pack exposes metadata and resource ids rather than duplicate copies
   sourceModule: "my-addon",
   cardIds: [],
   templateIds: [],
+  blueprintIds: [],
   imageProviderIds: [],
   metadata: {}
 }
 ```
 
-Cards and templates receive authoritative source metadata during registration:
+Cards, templates, and Library Blueprints receive authoritative source metadata during registration:
 
 ```js
 card.source = {
@@ -115,3 +121,10 @@ Result:
 ```
 
 Specific providers may be requested with `providerIds`.
+
+
+## Prepared Chase libraries
+
+A pack can register complete `ChaseBlueprint` definitions in `blueprints`. Chase Forge namespaces them to the owning module, stamps authoritative source metadata, and marks `metadata.library.readOnly = true`. They follow the same pack activation and transactional rollback rules as cards/templates.
+
+Library Blueprints are source content, not world persistence records. The GM Builder may preview/start them, but source definitions are never edited. Copying one into **My Chases** creates a new world-owned Blueprint; starting one directly creates a Session from a snapshot.

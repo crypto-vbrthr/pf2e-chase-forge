@@ -2,29 +2,59 @@
   <aside class="chase-builder-sidebar">
     <div class="chase-builder-sidebar-header">
       <div>
-        <h2>{{localize "PF2E_CHASE_FORGE.Builder.Blueprints"}}</h2>
-        <p>{{localize "PF2E_CHASE_FORGE.Builder.BlueprintsHint"}}</p>
+        <h2>{{localize "PF2E_CHASE_FORGE.Builder.Chases"}}</h2>
+        <p>{{localize "PF2E_CHASE_FORGE.Builder.ChasesHint"}}</p>
       </div>
-      <button type="button" class="icon" data-action="newBlueprint" data-tooltip="{{localize 'PF2E_CHASE_FORGE.Builder.New'}}">
-        <i class="fa-solid fa-plus"></i>
-      </button>
     </div>
 
-    <div class="chase-builder-blueprint-list">
-      {{#each blueprints}}
-        <button type="button" class="chase-blueprint-row {{#if active}}active{{/if}}" data-action="loadBlueprint" data-blueprint-id="{{id}}">
-          <span class="chase-blueprint-row-title">{{name}}</span>
-          <span class="chase-blueprint-row-meta">
-            {{chaseTypeLabel}} · {{cardCount}} {{localize "PF2E_CHASE_FORGE.Builder.CardsShort"}} · {{participantCount}} {{localize "PF2E_CHASE_FORGE.Builder.ParticipantsShort"}}
-          </span>
-          {{#unless editable}}
-            <span class="chase-blueprint-row-warning"><i class="fa-solid fa-code-branch"></i> {{localize "PF2E_CHASE_FORGE.Builder.AdvancedRoute"}}</span>
-          {{/unless}}
-        </button>
-      {{else}}
-        <div class="chase-builder-empty">{{localize "PF2E_CHASE_FORGE.Builder.NoBlueprints"}}</div>
-      {{/each}}
-    </div>
+    <button type="button" class="chase-builder-new-button" data-action="newBlueprint">
+      <i class="fa-solid fa-plus"></i> {{localize "PF2E_CHASE_FORGE.Builder.NewChase"}}
+    </button>
+
+    <section class="chase-builder-sidebar-section">
+      <h3><i class="fa-solid fa-folder-open"></i> {{localize "PF2E_CHASE_FORGE.Builder.MyChases"}}</h3>
+      <p>{{localize "PF2E_CHASE_FORGE.Builder.MyChasesHint"}}</p>
+      <div class="chase-builder-blueprint-list">
+        {{#each blueprints}}
+          <button type="button" class="chase-blueprint-row {{#if active}}active{{/if}}" data-action="loadBlueprint" data-blueprint-id="{{id}}">
+            <span class="chase-blueprint-row-title">{{name}}</span>
+            <span class="chase-blueprint-row-meta">
+              {{chaseTypeLabel}} · {{cardCount}} {{localize "PF2E_CHASE_FORGE.Builder.CardsShort"}} · {{participantCount}} {{localize "PF2E_CHASE_FORGE.Builder.ParticipantsShort"}}
+            </span>
+            {{#unless editable}}
+              <span class="chase-blueprint-row-warning"><i class="fa-solid fa-code-branch"></i> {{localize "PF2E_CHASE_FORGE.Builder.AdvancedRoute"}}</span>
+            {{/unless}}
+          </button>
+        {{else}}
+          <div class="chase-builder-empty compact">{{localize "PF2E_CHASE_FORGE.Builder.NoBlueprints"}}</div>
+        {{/each}}
+      </div>
+    </section>
+
+    <section class="chase-builder-sidebar-section chase-builder-library-section">
+      <h3><i class="fa-solid fa-book-open"></i> {{localize "PF2E_CHASE_FORGE.Builder.Library"}}</h3>
+      <p>{{localize "PF2E_CHASE_FORGE.Builder.LibraryHint"}}</p>
+      <div class="chase-builder-library-groups">
+        {{#each libraryGroups}}
+          <div class="chase-builder-library-group">
+            <div class="chase-builder-library-group-header">
+              <span><i class="fa-solid fa-box-archive" aria-hidden="true"></i> {{label}}</span>
+              <small>{{count}} {{localize "PF2E_CHASE_FORGE.Builder.LibraryChasesShort"}}{{#if version}} · v{{version}}{{/if}}</small>
+            </div>
+            <div class="chase-builder-blueprint-list">
+              {{#each chases}}
+                <button type="button" class="chase-blueprint-row chase-library-row {{#if active}}active{{/if}}" data-action="loadLibraryBlueprint" data-library-blueprint-id="{{id}}">
+                  <span class="chase-blueprint-row-title"><i class="fa-solid fa-lock" aria-hidden="true"></i> {{name}}</span>
+                  <span class="chase-blueprint-row-meta">{{chaseTypeLabel}} · {{cardCount}} {{localize "PF2E_CHASE_FORGE.Builder.CardsShort"}}</span>
+                </button>
+              {{/each}}
+            </div>
+          </div>
+        {{else}}
+          <div class="chase-builder-empty compact">{{localize "PF2E_CHASE_FORGE.Builder.LibraryEmpty"}}</div>
+        {{/each}}
+      </div>
+    </section>
 
     {{#if hasOpenableSessions}}
       <div class="chase-builder-session-list">
@@ -42,28 +72,43 @@
   <main class="chase-builder-main">
     <header class="chase-builder-toolbar">
       <div class="chase-builder-title-block">
-        <span class="chase-builder-kicker">{{localize "PF2E_CHASE_FORGE.Builder.Kicker"}}</span>
+        <span class="chase-builder-kicker">{{#if librarySelected}}{{localize "PF2E_CHASE_FORGE.Builder.LibraryKicker"}}{{else}}{{localize "PF2E_CHASE_FORGE.Builder.Kicker"}}{{/if}}</span>
         <strong>{{draft.name}}</strong>
         <span>{{cardCount}} {{localize "PF2E_CHASE_FORGE.Builder.CardsShort"}} · {{participantCount}} {{localize "PF2E_CHASE_FORGE.Builder.ParticipantsShort"}}</span>
       </div>
       <div class="chase-builder-toolbar-actions">
+        <button type="button" class="chase-builder-new-toolbar" data-action="newBlueprint"><i class="fa-solid fa-plus"></i> {{localize "PF2E_CHASE_FORGE.Builder.NewChase"}}</button>
         <button type="button" data-action="refreshBuilder"><i class="fa-solid fa-rotate"></i> {{localize "PF2E_CHASE_FORGE.Builder.Refresh"}}</button>
-        <button type="button" data-action="duplicateBlueprint" {{#unless editable}}disabled{{/unless}}><i class="fa-solid fa-copy"></i> {{localize "PF2E_CHASE_FORGE.Builder.Duplicate"}}</button>
-        <button type="button" data-action="deleteBlueprint"><i class="fa-solid fa-trash"></i> {{localize "PF2E_CHASE_FORGE.Builder.Delete"}}</button>
-        <button type="button" class="chase-builder-primary" data-action="saveBlueprint" {{#unless editable}}disabled{{/unless}}><i class="fa-solid fa-floppy-disk"></i> {{localize "PF2E_CHASE_FORGE.Builder.Save"}}</button>
+        {{#if librarySelected}}
+          <button type="button" class="chase-builder-primary" data-action="copyLibraryBlueprint"><i class="fa-solid fa-file-import"></i> {{localize "PF2E_CHASE_FORGE.Builder.CopyFromLibrary"}}</button>
+        {{else}}
+          <button type="button" data-action="duplicateBlueprint" {{#unless editable}}disabled{{/unless}}><i class="fa-solid fa-copy"></i> {{localize "PF2E_CHASE_FORGE.Builder.Duplicate"}}</button>
+          <button type="button" data-action="deleteBlueprint"><i class="fa-solid fa-trash"></i> {{localize "PF2E_CHASE_FORGE.Builder.Delete"}}</button>
+          <button type="button" class="chase-builder-primary" data-action="saveBlueprint" {{#unless editable}}disabled{{/unless}}><i class="fa-solid fa-floppy-disk"></i> {{localize "PF2E_CHASE_FORGE.Builder.Save"}}</button>
+        {{/if}}
         <button type="button" class="chase-builder-start" data-action="startBlueprint"><i class="fa-solid fa-play"></i> {{localize "PF2E_CHASE_FORGE.Builder.Start"}}</button>
       </div>
     </header>
 
-    {{#unless editable}}
-      <div class="chase-builder-banner warning">
-        <i class="fa-solid fa-code-branch"></i>
+    {{#if librarySelected}}
+      <div class="chase-builder-banner info chase-builder-library-banner">
+        <i class="fa-solid fa-lock"></i>
         <div>
-          <strong>{{localize "PF2E_CHASE_FORGE.Builder.NonLinearTitle"}}</strong>
-          <p>{{localize "PF2E_CHASE_FORGE.Builder.NonLinearHint"}}</p>
+          <strong>{{localize "PF2E_CHASE_FORGE.Builder.LibraryReadOnlyTitle"}}</strong>
+          <p>{{localize "PF2E_CHASE_FORGE.Builder.LibraryReadOnlyHint"}}</p>
         </div>
       </div>
-    {{/unless}}
+    {{else}}
+      {{#unless editable}}
+        <div class="chase-builder-banner warning">
+          <i class="fa-solid fa-code-branch"></i>
+          <div>
+            <strong>{{localize "PF2E_CHASE_FORGE.Builder.NonLinearTitle"}}</strong>
+            <p>{{localize "PF2E_CHASE_FORGE.Builder.NonLinearHint"}}</p>
+          </div>
+        </div>
+      {{/unless}}
+    {{/if}}
 
     {{#if validationErrors.length}}
       <div class="chase-builder-banner error">
@@ -267,10 +312,10 @@
         </div>
       </section>
 
-      <section class="chase-builder-section">
+      <section class="chase-builder-section chase-builder-route-section">
         <div class="chase-builder-section-heading">
           <div>
-            <h3><i class="fa-solid fa-road"></i> {{localize "PF2E_CHASE_FORGE.Builder.Route"}}</h3>
+            <h3><i class="fa-solid fa-diagram-project"></i> {{localize "PF2E_CHASE_FORGE.Builder.Route"}}</h3>
             <p>{{localize "PF2E_CHASE_FORGE.Builder.RouteHint"}}</p>
           </div>
           {{#if editable}}
@@ -286,132 +331,235 @@
           {{/if}}
         </div>
 
-        {{#if editable}}
-          <div class="chase-builder-route-spine">
-            <div class="chase-route-terminal start"><i class="fa-solid fa-flag"></i> {{localize "PF2E_CHASE_FORGE.Builder.RouteStart"}}</div>
-            {{#each cards}}
-              <article class="chase-builder-card" data-builder-card data-card-index="{{index}}">
-                <div class="chase-builder-card-head">
-                  <div class="chase-builder-card-number">{{displayIndex}}</div>
-                  <label class="grow">
-                    <span>{{localize "PF2E_CHASE_FORGE.Builder.CardName"}}</span>
-                    <input type="text" data-card-field="name" value="{{card.name}}">
-                  </label>
-                  <label>
-                    <span>{{localize "PF2E_CHASE_FORGE.Builder.CardType"}}</span>
-                    <select data-card-field="type">
-                      {{#each card.typeOptions}}<option value="{{value}}" {{#if selected}}selected{{/if}}>{{label}}</option>{{/each}}
-                    </select>
-                  </label>
-                  <label class="small-number">
-                    <span>{{localize "PF2E_CHASE_FORGE.Builder.RequiredPoints"}}</span>
-                    <input type="number" data-card-field="requiredPoints" min="1" value="{{card.obstacle.requiredPoints}}">
-                  </label>
-                  <div class="chase-builder-card-actions">
-                    <button type="button" class="icon" data-action="moveCardUp" data-card-index="{{index}}" {{#if first}}disabled{{/if}}><i class="fa-solid fa-arrow-up"></i></button>
-                    <button type="button" class="icon" data-action="moveCardDown" data-card-index="{{index}}" {{#if last}}disabled{{/if}}><i class="fa-solid fa-arrow-down"></i></button>
-                    <button type="button" class="icon danger" data-action="removeCard" data-card-index="{{index}}"><i class="fa-solid fa-trash"></i></button>
-                  </div>
-                </div>
+        {{#if branchingEditable}}
+          <div class="chase-builder-branch-banner">
+            <i class="fa-solid fa-code-branch"></i>
+            <div><strong>{{localize "PF2E_CHASE_FORGE.Builder.BranchingMode"}}</strong><span>{{localize "PF2E_CHASE_FORGE.Builder.BranchingModeHint"}}</span></div>
+          </div>
+        {{/if}}
 
-                {{#if originLabel}}<div class="chase-builder-origin"><i class="fa-solid fa-link"></i> {{originLabel}}</div>{{/if}}
-
-                <div class="chase-builder-grid two card-fields">
-                  <label class="wide">
-                    <span>{{localize "PF2E_CHASE_FORGE.Builder.CardDescription"}}</span>
-                    <textarea data-card-field="description" rows="3">{{card.description}}</textarea>
-                  </label>
-                  <label class="wide">
-                    <span>{{localize "PF2E_CHASE_FORGE.Builder.CardGmNotes"}}</span>
-                    <textarea data-card-field="gmNotes" rows="2">{{card.gmNotes}}</textarea>
-                  </label>
-                  <label>
-                    <span>{{localize "PF2E_CHASE_FORGE.Builder.CardTags"}}</span>
-                    <input type="text" data-card-field="tags" value="{{card.tagsText}}">
-                  </label>
-                  <label class="chase-builder-checkbox bottom">
-                    <input type="checkbox" data-card-field="scalable" {{#if card.obstacle.scalable}}checked{{/if}}>
-                    <span>{{localize "PF2E_CHASE_FORGE.Builder.ScalablePoints"}}</span>
-                  </label>
-                  <label>
-                    <span>{{localize "PF2E_CHASE_FORGE.Builder.CardImageMode"}}</span>
-                    <select data-card-field="imageMode">
-                      {{#each card.imageModeOptions}}<option value="{{value}}" {{#if selected}}selected{{/if}}>{{label}}</option>{{/each}}
-                    </select>
-                  </label>
-                  <label>
-                    <span>{{localize "PF2E_CHASE_FORGE.Builder.ImagePath"}}</span>
-                    <input type="text" data-card-field="imagePath" value="{{card.image.path}}">
-                  </label>
-                  <label class="wide">
-                    <span>{{localize "PF2E_CHASE_FORGE.Builder.ImageAlt"}}</span>
-                    <input type="text" data-card-field="imageAlt" value="{{card.image.alt}}">
-                  </label>
+        {{#if builderSupported}}
+          <div class="chase-route-workspace {{#unless hasInspector}}no-inspector{{/unless}}">
+            <div class="chase-route-diagram-panel">
+              <div class="chase-route-diagram-heading">
+                <div>
+                  <strong><i class="fa-solid fa-route"></i> {{localize "PF2E_CHASE_FORGE.Builder.RouteDiagram"}}</strong>
+                  <span>{{localize "PF2E_CHASE_FORGE.Builder.RouteDiagramHint"}}</span>
                 </div>
-
-                <div class="chase-builder-approaches">
-                  <div class="chase-builder-subheading">
-                    <strong>{{localize "PF2E_CHASE_FORGE.Builder.Approaches"}}</strong>
-                    <button type="button" data-action="addApproach" data-card-index="{{index}}"><i class="fa-solid fa-plus"></i> {{localize "PF2E_CHASE_FORGE.Builder.AddApproach"}}</button>
-                  </div>
-                  {{#each card.approaches}}
-                    <div class="chase-builder-approach" data-builder-approach data-approach-index="{{approachIndex}}">
-                      <label>
-                        <span>{{localize "PF2E_CHASE_FORGE.Builder.ApproachLabel"}}</span>
-                        <input type="text" data-approach-field="label" value="{{label}}">
-                      </label>
-                      <label>
-                        <span>{{localize "PF2E_CHASE_FORGE.Builder.Statistic"}}</span>
-                        <select data-approach-field="statistic">
-                          {{#each statisticOptions}}<option value="{{value}}" {{#if selected}}selected{{/if}}>{{label}}</option>{{/each}}
-                        </select>
-                      </label>
-                      <label>
-                        <span>{{localize "PF2E_CHASE_FORGE.Builder.DcMode"}}</span>
-                        <select data-approach-field="dcMode">
-                          {{#each dcModeOptions}}<option value="{{value}}" {{#if selected}}selected{{/if}}>{{label}}</option>{{/each}}
-                        </select>
-                      </label>
-                      <label class="small-number">
-                        <span>{{localize "PF2E_CHASE_FORGE.Builder.DcValue"}}</span>
-                        <input type="number" data-approach-field="dcValue" value="{{dc.value}}">
-                      </label>
-                      <label class="small-number">
-                        <span>{{localize "PF2E_CHASE_FORGE.Builder.LevelOffset"}}</span>
-                        <input type="number" data-approach-field="levelOffset" value="{{dc.levelOffset}}">
-                      </label>
-                      <label>
-                        <span>{{localize "PF2E_CHASE_FORGE.Builder.DifficultyAdjustment"}}</span>
-                        <select data-approach-field="difficultyAdjustment">
-                          {{#each adjustmentOptions}}<option value="{{value}}" {{#if selected}}selected{{/if}}>{{label}}</option>{{/each}}
-                        </select>
-                      </label>
-                      <label>
-                        <span>{{localize "PF2E_CHASE_FORGE.Builder.Proficiency"}}</span>
-                        <select data-approach-field="proficiency">
-                          {{#each proficiencyOptions}}<option value="{{value}}" {{#if selected}}selected{{/if}}>{{label}}</option>{{/each}}
-                        </select>
-                      </label>
-                      <label class="chase-builder-checkbox bottom">
-                        <input type="checkbox" data-approach-field="hidden" {{#if dc.hidden}}checked{{/if}}>
-                        <span>{{localize "PF2E_CHASE_FORGE.Builder.HiddenDc"}}</span>
-                      </label>
-                      <button type="button" class="icon danger approach-delete" data-action="removeApproach" data-card-index="{{../index}}" data-approach-index="{{approachIndex}}"><i class="fa-solid fa-xmark"></i></button>
-                    </div>
-                  {{else}}
-                    <div class="chase-builder-empty inline">{{localize "PF2E_CHASE_FORGE.Builder.NoApproaches"}}</div>
-                  {{/each}}
-                </div>
-              </article>
-              <div class="chase-route-connector"><i class="fa-solid fa-arrow-down"></i></div>
-            {{else}}
-              <div class="chase-builder-empty route-empty">
-                <i class="fa-solid fa-road-barrier"></i>
-                <strong>{{localize "PF2E_CHASE_FORGE.Builder.NoCards"}}</strong>
-                <span>{{localize "PF2E_CHASE_FORGE.Builder.NoCardsHint"}}</span>
+                <span class="chase-route-diagram-count">{{cardCount}} {{localize "PF2E_CHASE_FORGE.Builder.CardsShort"}}{{#if hasBranchGroups}} · {{branchGroups.length}} {{localize "PF2E_CHASE_FORGE.Builder.BranchesShort"}}{{/if}}</span>
               </div>
-            {{/each}}
-            <div class="chase-route-terminal end"><i class="fa-solid fa-flag-checkered"></i> {{localize "PF2E_CHASE_FORGE.Builder.RouteEnd"}}</div>
+
+              <div class="chase-route-diagram" aria-label="{{localize 'PF2E_CHASE_FORGE.Builder.RouteDiagram'}}">
+                <div class="chase-route-terminal start"><i class="fa-solid fa-flag"></i> {{localize "PF2E_CHASE_FORGE.Builder.RouteStart"}}</div>
+                {{#unless routeDiagram.empty}}<div class="chase-route-flow-line"><i class="fa-solid fa-arrow-down"></i></div>{{/unless}}
+
+                {{#each routeDiagram.items as |item|}}
+                  {{#if item.isCard}}
+                    <button type="button" class="chase-route-card-node {{#if item.card.selected}}selected{{/if}}" data-action="selectRouteCard" data-card-ref="{{item.card.ref}}" title="{{localize 'PF2E_CHASE_FORGE.Builder.OpenCard'}}">
+                      {{#if item.card.imagePath}}
+                        <span class="chase-route-card-thumb"><img src="{{item.card.imagePath}}" alt="{{item.card.imageAlt}}"></span>
+                      {{else}}
+                        <span class="chase-route-card-thumb placeholder"><i class="fa-solid fa-signs-post"></i></span>
+                      {{/if}}
+                      <span class="chase-route-card-copy">
+                        <strong>{{item.card.name}}</strong>
+                      </span>
+                    </button>
+                    {{#if item.card.canAddBranch}}
+                      <button type="button" class="chase-route-inline-branch" data-action="addBranchAfterCard" data-node-id="{{item.card.nodeId}}" title="{{localize 'PF2E_CHASE_FORGE.Builder.AddBranch'}}">
+                        <i class="fa-solid fa-code-branch"></i> {{localize "PF2E_CHASE_FORGE.Builder.AddBranchShort"}}
+                      </button>
+                    {{/if}}
+                    <div class="chase-route-flow-line"><i class="fa-solid fa-arrow-down"></i></div>
+                  {{/if}}
+
+                  {{#if item.isBranch}}
+                    <div class="chase-route-branch-block {{#if item.branch.selected}}selected{{/if}}">
+                      <button type="button" class="chase-route-decision-node {{#if item.branch.selected}}selected{{/if}}" data-action="selectBranchGroup" data-branch-group-id="{{item.branch.branchGroupId}}" title="{{localize 'PF2E_CHASE_FORGE.Builder.OpenBranch'}}">
+                        <span class="chase-route-diamond"><i class="fa-solid fa-code-branch"></i></span>
+                        <span>{{localize "PF2E_CHASE_FORGE.Builder.DecisionNode"}}</span>
+                      </button>
+
+                      <div class="chase-route-branch-lanes">
+                        {{#each item.branch.routes as |route|}}
+                          <div class="chase-route-lane">
+                            <button type="button" class="chase-route-lane-head" data-action="selectBranchGroup" data-branch-group-id="{{item.branch.branchGroupId}}">
+                              <strong>{{route.label}}</strong>
+                              <small><i class="fa-solid {{route.visibilityIcon}}"></i> {{route.visibilityLabel}}</small>
+                            </button>
+                            <div class="chase-route-lane-line"><i class="fa-solid fa-arrow-down"></i></div>
+                            {{#each route.cards as |routeCard|}}
+                              <button type="button" class="chase-route-card-node branch-card {{#if routeCard.selected}}selected{{/if}}" data-action="selectRouteCard" data-card-ref="{{routeCard.ref}}" title="{{localize 'PF2E_CHASE_FORGE.Builder.OpenCard'}}">
+                                {{#if routeCard.imagePath}}
+                                  <span class="chase-route-card-thumb"><img src="{{routeCard.imagePath}}" alt="{{routeCard.imageAlt}}"></span>
+                                {{else}}
+                                  <span class="chase-route-card-thumb placeholder"><i class="fa-solid fa-signs-post"></i></span>
+                                {{/if}}
+                                <span class="chase-route-card-copy">
+                                  <strong>{{routeCard.name}}</strong>
+                                </span>
+                              </button>
+                              <div class="chase-route-lane-line"><i class="fa-solid fa-arrow-down"></i></div>
+                            {{else}}
+                              <div class="chase-route-lane-empty">{{localize "PF2E_CHASE_FORGE.Builder.RoutePathEmpty"}}</div>
+                              <div class="chase-route-lane-line"><i class="fa-solid fa-arrow-down"></i></div>
+                            {{/each}}
+                          </div>
+                        {{/each}}
+                      </div>
+
+                      <button type="button" class="chase-route-merge-node {{#if item.branch.selected}}selected{{/if}}" data-action="selectBranchGroup" data-branch-group-id="{{item.branch.branchGroupId}}" title="{{localize 'PF2E_CHASE_FORGE.Builder.OpenBranch'}}">
+                        <span class="chase-route-diamond hollow"><i class="fa-solid fa-code-merge"></i></span>
+                        <span>{{localize "PF2E_CHASE_FORGE.Builder.MergeNode"}}</span>
+                      </button>
+                    </div>
+                    <div class="chase-route-flow-line"><i class="fa-solid fa-arrow-down"></i></div>
+                  {{/if}}
+                {{else}}
+                  <div class="chase-builder-empty route-empty compact-diagram">
+                    <i class="fa-solid fa-road-barrier"></i>
+                    <strong>{{localize "PF2E_CHASE_FORGE.Builder.NoCards"}}</strong>
+                    <span>{{localize "PF2E_CHASE_FORGE.Builder.NoCardsHint"}}</span>
+                  </div>
+                {{/each}}
+
+                <div class="chase-route-terminal end"><i class="fa-solid fa-flag-checkered"></i> {{localize "PF2E_CHASE_FORGE.Builder.RouteEnd"}}</div>
+              </div>
+            </div>
+
+            <aside class="chase-route-inspector">
+              {{#if selectedCard}}
+                <article class="chase-route-inspector-card chase-builder-card" data-builder-card data-card-index="{{selectedCard.index}}" data-card-ref="{{selectedCard.ref}}" data-node-id="{{selectedCard.node.id}}">
+                  <div class="chase-route-inspector-title">
+                    <div>
+                      <span class="chase-builder-kicker">{{localize "PF2E_CHASE_FORGE.Builder.CardInspector"}}</span>
+                      <h4>{{selectedCard.card.name}}</h4>
+                    </div>
+                    {{#if selectedCard.editable}}
+                      <div class="chase-builder-card-actions">
+                        {{#if selectedCard.canAddBranch}}<button type="button" class="icon branch" data-action="addBranchAfterCard" data-node-id="{{selectedCard.node.id}}" title="{{localize 'PF2E_CHASE_FORGE.Builder.AddBranch'}}"><i class="fa-solid fa-code-branch"></i></button>{{/if}}
+                        {{#if selectedCard.linearEditable}}
+                          <button type="button" class="icon" data-action="moveCardUp" data-card-index="{{selectedCard.index}}" data-card-ref="{{selectedCard.ref}}" {{#if selectedCard.first}}disabled{{/if}} title="{{localize 'PF2E_CHASE_FORGE.Builder.MoveUp'}}"><i class="fa-solid fa-arrow-up"></i></button>
+                          <button type="button" class="icon" data-action="moveCardDown" data-card-index="{{selectedCard.index}}" data-card-ref="{{selectedCard.ref}}" {{#if selectedCard.last}}disabled{{/if}} title="{{localize 'PF2E_CHASE_FORGE.Builder.MoveDown'}}"><i class="fa-solid fa-arrow-down"></i></button>
+                          <button type="button" class="icon danger" data-action="removeCard" data-card-index="{{selectedCard.index}}" data-card-ref="{{selectedCard.ref}}" title="{{localize 'PF2E_CHASE_FORGE.Builder.RemoveCard'}}"><i class="fa-solid fa-trash"></i></button>
+                        {{/if}}
+                      </div>
+                    {{/if}}
+                  </div>
+
+                  {{#if selectedCard.card.image.path}}
+                    <div class="chase-route-inspector-preview"><img src="{{selectedCard.card.image.path}}" alt="{{selectedCard.card.image.alt}}"></div>
+                  {{/if}}
+                  {{#if selectedCard.originLabel}}<div class="chase-builder-origin"><i class="fa-solid fa-link"></i> {{selectedCard.originLabel}}</div>{{/if}}
+
+                  <div class="chase-builder-grid two card-fields">
+                    <label class="wide">
+                      <span>{{localize "PF2E_CHASE_FORGE.Builder.CardName"}}</span>
+                      <input type="text" data-card-field="name" value="{{selectedCard.card.name}}" {{#unless selectedCard.editable}}disabled{{/unless}}>
+                    </label>
+                    <label>
+                      <span>{{localize "PF2E_CHASE_FORGE.Builder.CardType"}}</span>
+                      <select data-card-field="type" {{#unless selectedCard.editable}}disabled{{/unless}}>
+                        {{#each selectedCard.card.typeOptions}}<option value="{{value}}" {{#if selected}}selected{{/if}}>{{label}}</option>{{/each}}
+                      </select>
+                    </label>
+                    <label class="small-number">
+                      <span>{{localize "PF2E_CHASE_FORGE.Builder.RequiredPoints"}}</span>
+                      <input type="number" data-card-field="requiredPoints" min="1" value="{{selectedCard.card.obstacle.requiredPoints}}" {{#unless selectedCard.editable}}disabled{{/unless}}>
+                    </label>
+                    <label class="wide">
+                      <span>{{localize "PF2E_CHASE_FORGE.Builder.CardDescription"}}</span>
+                      <textarea data-card-field="description" rows="4" {{#unless selectedCard.editable}}disabled{{/unless}}>{{selectedCard.card.description}}</textarea>
+                    </label>
+                    <label class="wide">
+                      <span>{{localize "PF2E_CHASE_FORGE.Builder.CardGmNotes"}}</span>
+                      <textarea data-card-field="gmNotes" rows="3" {{#unless selectedCard.editable}}disabled{{/unless}}>{{selectedCard.card.gmNotes}}</textarea>
+                    </label>
+                    <label>
+                      <span>{{localize "PF2E_CHASE_FORGE.Builder.CardTags"}}</span>
+                      <input type="text" data-card-field="tags" value="{{selectedCard.card.tagsText}}" {{#unless selectedCard.editable}}disabled{{/unless}}>
+                    </label>
+                    <label class="chase-builder-checkbox bottom">
+                      <input type="checkbox" data-card-field="scalable" {{#if selectedCard.card.obstacle.scalable}}checked{{/if}} {{#unless selectedCard.editable}}disabled{{/unless}}>
+                      <span>{{localize "PF2E_CHASE_FORGE.Builder.ScalablePoints"}}</span>
+                    </label>
+                    <label>
+                      <span>{{localize "PF2E_CHASE_FORGE.Builder.CardImageMode"}}</span>
+                      <select data-card-field="imageMode" {{#unless selectedCard.editable}}disabled{{/unless}}>
+                        {{#each selectedCard.card.imageModeOptions}}<option value="{{value}}" {{#if selected}}selected{{/if}}>{{label}}</option>{{/each}}
+                      </select>
+                    </label>
+                    <label>
+                      <span>{{localize "PF2E_CHASE_FORGE.Builder.ImagePath"}}</span>
+                      <input type="text" data-card-field="imagePath" value="{{selectedCard.card.image.path}}" {{#unless selectedCard.editable}}disabled{{/unless}}>
+                    </label>
+                    <label class="wide">
+                      <span>{{localize "PF2E_CHASE_FORGE.Builder.ImageAlt"}}</span>
+                      <input type="text" data-card-field="imageAlt" value="{{selectedCard.card.image.alt}}" {{#unless selectedCard.editable}}disabled{{/unless}}>
+                    </label>
+                  </div>
+
+                  <div class="chase-builder-approaches">
+                    <div class="chase-builder-subheading">
+                      <strong>{{localize "PF2E_CHASE_FORGE.Builder.Approaches"}}</strong>
+                      {{#if selectedCard.editable}}<button type="button" data-action="addApproach" data-card-index="{{selectedCard.index}}" data-card-ref="{{selectedCard.ref}}"><i class="fa-solid fa-plus"></i> {{localize "PF2E_CHASE_FORGE.Builder.AddApproach"}}</button>{{/if}}
+                    </div>
+                    {{#each selectedCard.card.approaches}}
+                      <div class="chase-builder-approach" data-builder-approach data-approach-index="{{approachIndex}}">
+                        <label><span>{{localize "PF2E_CHASE_FORGE.Builder.ApproachLabel"}}</span><input type="text" data-approach-field="label" value="{{label}}" {{#unless ../selectedCard.editable}}disabled{{/unless}}></label>
+                        <label><span>{{localize "PF2E_CHASE_FORGE.Builder.Statistic"}}</span><select data-approach-field="statistic" {{#unless ../selectedCard.editable}}disabled{{/unless}}>{{#each statisticOptions}}<option value="{{value}}" {{#if selected}}selected{{/if}}>{{label}}</option>{{/each}}</select></label>
+                        <label><span>{{localize "PF2E_CHASE_FORGE.Builder.DcMode"}}</span><select data-approach-field="dcMode" {{#unless ../selectedCard.editable}}disabled{{/unless}}>{{#each dcModeOptions}}<option value="{{value}}" {{#if selected}}selected{{/if}}>{{label}}</option>{{/each}}</select></label>
+                        <label class="small-number"><span>{{localize "PF2E_CHASE_FORGE.Builder.DcValue"}}</span><input type="number" data-approach-field="dcValue" value="{{dc.value}}" {{#unless ../selectedCard.editable}}disabled{{/unless}}></label>
+                        <label class="small-number"><span>{{localize "PF2E_CHASE_FORGE.Builder.LevelOffset"}}</span><input type="number" data-approach-field="levelOffset" value="{{dc.levelOffset}}" {{#unless ../selectedCard.editable}}disabled{{/unless}}></label>
+                        <label><span>{{localize "PF2E_CHASE_FORGE.Builder.DifficultyAdjustment"}}</span><select data-approach-field="difficultyAdjustment" {{#unless ../selectedCard.editable}}disabled{{/unless}}>{{#each adjustmentOptions}}<option value="{{value}}" {{#if selected}}selected{{/if}}>{{label}}</option>{{/each}}</select></label>
+                        <label><span>{{localize "PF2E_CHASE_FORGE.Builder.Proficiency"}}</span><select data-approach-field="proficiency" {{#unless ../selectedCard.editable}}disabled{{/unless}}>{{#each proficiencyOptions}}<option value="{{value}}" {{#if selected}}selected{{/if}}>{{label}}</option>{{/each}}</select></label>
+                        <label class="chase-builder-checkbox bottom"><input type="checkbox" data-approach-field="hidden" {{#if dc.hidden}}checked{{/if}} {{#unless ../selectedCard.editable}}disabled{{/unless}}><span>{{localize "PF2E_CHASE_FORGE.Builder.HiddenDc"}}</span></label>
+                        {{#if ../selectedCard.editable}}<button type="button" class="icon danger approach-delete" data-action="removeApproach" data-card-index="{{cardIndex}}" data-card-ref="{{cardRef}}" data-approach-index="{{approachIndex}}"><i class="fa-solid fa-xmark"></i></button>{{/if}}
+                      </div>
+                    {{else}}
+                      <div class="chase-builder-empty inline">{{localize "PF2E_CHASE_FORGE.Builder.NoApproaches"}}</div>
+                    {{/each}}
+                  </div>
+                </article>
+              {{else}}
+                {{#if selectedBranch}}
+                  <article class="chase-route-inspector-branch">
+                    <div class="chase-route-inspector-title">
+                      <div>
+                        <span class="chase-builder-kicker">{{localize "PF2E_CHASE_FORGE.Builder.BranchInspector"}}</span>
+                        <h4>{{selectedBranch.sourceLabel}}</h4>
+                        <small>{{localize "PF2E_CHASE_FORGE.Builder.BranchMergeTo"}} {{selectedBranch.continuationLabel}}</small>
+                      </div>
+                      {{#if selectedBranch.editable}}<button type="button" class="danger" data-action="removeBranchGroup" data-branch-group-id="{{selectedBranch.branchGroupId}}"><i class="fa-solid fa-code-merge"></i> {{localize "PF2E_CHASE_FORGE.Builder.RemoveBranch"}}</button>{{/if}}
+                    </div>
+                    <p class="chase-route-inspector-hint">{{localize "PF2E_CHASE_FORGE.Builder.BranchInspectorHint"}}</p>
+                    <div class="chase-route-inspector-routes">
+                      {{#each selectedBranch.routes as |route|}}
+                        <div class="chase-builder-branch-route" data-branch-edge data-edge-id="{{route.edgeId}}">
+                          <label><span>{{localize "PF2E_CHASE_FORGE.Builder.RouteLabel"}}</span><input type="text" data-branch-field="label" value="{{route.label}}" {{#unless route.editable}}disabled{{/unless}}></label>
+                          <label><span>{{localize "PF2E_CHASE_FORGE.Builder.RouteVisibility"}}</span><select data-branch-field="visibility" {{#unless route.editable}}disabled{{/unless}}>{{#each route.visibilityOptions}}<option value="{{value}}" {{#if selected}}selected{{/if}}>{{label}}</option>{{/each}}</select></label>
+                          <label class="wide"><span>{{localize "PF2E_CHASE_FORGE.Builder.RouteDescription"}}</span><input type="text" data-branch-field="description" value="{{route.description}}" {{#unless route.editable}}disabled{{/unless}}></label>
+                          <div class="chase-builder-branch-path"><i class="fa-solid fa-route"></i> {{#each route.nodes}}<span>{{name}}</span>{{else}}<span>{{localize "PF2E_CHASE_FORGE.Builder.RoutePathEmpty"}}</span>{{/each}}</div>
+                          {{#if route.editable}}<button type="button" data-action="appendBranchCard" data-edge-id="{{route.edgeId}}"><i class="fa-solid fa-plus"></i> {{localize "PF2E_CHASE_FORGE.Builder.AppendBranchCard"}}</button>{{/if}}
+                        </div>
+                      {{/each}}
+                    </div>
+                  </article>
+                {{else}}
+                  <div class="chase-route-inspector-empty">
+                    <i class="fa-solid fa-hand-pointer"></i>
+                    <strong>{{localize "PF2E_CHASE_FORGE.Builder.InspectorEmptyTitle"}}</strong>
+                    <span>{{localize "PF2E_CHASE_FORGE.Builder.InspectorEmptyHint"}}</span>
+                  </div>
+                {{/if}}
+              {{/if}}
+            </aside>
+          </div>
+        {{else}}
+          <div class="chase-builder-empty route-empty">
+            <i class="fa-solid fa-code-branch"></i>
+            <strong>{{localize "PF2E_CHASE_FORGE.Builder.NonLinearTitle"}}</strong>
+            <span>{{localize "PF2E_CHASE_FORGE.Builder.NonLinearHint"}}</span>
           </div>
         {{/if}}
       </section>

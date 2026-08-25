@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { createPublicApi } from "../scripts/api/public-api.js";
 import { sampleBlueprint } from "./helpers.js";
 
-test("dev.9 public API advertises builder, persistence, route, rules, and consequence capabilities", () => {
+test("dev.10.2 public API advertises builder, persistence, route, rules, consequence, branching, and library capabilities", () => {
   const api = createPublicApi();
   const caps = api.getCapabilities();
   assert.equal(caps.coreDataModel, true);
@@ -14,6 +14,8 @@ test("dev.9 public API advertises builder, persistence, route, rules, and conseq
   assert.equal(caps.extensionApi, true);
   assert.equal(caps.transactionalPackRegistration, true);
   assert.equal(caps.contentPackActivation, true);
+  assert.equal(caps.chaseLibrary, true);
+  assert.equal(caps.readOnlyLibraryBlueprints, true);
   assert.equal(caps.imageProviders, true);
   assert.equal(caps.routeGraphEngine, true);
   assert.equal(caps.deterministicRouteResolution, true);
@@ -96,6 +98,7 @@ test("public API containers are frozen", () => {
   assert.equal(Object.isFrozen(api.sessionManager), true);
   assert.equal(Object.isFrozen(api.cards), true);
   assert.equal(Object.isFrozen(api.templates), true);
+  assert.equal(Object.isFrozen(api.library), true);
   assert.equal(Object.isFrozen(api.packs), true);
   assert.equal(Object.isFrozen(api.images), true);
   assert.equal(Object.isFrozen(api.extensions), true);
@@ -107,6 +110,7 @@ test("registry stats are exposed without leaking mutable registry instances", ()
     packs: 0,
     cards: 0,
     templates: 0,
+    libraryBlueprints: 0,
     imageProviders: 0,
     enabledPacks: 0
   });
@@ -176,16 +180,19 @@ test("Weather Forge availability capability is detected dynamically from its pub
   }
 });
 
-test("dev.9 advertises Player View and synchronization when their services are supplied", () => {
+test("dev.10.2 advertises Player View, synchronization and branching Builder support", () => {
   const ui = { openPlayerView() {}, getOpenPlayerViews() { return []; } };
   const sync = { sendIntent() {}, publishSession() {} };
   const api = createPublicApi({ ui, sync });
-  assert.equal(api.version, 9);
+  assert.equal(api.version, 11);
   assert.equal(api.contracts.playerView, 1);
   assert.equal(api.contracts.playerStateProjector, 1);
   assert.equal(api.contracts.sessionSync, 1);
   assert.equal(api.getCapabilities().playerView, true);
   assert.equal(api.getCapabilities().sessionSync, true);
   assert.equal(api.getCapabilities().playerIntents, true);
+  assert.equal(api.getCapabilities().branchingBuilder, true);
+  assert.equal(api.getCapabilities().interactiveRouteDecisions, true);
+  assert.equal(api.builder.branchingContractVersion, 1);
   assert.equal(api.sync, sync);
 });

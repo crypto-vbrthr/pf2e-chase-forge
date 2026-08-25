@@ -1,5 +1,51 @@
 # Changelog
 
+## 0.1.0-dev.10.2 – Visual Route Diagram & Card Inspector
+
+- Replaces the long expanded route-card stack with a compact activity-diagram style route view.
+- Shows each Chase Card as a small clickable node containing only its name and, when available, a thumbnail of the linked image.
+- Opens the selected card in a dedicated inspector with the full card, image, approach, DC, and GM-note editing controls.
+- Places route splits immediately after the obstacle that causes the choice, making the relationship between source obstacle, branch lanes, merge, and continuation visually explicit.
+- Renders branch lanes side by side and shows an explicit decision diamond and merge diamond around the branch paths.
+- Clicking a decision/merge node opens a Branch Inspector for route labels, descriptions, visibility, branch extension, and branch removal.
+- Keeps prepared Library chases read-only while still allowing Builder-managed library Blueprints to be inspected through the same route diagram and card inspector.
+- Fixes Builder form synchronization for branching Blueprints so card and branch edits made through the inspector are preserved before selection changes, save, start, and other actions.
+- Automatically selects newly added cards and newly created route splits so their inspector opens immediately.
+- Adds deterministic route-diagram model tests proving that branch blocks appear immediately after their source card and branch-lane cards do not leak into the shared mainline.
+- Public API remains at version `11`; persisted Blueprint/Session schemas are unchanged.
+- Expands automated coverage to 289 passing tests.
+
+## 0.1.0-dev.10.1 – New Chase & Prepared Chase Libraries
+
+- Adds permanent **New Chase** controls to both the Builder sidebar and sticky command toolbar so the GM can reset to a fresh prepared chase at any time.
+- Splits prepared content in the Builder into **My Chases** (world-owned, editable Blueprints) and **Library** content supplied by Chase Forge or add-on packs.
+- Adds a read-only Chase Library registry for complete prepared `ChaseBlueprint` definitions supplied by registered content packs.
+- Groups library entries by their source pack/library and displays the library name, chase count, and source version when available.
+- Library chases are immutable source content: the Builder disables editing and destructive actions while a library entry is selected.
+- Adds **Copy to My Chases** to create an independent editable world Blueprint while preserving `metadata.libraryOrigin` provenance.
+- Lets a GM start a library chase directly without first creating a world copy. The resulting `ChaseSession` contains its own Blueprint snapshot and runtime changes never mutate the source library chase.
+- Adds `blueprints` to the add-on pack contract alongside cards, templates, and image providers; registration, replacement, activation, rollback, and removal remain transactional.
+- Adds public `forge.library.get/list/has`, bound extension `listLibraryBlueprints()`, and the `registries.libraryBlueprints` extension capability.
+- Raises the public API version to `11`; core Blueprint, Session, and persistence schema versions remain unchanged.
+- Expands automated coverage to 284 tests.
+
+## 0.1.0-dev.10 – Branching & Interactive Route Decisions
+
+- Adds the first GM-editable Branching Chase Builder on top of the existing DAG Route Graph Engine.
+- Converts a normal linear Builder Blueprint to Branching Builder mode when the GM adds the first route split; no migration of the persisted core schema is required.
+- Lets the GM add a two-route split after an eligible mainline Chase Card, with one generated obstacle per route and an explicit merge back into the original continuation.
+- Lets each branch route be named and described independently and marked `public`, `discoverable`, or `hidden`.
+- Lets branch paths be extended with additional manual obstacles before they merge again.
+- Keeps normal mainline card creation available after a branch block, so a chase can continue beyond the merge and can contain multiple sequential branch blocks.
+- Adds Branching Builder card/approach editing by stable card reference instead of linear-list index, preserving edits safely across split paths.
+- Adds branch removal that reconnects the source to the original continuation and returns the Blueprint to Basic Builder mode when the final branch is removed.
+- Reuses the existing authoritative Player View route-intent flow: after an obstacle is cleared, the Rules Engine pauses when multiple legal routes are available and the player can choose a visible route from the Player Chase View.
+- Discoverable/hidden route edges stay absent from the Player View until they are explicitly made available by the GM/rules state.
+- Adds public Builder API helpers for branch creation, route editing, branch-path extension, mainline continuation, branch removal, and Branching Builder validation.
+- Raises the public API version to `10`; core Blueprint/Session schema versions remain unchanged.
+- Deliberately does not add nested branches or a free-form graphical route canvas yet; dev.10 manages simple split → branch paths → merge structures.
+- Expands automated coverage to 279 tests.
+
 ## 0.1.0-dev.9.1.4 – Player View Delivery & Session List Refresh Hotfix
 
 - Hardens Chase Player View synchronization with socket-start retries instead of relying on a single ready-time listener registration.

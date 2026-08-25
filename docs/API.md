@@ -1,4 +1,4 @@
-# PF2E Chase Forge Public API - dev.9
+# PF2E Chase Forge Public API - dev.10.2
 
 ## Access
 
@@ -6,14 +6,21 @@
 const forge = game.modules.get("pf2e-chase-forge")?.api;
 ```
 
-Current public API version: `9`  
+Current public API version: `11`  
 Extension Contract version: `1`  
-Basic Builder Contract version: `1`
+Basic Builder Contract version: `1`  
+Branching Builder Contract version: `1`
 
-## New dev.9 capabilities
+Dev.10.2 is primarily a Builder presentation/update release. Public API version `11` and persisted schema versions are unchanged.
+
+## Current dev.10.2 capabilities
 
 ```text
+chaseLibrary
+readOnlyLibraryBlueprints
 basicBuilder
+branchingBuilder
+interactiveRouteDecisions
 builderUi
 gmRunner
 playerView
@@ -23,6 +30,19 @@ chatWorkflow
 ```
 
 `gmRunner` and `playerView` are true in normal Foundry initialization. `sessionSync` and `playerIntents` expose the module-socket bridge that keeps player-safe projections synchronized while the GM remains authoritative. Campaign Forge integration remains false.
+
+
+## Prepared Chase Library
+
+```js
+forge.library.list();
+forge.library.get("my-addon:prepared-chase");
+forge.library.has("my-addon:prepared-chase");
+```
+
+Library Blueprints are immutable add-on/core content. The Builder can start them directly as independent Session snapshots or copy them into protected world persistence as a new editable Blueprint.
+
+Bound extensions can include `blueprints` in `registerPack()` and inspect their own registered entries with `extension.listLibraryBlueprints()`.
 
 ## Basic Builder
 
@@ -48,6 +68,32 @@ forge.builder.resetGroupsForType(blueprint, chaseType, options);
 forge.builder.validate(blueprint, options);
 forge.builder.summary(blueprint);
 ```
+
+## Branching Builder
+
+The public Builder API exposes the managed split/merge helpers used by the GM Builder UI:
+
+```js
+forge.builder.branchingContractVersion;
+forge.builder.isBranching(blueprint);
+forge.builder.listBranchingCards(blueprint);
+forge.builder.listBranchGroups(blueprint);
+forge.builder.convertToBranching(blueprint);
+forge.builder.addBranchAfterCard(blueprint, sourceNodeId, options);
+forge.builder.appendBranchCard(blueprint, branchEntryEdgeId, options);
+forge.builder.appendMainlineCard(blueprint, card, options);
+forge.builder.appendMainlineManualCard(blueprint, options);
+forge.builder.updateBranchRoute(blueprint, edgeId, updates);
+forge.builder.removeBranch(blueprint, branchGroupId);
+forge.builder.updateCardByRef(blueprint, cardRef, updaterOrCard);
+forge.builder.addApproachByRef(blueprint, cardRef, approach);
+forge.builder.removeApproachByRef(blueprint, cardRef, approachIndex);
+forge.builder.validateBranching(blueprint, options);
+```
+
+A managed branch is a DAG fragment with one source card, two entry edges, one or more cards per lane, and a merge node leading back to the prior continuation. Player route choices reuse the authoritative dev.9 route-intent flow. Routes marked `discoverable` or `hidden` remain absent from a player's projected state until route state makes them available.
+
+Nested branches inside a branch lane are deliberately rejected in dev.10. Arbitrary graphs created outside the managed Builder contract remain readable/startable but are not rewritten by the Builder.
 
 ## Builder UI
 
@@ -116,7 +162,7 @@ Public obstacle messages exclude GM notes and exact DCs by contract.
 
 ## Schemas
 
-No core schema versions changed in dev.9:
+No core schema versions changed in dev.10:
 
 ```text
 forge.schemas.blueprint === 2
