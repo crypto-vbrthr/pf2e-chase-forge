@@ -1554,3 +1554,116 @@
     justify-content: flex-start;
   }
 }
+
+/* dev.13 visual system */
+.chase-visual-path-row {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.chase-visual-path-row > input {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.chase-visual-blueprint-preview {
+  border: 1px solid var(--chase-border);
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--chase-panel-soft);
+  max-height: 220px;
+}
+
+.chase-visual-blueprint-preview img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  max-height: 220px;
+  object-fit: cover;
+  border: 0;
+}
+
+.chase-route-inspector-preview {
+  position: relative;
+}
+
+.chase-visual-fallback-badge {
+  position: absolute;
+  right: 8px;
+  bottom: 8px;
+  padding: 3px 7px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--chase-panel) 88%, transparent);
+  border: 1px solid var(--chase-border);
+  font-size: .75rem;
+}
+
+.chase-visual-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.chase-visual-source {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+  opacity: .78;
+  font-size: .8rem;
+}
+
+.chase-visual-candidate-section {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--chase-border);
+}
+
+.chase-visual-candidate-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(126px, 1fr));
+  gap: 8px;
+}
+
+.chase-visual-candidate {
+  display: grid !important;
+  grid-template-rows: 86px auto;
+  gap: 5px;
+  min-width: 0;
+  padding: 5px !important;
+  border: 1px solid var(--chase-border) !important;
+  border-radius: 7px !important;
+  overflow: hidden;
+  background: var(--chase-panel-soft) !important;
+}
+
+.chase-visual-candidate:hover,
+.chase-visual-candidate.selected {
+  border-color: var(--chase-accent) !important;
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--chase-accent) 35%, transparent);
+}
+
+.chase-visual-candidate img {
+  width: 100%;
+  height: 86px;
+  object-fit: cover;
+  border: 0;
+  border-radius: 5px;
+}
+
+.chase-visual-candidate span {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-size: .75rem;
+}
+
+.chase-visual-errors {
+  margin-top: 8px;
+  padding: 7px 9px;
+  border: 1px solid var(--chase-border);
+  border-radius: 6px;
+  opacity: .8;
+  font-size: .8rem;
+}

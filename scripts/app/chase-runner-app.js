@@ -212,6 +212,25 @@ function getAppClass() {
           try { obstacle = this.chaseApi.rules.currentObstacle(session, runtimeGroup.id); }
           catch { obstacle = null; }
         }
+        if (obstacle?.card) {
+          try {
+            const visual = await this.chaseApi.images?.resolveCard?.(obstacle.card, { blueprint: session.blueprintSnapshot, fallbackToBlueprint: true });
+            if (visual?.path) {
+              obstacle = cloneData(obstacle);
+              obstacle.card.image = {
+                ...(obstacle.card.image ?? {}),
+                mode: visual.mode ?? obstacle.card.image?.mode ?? "manual",
+                path: visual.path,
+                alt: visual.alt || obstacle.card.image?.alt || obstacle.card.name || "",
+                providerId: visual.providerId ?? obstacle.card.image?.providerId ?? null,
+                imageId: visual.id ?? obstacle.card.image?.imageId ?? null
+              };
+              obstacle.card.metadata = { ...(obstacle.card.metadata ?? {}), resolvedVisual: cloneData(visual) };
+            }
+          } catch (error) {
+            console.warn(`${MODULE_ID} | Failed to resolve Runner obstacle image.`, error);
+          }
+        }
         const approaches = (obstacle?.card?.approaches ?? []).map(approach => {
           const savedGmDc = storedGmDc(session, obstacle?.card?.id, approach.id);
           let dc = null;
@@ -387,7 +406,19 @@ function getAppClass() {
         const session = await this.chaseApi.sessionManager.getSession(this.sessionId);
         const runtimeGroup = session.groups.find(group => group.id === target.dataset.runtimeGroupId);
         const groupDefinition = resolveBlueprintGroup(session, runtimeGroup);
-        const obstacle = this.chaseApi.rules.currentObstacle(session, runtimeGroup.id);
+        let obstacle = this.chaseApi.rules.currentObstacle(session, runtimeGroup.id);
+        try {
+          const visual = await this.chaseApi.images?.resolveCard?.(obstacle.card, { blueprint: session.blueprintSnapshot, fallbackToBlueprint: true });
+          if (visual?.path) {
+            obstacle = cloneData(obstacle);
+            obstacle.card.image = {
+              ...(obstacle.card.image ?? {}),
+              mode: visual.mode ?? obstacle.card.image?.mode ?? "manual",
+              path: visual.path,
+              alt: visual.alt || obstacle.card.image?.alt || obstacle.card.name || ""
+            };
+          }
+        } catch { /* Chat can still be posted without art. */ }
         await this.chat.postObstacle({ session, runtimeGroup, groupDefinition, obstacle });
         notify("info", i18n("PF2E_CHASE_FORGE.Runner.Posted", "Hindernis in den Chat gesendet."));
       } catch (error) { console.error(error); notify("error", error.message); }

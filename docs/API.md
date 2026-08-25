@@ -1,4 +1,4 @@
-# PF2E Chase Forge Public API - dev.11
+# PF2E Chase Forge Public API - dev.13
 
 ## Access
 
@@ -6,14 +6,14 @@
 const forge = game.modules.get("pf2e-chase-forge")?.api;
 ```
 
-Current public API version: `12`  
+Current public API version: `13`  
 Extension Contract version: `1`  
 Basic Builder Contract version: `1`  
 Branching Builder Contract version: `1`
 
-Dev.11 adds Generator Contract v1 and raises the public API to `12`. Persisted schema versions remain unchanged.
+Dev.13 adds Visual System Contract v1 and raises the public API to `13`. Persisted schema versions remain unchanged.
 
-## Current dev.11 capabilities
+## Current dev.13 capabilities
 
 ```text
 chaseLibrary
@@ -24,6 +24,10 @@ interactiveRouteDecisions
 generatorTemplates
 seededGeneration
 generatorFallbackCards
+visualSystem
+resolvedCardImages
+predefinedImageCandidates
+automaticImageProviders
 builderUi
 gmRunner
 playerView
@@ -34,6 +38,25 @@ chatWorkflow
 
 `gmRunner` and `playerView` are true in normal Foundry initialization. `sessionSync` and `playerIntents` expose the module-socket bridge that keeps player-safe projections synchronized while the GM remains authoritative. Campaign Forge integration remains false.
 
+
+
+## Visual System
+
+```js
+forge.images.contractVersion; // 1
+forge.images.providers.list();
+forge.images.collectCandidates(context, options);
+forge.images.buildContext({ blueprint, card });
+forge.images.resolve(image, context, options);
+forge.images.resolveCard(card, { blueprint, fallbackToBlueprint: true });
+forge.images.resolveBlueprint(blueprint);
+forge.images.candidatesFor(card.image, { blueprint, card });
+forge.images.selectCandidate(candidates, imageId);
+forge.images.applyCandidate(card.image, candidate, { mode: "provider" });
+forge.images.clearCache();
+```
+
+The resolver supports `none`, `manual`, `predefined`, `provider`, and `automatic` modes. Provider context includes environment, tone, movement, time, weather, Blueprint tags, card tags, and `metadata.imageTags`. See `docs/VISUAL_SYSTEM.md`.
 
 ## Generator & Templates
 

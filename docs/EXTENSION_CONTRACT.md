@@ -85,6 +85,10 @@ extension.registerPack({
 
 If the pack omits `version`, the controller's extension version is inherited.
 
+### Visual candidates (dev.13)
+
+Image candidates returned by providers or embedded in `card.image.candidates` may contain `id`, `path`, `alt`, `tags`, `weight`, and free-form `metadata`. Chase Forge preserves these fields and can present the candidates in the Builder Card Inspector. `provider` and `automatic` modes are resolved by Visual System Contract v1; see `VISUAL_SYSTEM.md`.
+
 ## Generator templates (dev.11)
 
 Templates registered in `templates` are executable by `forge.generator`. Add-ons can use the existing `filters` block to restrict/prefer cards and the `generator` block to control card count, branch count, duplicate policy, route labels, and localized fallback-card naming. No new extension contract version is required because these payloads were already open template fields. See `GENERATOR.md`.

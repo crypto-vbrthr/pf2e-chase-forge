@@ -48,6 +48,7 @@ import { PLAYER_CHASE_VIEW_CONTRACT_VERSION } from "../app/chase-player-app.js";
 import { CHASE_SESSION_SYNC_CONTRACT_VERSION } from "../sync/chase-session-sync.js";
 import { PLAYER_STATE_PROJECTOR_CONTRACT_VERSION, projectChasePublicState } from "../player/public-state-projector.js";
 import { CHASE_GENERATOR_CONTRACT_VERSION, createChaseGenerator, generateChaseFromTemplate, inspectGenerationCandidates, selectGenerationCards } from "../generator/chase-generator.js";
+import { CHASE_VISUAL_SYSTEM_CONTRACT_VERSION, createChaseImageService } from "../images/image-service.js";
 import {
   BASIC_BUILDER_CONTRACT_VERSION,
   addApproachToBasicCard,
@@ -125,6 +126,19 @@ function contentApi(registries) {
 
 export function createPublicApi({ registries = createRegistryService(), persistenceStore = createMemoryChaseStore(), ui = null, sync = null } = {}) {
   const content = contentApi(registries);
+  const visual = createChaseImageService({ images: content.images });
+  const images = Object.freeze({
+    ...content.images,
+    contractVersion: CHASE_VISUAL_SYSTEM_CONTRACT_VERSION,
+    buildContext: visual.buildContext,
+    resolve: visual.resolve,
+    resolveCard: visual.resolveCard,
+    resolveBlueprint: visual.resolveBlueprint,
+    candidatesFor: visual.candidatesFor,
+    selectCandidate: visual.selectCandidate,
+    applyCandidate: visual.applyCandidate,
+    clearCache: visual.clearCache
+  });
   const generator = createChaseGenerator({ templates: content.templates, cards: content.cards });
   const extensions = createExtensionPublicApi(registries);
   const route = createRouteGraphEngine();
@@ -167,7 +181,8 @@ export function createPublicApi({ registries = createRegistryService(), persiste
       playerStateProjector: PLAYER_STATE_PROJECTOR_CONTRACT_VERSION,
       sessionSync: CHASE_SESSION_SYNC_CONTRACT_VERSION,
       chatPresenter: CHASE_CHAT_PRESENTER_CONTRACT_VERSION,
-      generator: CHASE_GENERATOR_CONTRACT_VERSION
+      generator: CHASE_GENERATOR_CONTRACT_VERSION,
+      visualSystem: CHASE_VISUAL_SYSTEM_CONTRACT_VERSION
     }),
     getCapabilities: () => Object.freeze({
       coreDataModel: true,
@@ -182,6 +197,10 @@ export function createPublicApi({ registries = createRegistryService(), persiste
       chaseLibrary: true,
       readOnlyLibraryBlueprints: true,
       imageProviders: true,
+      visualSystem: true,
+      resolvedCardImages: true,
+      predefinedImageCandidates: true,
+      automaticImageProviders: true,
       routeGraphEngine: true,
       deterministicRouteResolution: true,
       routeConditions: true,
@@ -380,7 +399,7 @@ export function createPublicApi({ registries = createRegistryService(), persiste
       getPlayerState: sessionId => ui?.getPlayerState?.(sessionId) ?? null
     }),
     player: Object.freeze({
-      projectState: (session, options = {}) => projectChasePublicState({ cards: content.cards, images: content.images, rules, route }, session, options)
+      projectState: (session, options = {}) => projectChasePublicState({ cards: content.cards, images, rules, route }, session, options)
     }),
     sync: sync ?? Object.freeze({}),
     presentation: Object.freeze({ chat: chatPresenter }),
@@ -390,7 +409,7 @@ export function createPublicApi({ registries = createRegistryService(), persiste
     templates: content.templates,
     library: content.library,
     packs: content.packs,
-    images: content.images,
+    images,
     extensions,
     registries: Object.freeze({
       getStats: () => registries.getStats()

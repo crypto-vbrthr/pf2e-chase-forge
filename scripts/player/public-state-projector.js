@@ -61,6 +61,10 @@ function resolveCard(api, session, cardRef) {
 }
 
 async function resolveCardImage(api, session, card) {
+  try {
+    const resolved = await api?.images?.resolveCard?.(card, { blueprint: session?.blueprintSnapshot, fallbackToBlueprint: true });
+    if (resolved?.path) return { path: resolved.path, alt: resolved.alt || card?.image?.alt || card?.name || "" };
+  } catch { /* Fall through to the legacy resolver for compatibility. */ }
   const image = card?.image ?? {};
   if (image.mode === "none") return null;
   if (image.path) return { path: image.path, alt: image.alt || card?.name || "" };

@@ -52,8 +52,10 @@ function normalizeImage(image = {}) {
       id: asString(candidate.id, createId("image")),
       path: asString(candidate.path),
       providerId: candidate.providerId ? asString(candidate.providerId) : null,
+      alt: asString(candidate.alt),
       tags: uniqueStrings(candidate.tags),
-      weight: Math.max(0, asFiniteNumber(candidate.weight, 1))
+      weight: Math.max(0, asFiniteNumber(candidate.weight, 1)),
+      metadata: isPlainObject(candidate.metadata) ? cloneData(candidate.metadata) : {}
     }))
   };
 }

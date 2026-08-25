@@ -482,5 +482,16 @@
   "PF2E_CHASE_FORGE.CoreCards.social-public-performance.Name": "Öffentliche Darbietung",
   "PF2E_CHASE_FORGE.CoreCards.social-public-performance.Description": "Eine Straßendarbietung zieht einen dichten Zuschauerring um den schnellsten Weg.",
   "PF2E_CHASE_FORGE.CoreCards.social-masquerade-crowd.Name": "Maskierte Menge",
-  "PF2E_CHASE_FORGE.CoreCards.social-masquerade-crowd.Description": "Masken, Kostüme und ähnlich gekleidete Feiernde machen es schwer, die richtige Person im Blick zu behalten."
+  "PF2E_CHASE_FORGE.CoreCards.social-masquerade-crowd.Description": "Masken, Kostüme und ähnlich gekleidete Feiernde machen es schwer, die richtige Person im Blick zu behalten.",
+  "PF2E_CHASE_FORGE.Visual.AnyProvider": "Beliebiger Anbieter",
+  "PF2E_CHASE_FORGE.Visual.ImageProvider": "Bildanbieter",
+  "PF2E_CHASE_FORGE.Visual.BrowseImage": "Bild auswählen",
+  "PF2E_CHASE_FORGE.Visual.FindImages": "Bilder suchen / aktualisieren",
+  "PF2E_CHASE_FORGE.Visual.ReleaseSelection": "Bildauswahl lösen",
+  "PF2E_CHASE_FORGE.Visual.AvailableImages": "Verfügbare Bilder",
+  "PF2E_CHASE_FORGE.Visual.AvailableImagesHint": "Vordefinierte Bilder und Treffer registrierter Bildanbieter.",
+  "PF2E_CHASE_FORGE.Visual.ProviderErrors": "Mindestens ein Bildanbieter konnte nicht abgefragt werden.",
+  "PF2E_CHASE_FORGE.Visual.FilePickerUnavailable": "Die Foundry-Dateiauswahl ist nicht verfügbar.",
+  "PF2E_CHASE_FORGE.Visual.CandidateUnavailable": "Dieses Bild ist nicht mehr verfügbar.",
+  "PF2E_CHASE_FORGE.Visual.Fallback": "Fallback"
 }

@@ -1,12 +1,35 @@
 # PF2E Chase Forge
 
-**Version:** 0.1.0-dev.12  
+**Version:** 0.1.0-dev.13.1  
 **Foundry VTT:** 14  
 **System:** Pathfinder 2e
 
-PF2E Chase Forge is a modular Pathfinder 2e chase framework for Foundry VTT. `0.1.0-dev.12` adds the first built-in **Core Card Library** with 72 reusable, localized, level-scaled Chase obstacles across six environment families. The Generator can now build normal Core chases without relying on placeholder cards.
+PF2E Chase Forge is a modular Pathfinder 2e chase framework for Foundry VTT. `0.1.0-dev.13.1` includes the **Visual System** that resolves manual, predefined, provider-driven, and automatic artwork consistently across the Builder, GM Runner, and Player View.
 
-The underlying architecture remains intact: DAG route graphs, synchronized GM/Player runtime views, add-on registries, PF2e chase rules, consequence orchestration, optional Critical Forge / Effect Forge integration, Weather Forge prefill, and protected restart-safe Blueprint/Session persistence.
+The underlying architecture remains intact: DAG route graphs, synchronized GM/Player runtime views, add-on registries, template-based generation, the 72-card Core Library, PF2e chase rules, consequence orchestration, optional Critical Forge / Effect Forge integration, Weather Forge prefill, and protected restart-safe Blueprint/Session persistence.
+
+## dev.13 Visual System
+
+Chase Card images now use one shared resolver instead of each UI interpreting image fields independently. `manual` images use an explicit Foundry path, `predefined` images can be shipped as candidates by a content pack, `provider` can target a particular registered provider, and `automatic` chooses the best available provider result from the Chase context.
+
+The visual context combines Blueprint/card tags with environment, tone, movement mode, time of day, and weather. The Builder resolves these previews for compact route thumbnails and the Card Inspector without silently writing an automatic preview path back into the Blueprint.
+
+The Card Inspector includes a Foundry file picker, image-provider selector, refresh action, and a small candidate gallery. Selecting a provider result pins its provider/id/path to that card occurrence; releasing the selection returns it to provider/automatic selection. Predefined candidates supplied directly by a content pack appear in the same gallery.
+
+GM Runner and Player View resolve the same visual source. If an obstacle has no own art, the Chase-level Blueprint image can be used as runtime fallback. If no art exists at all, the existing compact route placeholder remains.
+
+Public API examples:
+
+```js
+const forge = game.modules.get("pf2e-chase-forge")?.api;
+
+const visual = await forge.images.resolveCard(card, { blueprint });
+const choices = await forge.images.candidatesFor(card.image, { blueprint, card });
+const pinned = forge.images.applyCandidate(card.image, choices.candidates[0], { mode: "provider" });
+forge.images.clearCache();
+```
+
+See `docs/VISUAL_SYSTEM.md` for the image-mode and provider contract.
 
 
 ## dev.12 Core Card Library

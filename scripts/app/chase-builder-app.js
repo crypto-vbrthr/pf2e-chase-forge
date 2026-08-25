@@ -34,6 +34,7 @@ import {
 } from "../builder/branching-builder-model.js";
 import { cloneData, createId, nowIso } from "../data/utils.js";
 import { localizeChaseCard, localizeSkillLabel } from "../content/content-localization.js";
+import { openFoundryImagePicker } from "../images/foundry-image-picker.js";
 
 let builderAppClass = null;
 let openBuilderApp = null;
@@ -153,7 +154,8 @@ function compactRouteCard(item, { selected = null, editable = false } = {}) {
   if (!item) return null;
   const card = item.card ?? {};
   const nodeId = item.node?.id ?? item.nodeId ?? null;
-  const imagePath = typeof card.image?.path === "string" && card.image.path.trim() ? card.image.path.trim() : null;
+  const resolvedPreview = typeof card.imagePreviewPath === "string" && card.imagePreviewPath.trim() ? card.imagePreviewPath.trim() : null;
+  const imagePath = resolvedPreview ?? (typeof card.image?.path === "string" && card.image.path.trim() ? card.image.path.trim() : null);
   return {
     index: Number.isFinite(Number(item.index)) ? Number(item.index) : 0,
     displayIndex: item.displayIndex ?? (Number(item.index ?? 0) + 1),
@@ -164,7 +166,7 @@ function compactRouteCard(item, { selected = null, editable = false } = {}) {
     typeLabel: item.typeLabel ?? card.type ?? "obstacle",
     requiredPoints: card.obstacle?.requiredPoints ?? null,
     imagePath,
-    imageAlt: card.image?.alt || card.name || item.node?.label || "",
+    imageAlt: card.imagePreviewAlt || card.image?.alt || card.name || item.node?.label || "",
     selected: selected?.type === "card" && selected?.id === (item.ref ?? item.node?.cardRef),
     editable,
     canAddBranch: editable && item.canAddBranch === true
@@ -404,6 +406,10 @@ function applyBuilderRuntimeLayout(app, reason = "runtime") {
   return { root, windowContent, shell, main, toolbar, editor, sidebar };
 }
 
+function imageCandidateLabel(candidate, index = 0) {
+  return candidate?.alt || candidate?.metadata?.label || candidate?.id || `Bild ${index + 1}`;
+}
+
 function getAppClass() {
   if (builderAppClass) return builderAppClass;
   const api = globalThis.foundry?.applications?.api;
@@ -449,7 +455,12 @@ function getAppClass() {
         selectRouteCard: this._actionSelectRouteCard,
         selectBranchGroup: this._actionSelectBranchGroup,
         generateFromTemplate: this._actionGenerateFromTemplate,
-        rerollGeneratedRoute: this._actionRerollGeneratedRoute
+        rerollGeneratedRoute: this._actionRerollGeneratedRoute,
+        browseBlueprintImage: this._actionBrowseBlueprintImage,
+        browseCardImage: this._actionBrowseCardImage,
+        refreshCardImages: this._actionRefreshCardImages,
+        selectCardImageCandidate: this._actionSelectCardImageCandidate,
+        clearCardImageSelection: this._actionClearCardImageSelection
       }
     };
 
@@ -601,6 +612,24 @@ function getAppClass() {
       const editable = builderSupported && !librarySelected;
       const cards = builderSupported ? listEditableCards(this._draft) : [];
       const branchGroups = branchingEditable ? listBranchGroups(this._draft) : [];
+      const imageProviders = this.chaseApi.images?.providers?.list?.() ?? [];
+      const imageProviderOptions = [
+        { value: "", label: i18n("PF2E_CHASE_FORGE.Visual.AnyProvider", "Beliebiger Anbieter") },
+        ...imageProviders.map(provider => ({ value: provider.id, label: provider.label || provider.id }))
+      ];
+      const resolvedCardImages = new Map();
+      await Promise.all(cards.map(async item => {
+        try {
+          const visual = await this.chaseApi.images?.resolveCard?.(item.card, { blueprint: this._draft });
+          if (item.ref) resolvedCardImages.set(item.ref, visual ?? null);
+        } catch (error) {
+          console.warn(`${MODULE_ID} | Failed to resolve Builder card image for '${item.ref}'.`, error);
+          if (item.ref) resolvedCardImages.set(item.ref, null);
+        }
+      }));
+      let blueprintResolvedImage = null;
+      try { blueprintResolvedImage = await this.chaseApi.images?.resolveBlueprint?.(this._draft); }
+      catch (error) { console.warn(`${MODULE_ID} | Failed to resolve Blueprint image.`, error); }
       const registeredCards = (this.chaseApi.cards.list({ includeDisabled: false }) ?? []).map(localizeChaseCard);
       const generatorTemplates = this.chaseApi.generator?.listTemplates?.({ includeDisabled: false }) ?? [];
       if (!this._generatorTemplateId || !generatorTemplates.some(template => template.id === this._generatorTemplateId)) {
@@ -717,6 +746,10 @@ function getAppClass() {
           tagsText: item.card.tags.join(", "),
           typeOptions: optionList(CARD_TYPE_VALUES, item.card.type, "PF2E_CHASE_FORGE.CardType"),
           imageModeOptions: optionList(IMAGE_MODE_VALUES, item.card.image?.mode ?? "none", "PF2E_CHASE_FORGE.ImageMode"),
+          imagePreviewPath: resolvedCardImages.get(item.ref)?.path ?? item.card.image?.path ?? null,
+          imagePreviewAlt: resolvedCardImages.get(item.ref)?.alt || item.card.image?.alt || item.card.name || "",
+          imageResolved: resolvedCardImages.get(item.ref) ?? null,
+          imageProviderOptions: imageProviderOptions.map(option => ({ ...option, selected: option.value === (item.card.image?.providerId ?? "") })),
           approaches: (item.card.approaches ?? []).map((approach, approachIndex) => ({
             ...approach,
             approachIndex,
@@ -758,6 +791,27 @@ function getAppClass() {
       const selectedBranch = this._selectedInspector?.type === "branch"
         ? branchViews.find(group => group.branchGroupId === this._selectedInspector.id) ?? null
         : null;
+      if (selectedCard?.card) {
+        try {
+          const candidateResult = await this.chaseApi.images?.candidatesFor?.(selectedCard.card.image ?? {}, {
+            blueprint: this._draft,
+            card: selectedCard.card
+          }) ?? { candidates: [], errors: [] };
+          selectedCard.card.imageCandidates = (candidateResult.candidates ?? []).slice(0, 12).map((candidate, index) => ({
+            ...candidate,
+            label: imageCandidateLabel(candidate, index),
+            selected: Boolean((selectedCard.card.image?.imageId && candidate.id === selectedCard.card.image.imageId) || (selectedCard.card.image?.path && candidate.path === selectedCard.card.image.path))
+          }));
+          selectedCard.card.hasImageCandidates = selectedCard.card.imageCandidates.length > 0;
+          selectedCard.card.imageCandidateErrors = candidateResult.errors ?? [];
+          selectedCard.card.hasImageCandidateErrors = selectedCard.card.imageCandidateErrors.length > 0;
+        } catch (error) {
+          selectedCard.card.imageCandidates = [];
+          selectedCard.card.hasImageCandidates = false;
+          selectedCard.card.imageCandidateErrors = [{ message: error?.message ?? String(error) }];
+          selectedCard.card.hasImageCandidateErrors = true;
+        }
+      }
 
       return {
         ...context,
@@ -806,6 +860,10 @@ function getAppClass() {
         lengthOptions: optionList(LENGTH_VALUES, this._draft.settings.length, "PF2E_CHASE_FORGE.Length"),
         difficultyOptions: optionList(DIFFICULTY_VALUES, this._draft.settings.difficulty, "PF2E_CHASE_FORGE.Difficulty"),
         imageModeOptions: optionList(IMAGE_MODE_VALUES, this._draft.settings.imageMode, "PF2E_CHASE_FORGE.ImageMode"),
+        blueprintImagePreviewPath: blueprintResolvedImage?.path ?? this._draft.image?.path ?? null,
+        blueprintImagePreviewAlt: blueprintResolvedImage?.alt || this._draft.image?.alt || this._draft.name || "",
+        imageProviders,
+        hasImageProviders: imageProviders.length > 0,
         timeOptions: TIME_VALUES.map(value => ({ value, selected: value === (this._draft.settings.timeOfDay ?? ""), label: value ? i18n(`PF2E_CHASE_FORGE.Time.${value}`, value) : i18n("PF2E_CHASE_FORGE.Common.NotSet", "Nicht festgelegt") })),
         roundUnitOptions: ROUND_UNIT_VALUES.map(value => ({ value, selected: value === (this._draft.settings.roundDuration?.unit ?? "rounds"), label: i18n(`PF2E_CHASE_FORGE.RoundUnit.${value}`, value) })),
         actionLevelOptions: optionList(TONE_LEVEL_VALUES, builderMeta.actionLevel ?? "medium", "PF2E_CHASE_FORGE.ToneLevel"),
@@ -1012,6 +1070,12 @@ function getAppClass() {
         card.image.mode = cardElement.querySelector('[data-card-field="imageMode"]')?.value || "none";
         card.image.path = cardElement.querySelector('[data-card-field="imagePath"]')?.value?.trim() || null;
         card.image.alt = cardElement.querySelector('[data-card-field="imageAlt"]')?.value ?? "";
+        card.image.providerId = cardElement.querySelector('[data-card-field="imageProviderId"]')?.value?.trim() || null;
+        if (card.image.mode === "none") {
+          card.image.path = null;
+          card.image.providerId = null;
+          card.image.imageId = null;
+        }
 
         const approachRows = cardElement.querySelectorAll("[data-builder-approach]");
         for (const row of approachRows) {
@@ -1329,6 +1393,101 @@ function getAppClass() {
         notify("error", format("PF2E_CHASE_FORGE.Generator.Failed", { message: error?.message ?? String(error) }, `Generierung fehlgeschlagen: ${error?.message ?? error}`));
         return null;
       }
+    }
+
+    _updateSelectedCardImage(updater) {
+      if (this._libraryBlueprintId || this._selectedInspector?.type !== "card") return false;
+      const cardRef = this._selectedInspector.id;
+      this._draft = updateBuilderCardByRef(this._draft, cardRef, card => ({
+        ...card,
+        image: typeof updater === "function" ? updater(cloneData(card.image ?? {}), card) : cloneData(updater ?? card.image ?? {})
+      }));
+      this.chaseApi.images?.clearCache?.();
+      return true;
+    }
+
+    static async _actionBrowseBlueprintImage() {
+      if (this._libraryBlueprintId) return null;
+      this._syncDraftFromForm();
+      const current = this._draft.image?.path ?? "";
+      const field = this.element?.querySelector?.('input[name="image.path"]') ?? null;
+      const opened = await openFoundryImagePicker({
+        current,
+        field,
+        callback: async path => {
+          if (!path) return;
+          this._draft.image.mode = "manual";
+          this._draft.settings.imageMode = "manual";
+          this._draft.image.path = String(path);
+          this._draft.image.imageId = null;
+          this._draft.image.providerId = null;
+          this.chaseApi.images?.clearCache?.();
+          await this.render({ force: true });
+        }
+      });
+      if (!opened) notify("warn", i18n("PF2E_CHASE_FORGE.Visual.FilePickerUnavailable", "Die Foundry-Dateiauswahl ist nicht verfügbar."));
+      return opened;
+    }
+
+    static async _actionBrowseCardImage() {
+      if (this._libraryBlueprintId || this._selectedInspector?.type !== "card") return null;
+      this._syncDraftFromForm();
+      const item = listEditableCards(this._draft).find(candidate => candidate.ref === this._selectedInspector.id);
+      const current = item?.card?.image?.path ?? "";
+      const field = this.element?.querySelector?.('[data-card-field="imagePath"]') ?? null;
+      const opened = await openFoundryImagePicker({
+        current,
+        field,
+        callback: async path => {
+          if (!path) return;
+          this._updateSelectedCardImage(image => ({
+            ...image,
+            mode: "manual",
+            path: String(path),
+            providerId: null,
+            imageId: null
+          }));
+          await this.render({ force: true });
+        }
+      });
+      if (!opened) notify("warn", i18n("PF2E_CHASE_FORGE.Visual.FilePickerUnavailable", "Die Foundry-Dateiauswahl ist nicht verfügbar."));
+      return opened;
+    }
+
+    static async _actionRefreshCardImages() {
+      if (this._selectedInspector?.type !== "card") return null;
+      this._syncDraftFromForm();
+      this.chaseApi.images?.clearCache?.();
+      return this.render({ force: true });
+    }
+
+    static async _actionSelectCardImageCandidate(event, target) {
+      if (this._libraryBlueprintId || this._selectedInspector?.type !== "card") return null;
+      this._syncDraftFromForm();
+      const cardRef = this._selectedInspector.id;
+      const item = listEditableCards(this._draft).find(candidate => candidate.ref === cardRef);
+      if (!item?.card) return null;
+      const imageId = target?.dataset?.imageId ?? null;
+      const providerId = target?.dataset?.providerId || null;
+      const result = await this.chaseApi.images?.candidatesFor?.(item.card.image ?? {}, { blueprint: this._draft, card: item.card }) ?? { candidates: [] };
+      const candidate = (result.candidates ?? []).find(entry => entry.id === imageId && (!providerId || entry.providerId === providerId))
+        ?? (result.candidates ?? []).find(entry => entry.id === imageId)
+        ?? null;
+      if (!candidate) {
+        notify("warn", i18n("PF2E_CHASE_FORGE.Visual.CandidateUnavailable", "Dieses Bild ist nicht mehr verfügbar."));
+        return this.render({ force: true });
+      }
+      const originalMode = item.card.image?.mode ?? "automatic";
+      const pinnedMode = candidate.providerId ? "provider" : (originalMode === "manual" ? "predefined" : originalMode);
+      this._updateSelectedCardImage(image => this.chaseApi.images.applyCandidate(image, candidate, { mode: pinnedMode }));
+      return this.render({ force: true });
+    }
+
+    static async _actionClearCardImageSelection() {
+      if (this._libraryBlueprintId || this._selectedInspector?.type !== "card") return null;
+      this._syncDraftFromForm();
+      this._updateSelectedCardImage(image => ({ ...image, path: null, imageId: null }));
+      return this.render({ force: true });
     }
 
     static async _actionAddManualCard() {

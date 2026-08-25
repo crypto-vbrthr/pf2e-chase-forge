@@ -2,7 +2,7 @@
 
 ## Baseline
 
-Version `0.1.0-dev.12` adds a built-in reusable Core Card content layer on top of the dev.11 template-driven generator while keeping source content separate from editable world snapshots. UI, transport, persistence, route traversal, PF2e rules, consequences, and integrations remain separate layers. The synchronized GM/Player runtime surfaces from dev.9 remain authoritative and are reused for interactive route choices.
+Version `0.1.0-dev.13` adds a centralized Visual System on top of the Core Card and template-driven generator layers while keeping source content separate from editable world snapshots. UI, transport, persistence, route traversal, PF2e rules, consequences, and integrations remain separate layers. The synchronized GM/Player runtime surfaces from dev.9 remain authoritative and are reused for interactive route choices.
 
 ```text
 External Chase Add-ons
@@ -122,3 +122,7 @@ Campaign Forge and Journal embedding remain later milestones.
 ## Core Card content layer
 
 The `core:cards` pack is registered through the same registry service used by add-ons. Registered cards are immutable source resources. Builder and Generator workflows copy them into Blueprint content snapshots before editing or runtime use. Localization is resolved lazily at display/copy time, and automatic image mode delegates art resolution to registered image providers.
+
+## dev.13 Visual System
+
+Image resolution is centralized in `scripts/images/image-service.js`. UI layers consume resolved view data and do not independently query providers or mutate automatic previews. Registered image providers remain extension-owned runtime functions, while pinned selections and predefined candidates remain ordinary serializable Blueprint/Card image data. GM Runner and Player View share the same resolver, with optional Chase-level fallback art.

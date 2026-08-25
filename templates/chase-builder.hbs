@@ -311,12 +311,18 @@
           </label>
           <label>
             <span>{{localize "PF2E_CHASE_FORGE.Builder.ImagePath"}}</span>
-            <input type="text" name="image.path" value="{{draft.image.path}}" placeholder="modules/.../image.webp" {{#unless editable}}disabled{{/unless}}>
+            <div class="chase-visual-path-row">
+              <input type="text" name="image.path" value="{{draft.image.path}}" placeholder="modules/.../image.webp" {{#unless editable}}disabled{{/unless}}>
+              {{#if editable}}<button type="button" class="icon" data-action="browseBlueprintImage" title="{{localize 'PF2E_CHASE_FORGE.Visual.BrowseImage'}}"><i class="fa-solid fa-folder-open"></i></button>{{/if}}
+            </div>
           </label>
           <label class="wide">
             <span>{{localize "PF2E_CHASE_FORGE.Builder.ImageAlt"}}</span>
             <input type="text" name="image.alt" value="{{draft.image.alt}}" {{#unless editable}}disabled{{/unless}}>
           </label>
+          {{#if blueprintImagePreviewPath}}
+            <div class="wide chase-visual-blueprint-preview"><img src="{{blueprintImagePreviewPath}}" alt="{{blueprintImagePreviewAlt}}"></div>
+          {{/if}}
         </div>
       </section>
 
@@ -503,8 +509,11 @@
                     {{/if}}
                   </div>
 
-                  {{#if selectedCard.card.image.path}}
-                    <div class="chase-route-inspector-preview"><img src="{{selectedCard.card.image.path}}" alt="{{selectedCard.card.image.alt}}"></div>
+                  {{#if selectedCard.card.imagePreviewPath}}
+                    <div class="chase-route-inspector-preview">
+                      <img src="{{selectedCard.card.imagePreviewPath}}" alt="{{selectedCard.card.imagePreviewAlt}}">
+                      {{#if selectedCard.card.imageResolved.fallback}}<span class="chase-visual-fallback-badge">{{localize "PF2E_CHASE_FORGE.Visual.Fallback"}}</span>{{/if}}
+                    </div>
                   {{/if}}
                   {{#if selectedCard.originLabel}}<div class="chase-builder-origin"><i class="fa-solid fa-link"></i> {{selectedCard.originLabel}}</div>{{/if}}
 
@@ -546,14 +555,45 @@
                       </select>
                     </label>
                     <label>
+                      <span>{{localize "PF2E_CHASE_FORGE.Visual.ImageProvider"}}</span>
+                      <select data-card-field="imageProviderId" {{#unless selectedCard.editable}}disabled{{/unless}}>
+                        {{#each selectedCard.card.imageProviderOptions}}<option value="{{value}}" {{#if selected}}selected{{/if}}>{{label}}</option>{{/each}}
+                      </select>
+                    </label>
+                    <label class="wide">
                       <span>{{localize "PF2E_CHASE_FORGE.Builder.ImagePath"}}</span>
-                      <input type="text" data-card-field="imagePath" value="{{selectedCard.card.image.path}}" {{#unless selectedCard.editable}}disabled{{/unless}}>
+                      <div class="chase-visual-path-row">
+                        <input type="text" data-card-field="imagePath" value="{{selectedCard.card.image.path}}" {{#unless selectedCard.editable}}disabled{{/unless}}>
+                        {{#if selectedCard.editable}}<button type="button" class="icon" data-action="browseCardImage" title="{{localize 'PF2E_CHASE_FORGE.Visual.BrowseImage'}}"><i class="fa-solid fa-folder-open"></i></button>{{/if}}
+                      </div>
                     </label>
                     <label class="wide">
                       <span>{{localize "PF2E_CHASE_FORGE.Builder.ImageAlt"}}</span>
                       <input type="text" data-card-field="imageAlt" value="{{selectedCard.card.image.alt}}" {{#unless selectedCard.editable}}disabled{{/unless}}>
                     </label>
+                    <div class="wide chase-visual-controls">
+                      <button type="button" data-action="refreshCardImages"><i class="fa-solid fa-images"></i> {{localize "PF2E_CHASE_FORGE.Visual.FindImages"}}</button>
+                      {{#if selectedCard.editable}}<button type="button" data-action="clearCardImageSelection"><i class="fa-solid fa-rotate-left"></i> {{localize "PF2E_CHASE_FORGE.Visual.ReleaseSelection"}}</button>{{/if}}
+                      {{#if selectedCard.card.imageResolved.providerId}}<span class="chase-visual-source"><i class="fa-solid fa-plug"></i> {{selectedCard.card.imageResolved.providerId}}</span>{{/if}}
+                    </div>
                   </div>
+
+                  {{#if selectedCard.card.hasImageCandidateErrors}}
+                    <div class="chase-visual-errors"><i class="fa-solid fa-triangle-exclamation"></i> {{localize "PF2E_CHASE_FORGE.Visual.ProviderErrors"}}</div>
+                  {{/if}}
+                  {{#if selectedCard.card.hasImageCandidates}}
+                    <div class="chase-visual-candidate-section">
+                      <div class="chase-builder-subheading"><strong>{{localize "PF2E_CHASE_FORGE.Visual.AvailableImages"}}</strong><small>{{localize "PF2E_CHASE_FORGE.Visual.AvailableImagesHint"}}</small></div>
+                      <div class="chase-visual-candidate-grid">
+                        {{#each selectedCard.card.imageCandidates as |candidate|}}
+                          <button type="button" class="chase-visual-candidate {{#if candidate.selected}}selected{{/if}}" data-action="selectCardImageCandidate" data-image-id="{{candidate.id}}" data-provider-id="{{candidate.providerId}}" {{#unless @root.selectedCard.editable}}disabled{{/unless}} title="{{candidate.label}}">
+                            <img src="{{candidate.path}}" alt="{{candidate.alt}}">
+                            <span>{{candidate.label}}</span>
+                          </button>
+                        {{/each}}
+                      </div>
+                    </div>
+                  {{/if}}
 
                   <div class="chase-builder-approaches">
                     <div class="chase-builder-subheading">

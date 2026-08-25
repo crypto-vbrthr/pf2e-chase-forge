@@ -184,11 +184,11 @@ test("Weather Forge availability capability is detected dynamically from its pub
   }
 });
 
-test("dev.12 advertises Player View, synchronization and branching Builder support", () => {
+test("dev.13 advertises Player View, synchronization, branching Builder, and Visual System support", () => {
   const ui = { openPlayerView() {}, getOpenPlayerViews() { return []; } };
   const sync = { sendIntent() {}, publishSession() {} };
   const api = createPublicApi({ ui, sync });
-  assert.equal(api.version, 12);
+  assert.equal(api.version, 13);
   assert.equal(api.contracts.playerView, 1);
   assert.equal(api.contracts.playerStateProjector, 1);
   assert.equal(api.contracts.sessionSync, 1);
@@ -198,5 +198,9 @@ test("dev.12 advertises Player View, synchronization and branching Builder suppo
   assert.equal(api.getCapabilities().branchingBuilder, true);
   assert.equal(api.getCapabilities().interactiveRouteDecisions, true);
   assert.equal(api.builder.branchingContractVersion, 1);
+  assert.equal(api.contracts.visualSystem, 1);
+  assert.equal(api.getCapabilities().visualSystem, true);
+  assert.equal(api.getCapabilities().automaticImageProviders, true);
+  assert.equal(typeof api.images.resolveCard, "function");
   assert.equal(api.sync, sync);
 });

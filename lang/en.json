@@ -482,5 +482,16 @@
   "PF2E_CHASE_FORGE.CoreCards.social-public-performance.Name": "Public Performance",
   "PF2E_CHASE_FORGE.CoreCards.social-public-performance.Description": "A street performance draws a dense ring of spectators around the quickest route.",
   "PF2E_CHASE_FORGE.CoreCards.social-masquerade-crowd.Name": "Masquerade Crowd",
-  "PF2E_CHASE_FORGE.CoreCards.social-masquerade-crowd.Description": "Masks, costumes, and look-alike revelers make it difficult to keep the right person in sight."
+  "PF2E_CHASE_FORGE.CoreCards.social-masquerade-crowd.Description": "Masks, costumes, and look-alike revelers make it difficult to keep the right person in sight.",
+  "PF2E_CHASE_FORGE.Visual.AnyProvider": "Any provider",
+  "PF2E_CHASE_FORGE.Visual.ImageProvider": "Image provider",
+  "PF2E_CHASE_FORGE.Visual.BrowseImage": "Choose image",
+  "PF2E_CHASE_FORGE.Visual.FindImages": "Find / refresh images",
+  "PF2E_CHASE_FORGE.Visual.ReleaseSelection": "Release image selection",
+  "PF2E_CHASE_FORGE.Visual.AvailableImages": "Available images",
+  "PF2E_CHASE_FORGE.Visual.AvailableImagesHint": "Predefined images and matches from registered image providers.",
+  "PF2E_CHASE_FORGE.Visual.ProviderErrors": "At least one image provider could not be queried.",
+  "PF2E_CHASE_FORGE.Visual.FilePickerUnavailable": "The Foundry file picker is unavailable.",
+  "PF2E_CHASE_FORGE.Visual.CandidateUnavailable": "This image is no longer available.",
+  "PF2E_CHASE_FORGE.Visual.Fallback": "Fallback"
 }

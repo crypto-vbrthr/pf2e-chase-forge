@@ -1,5 +1,32 @@
 # Changelog
 
+## 0.1.0-dev.13.1 – Image Picker Path Hotfix
+
+- Fixes Foundry FilePicker selections not being transferred into the Blueprint or card image-path field on some current/custom FilePicker implementations.
+- Binds the picker directly to the active Builder input field in addition to using the selection callback.
+- Explicitly preserves the documented `field` and `callback` bindings for ApplicationV2/replacement FilePicker compatibility.
+- Normalizes string and object-shaped selection payloads.
+- Recovers field-only selections when a FilePicker updates its bound input but omits the callback.
+- Keeps selected manual images in the Builder draft and re-renders the preview immediately.
+- Adds regression coverage for callback-based and field-only FilePicker selection flows.
+
+## 0.1.0-dev.13 – Visual System
+
+- Adds Visual System Contract v1 and raises the public API to version `13` without changing persisted schema versions.
+- Adds a centralized image resolver for `none`, `manual`, `predefined`, `provider`, and `automatic` image modes.
+- Resolves automatic/provider images from registered image providers using Chase, environment, tone, movement, time-of-day, weather, and card semantic tags.
+- Preserves predefined candidate `alt` text and metadata in normalized Chase image data.
+- Adds candidate discovery that combines card-embedded predefined images with dynamic provider results.
+- Adds deterministic candidate pinning (`providerId`, `imageId`, `path`) and release/reselection controls.
+- Caches automatic provider resolution during normal rendering and exposes an explicit refresh/clear-cache path.
+- Adds Foundry image-file browsing for Blueprint and card manual images with a compatibility fallback for legacy/current FilePicker implementations.
+- Adds image-provider selection, candidate thumbnails, source display, refresh, and selection controls to the visual Card Inspector.
+- Makes automatically resolved images appear in the compact route diagram and Card Inspector without silently persisting the preview path.
+- Makes GM Runner and Player View use the same Visual System resolver. A Chase-level image can act as runtime fallback art when an obstacle has no own image.
+- Keeps the existing no-image route-node placeholder when neither card nor provider art is available.
+- Adds `docs/VISUAL_SYSTEM.md` and regression coverage for manual, predefined, provider, automatic, fallback, caching, candidate pinning, Builder wiring, and Runner integration.
+- Expands automated coverage to **308 passing tests**.
+
 ## 0.1.0-dev.12 – Core Card Library
 
 - Adds the first built-in `core:cards` Chase Pack with **72 reusable Chase Cards**: twelve each for City, Wilderness, Dungeon, Coast, Mountain, and Social/Urban routes.
