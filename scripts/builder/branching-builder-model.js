@@ -127,7 +127,16 @@ export function listBranchGroups(input) {
     const merge = blueprint.graph.nodes.find(node => node.type === "merge" && node.metadata?.branchGroupId === branchGroupId) ?? null;
     const sourceId = merge?.metadata?.sourceNodeId ?? blueprint.graph.edges.find(edge => edge.metadata?.branchGroupId === branchGroupId && edge.metadata?.branchEntry)?.from ?? null;
     const sourceNode = nodeById.get(sourceId) ?? null;
-    const entryEdges = (outgoing.get(sourceId) ?? []).filter(edge => edge.metadata?.branchGroupId === branchGroupId && edge.metadata?.branchEntry);
+    const entryEdges = (outgoing.get(sourceId) ?? [])
+      .filter(edge => edge.metadata?.branchGroupId === branchGroupId && edge.metadata?.branchEntry)
+      // Replacing a branch-entry edge during relative insertion changes its
+      // physical array position. The visual lane order must remain stable.
+      .sort((a, b) => {
+        const laneOrder = lane => lane === "left" ? 0 : lane === "right" ? 1 : 10;
+        const laneDelta = laneOrder(a.metadata?.branchLane) - laneOrder(b.metadata?.branchLane);
+        if (laneDelta) return laneDelta;
+        return String(a.label ?? a.id).localeCompare(String(b.label ?? b.id));
+      });
     const routes = entryEdges.map(edge => {
       const nodes = [];
       let currentId = edge.to;
@@ -235,6 +244,10 @@ export function appendCardToBranchRoute(input, edgeId, { name = "Weiteres Hinder
     if (!tailEdge || tailEdge.to === merge.id) break;
     currentId = tailEdge.to;
   }
+  // An empty branch is represented by the branch-entry edge connecting the
+  // decision source directly to the merge. In that case the entry edge is
+  // itself the route segment that must be split by the new card.
+  if (!tailEdge && entryEdge.to === merge.id) tailEdge = entryEdge;
   if (!tailEdge) throw new Error("Branch route has no merge connection.");
   const tailNode = nodeById.get(tailEdge.from);
   if (!tailNode) throw new Error("Branch route tail is invalid.");
@@ -244,9 +257,34 @@ export function appendCardToBranchRoute(input, edgeId, { name = "Weiteres Hinder
   next.contentSnapshots.cards.push(record);
   next.graph.nodes.push(createChaseNode({ id: newNodeId, type: "card", label: name, cardRef: record.ref, metadata: { branchGroupId, branchLane: lane } }));
   next.graph.edges = next.graph.edges.filter(edge => edge.id !== tailEdge.id);
+  const emptyRoute = tailEdge.id === entryEdge.id && entryEdge.to === merge.id;
   next.graph.edges.push(
-    createChaseEdge({ id: createId("edge"), from: tailEdge.from, to: newNodeId, type: "normal", visibility: "public", metadata: { branchGroupId, branchLane: lane } }),
-    createChaseEdge({ id: createId("edge"), from: newNodeId, to: tailEdge.to, type: tailEdge.type, visibility: tailEdge.visibility, label: tailEdge.label, description: tailEdge.description, conditions: tailEdge.conditions, metadata: { ...(tailEdge.metadata ?? {}), branchGroupId, branchLane: lane } })
+    emptyRoute
+      ? createChaseEdge({
+          id: tailEdge.id,
+          from: tailEdge.from,
+          to: newNodeId,
+          type: tailEdge.type,
+          visibility: tailEdge.visibility,
+          label: tailEdge.label,
+          description: tailEdge.description,
+          conditions: tailEdge.conditions,
+          metadata: { ...(tailEdge.metadata ?? {}), branchGroupId, branchLane: lane, branchEntry: true }
+        })
+      : createChaseEdge({ id: createId("edge"), from: tailEdge.from, to: newNodeId, type: "normal", visibility: "public", metadata: { branchGroupId, branchLane: lane } }),
+    createChaseEdge({
+      id: createId("edge"),
+      from: newNodeId,
+      to: tailEdge.to,
+      type: emptyRoute ? "normal" : tailEdge.type,
+      visibility: emptyRoute ? "public" : tailEdge.visibility,
+      label: emptyRoute ? "" : tailEdge.label,
+      description: emptyRoute ? "" : tailEdge.description,
+      conditions: emptyRoute ? [] : tailEdge.conditions,
+      metadata: emptyRoute
+        ? { branchGroupId, branchLane: lane }
+        : { ...(tailEdge.metadata ?? {}), branchGroupId, branchLane: lane }
+    })
   );
   next.updatedAt = nowIso();
   return createChaseBlueprint(next);

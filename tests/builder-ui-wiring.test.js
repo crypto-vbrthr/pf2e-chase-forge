@@ -400,3 +400,15 @@ test("relative insertion helper is an instance method and destructive route edit
   assert.ok(de["PF2E_CHASE_FORGE.Builder.RemoveBranchConfirm"]?.includes("Zweige"));
   assert.ok(en["PF2E_CHASE_FORGE.Builder.RemoveBranchConfirm"]?.includes("branch routes"));
 });
+
+
+test("empty branch lanes expose an inline add-obstacle action", async () => {
+  const template = await readFile(new URL("../templates/chase-builder.hbs", import.meta.url), "utf8");
+  const css = await readFile(new URL("../styles/chase-forge.css", import.meta.url), "utf8");
+  const source = await readFile(new URL("../scripts/app/chase-builder-app.js", import.meta.url), "utf8");
+  assert.match(template, /chase-route-lane-empty[\s\S]*data-action="appendBranchCard"[\s\S]*data-edge-id="\{\{route\.edgeId\}\}"/);
+  assert.match(css, /\.chase-route-lane-empty \.chase-route-empty-add/);
+  const actionStart = source.indexOf("static async _actionAppendBranchCard");
+  const actionEnd = source.indexOf("static async _actionRemoveBranchGroup", actionStart);
+  assert.match(source.slice(actionStart, actionEnd), /this\._captureScrollPosition\(\)/);
+});

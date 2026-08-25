@@ -240,3 +240,35 @@ test("relative insertion before the mainline continuation after a branch keeps t
   blueprint = removeBranchGroup(blueprint, branch.branchGroupId);
   assert.equal(listEditableCards(blueprint).some(item => item.card?.name === "Torplatz"), true);
 });
+
+
+test("relative insertion before the first left-lane card does not swap branch lane positions", () => {
+  let blueprint = branchedDraft();
+  const before = listBranchGroups(blueprint)[0];
+  assert.deepEqual(before.routes.map(route => route.label), ["Dächer", "Gassen"]);
+  const left = before.routes[0];
+  blueprint = insertManualCardRelativeToBuilderCard(blueprint, left.nodes[0].ref, { position: "before", name: "Dachrinne" }).blueprint;
+  const after = listBranchGroups(blueprint)[0];
+  assert.deepEqual(after.routes.map(route => route.label), ["Dächer", "Gassen"]);
+  assert.deepEqual(after.routes[0].nodes.map(node => node.name), ["Dachrinne", "Route A – Hindernis"]);
+  assert.equal(validateBranchingBuilderBlueprint(blueprint).valid, true);
+});
+
+test("an empty branch route can be populated again from its branch entry", () => {
+  let blueprint = branchedDraft();
+  const initial = listBranchGroups(blueprint)[0];
+  const left = initial.routes[0];
+  blueprint = removeBuilderCardByRef(blueprint, left.nodes[0].ref);
+  let empty = listBranchGroups(blueprint)[0].routes.find(route => route.edgeId === left.edgeId);
+  assert.ok(empty);
+  assert.equal(empty.nodes.length, 0);
+
+  blueprint = appendCardToBranchRoute(blueprint, empty.edgeId, { name: "Neue Dachroute" });
+  const restored = listBranchGroups(blueprint)[0].routes.find(route => route.edgeId === left.edgeId);
+  assert.ok(restored);
+  assert.deepEqual(restored.nodes.map(node => node.name), ["Neue Dachroute"]);
+  const entry = blueprint.graph.edges.find(edge => edge.id === left.edgeId);
+  assert.equal(entry?.metadata?.branchEntry, true);
+  assert.equal(entry?.metadata?.branchLane, "left");
+  assert.equal(validateBranchingBuilderBlueprint(blueprint, { forStart: true }).valid, true);
+});

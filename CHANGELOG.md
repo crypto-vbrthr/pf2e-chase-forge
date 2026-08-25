@@ -1,3 +1,11 @@
+## 0.1.0-dev.16.7 – Stable Branch Lanes & Empty Route Repair Hotfix
+
+- Keeps left/right branch lanes visually stable when inserting a card before the first obstacle in a route.
+- Allows an empty branch route (direct source-to-merge path) to receive a new obstacle again.
+- Preserves the original branch-entry edge ID, label, visibility, type, and lane metadata when repopulating an empty route.
+- Adds an inline “add obstacle” control directly to empty branch lanes in the visual route diagram.
+- Adds regressions for lane-order stability and delete-last-card → repopulate-route workflows.
+
 ## 0.1.0-dev.16.6 – Relative Insertion Runtime & Destructive Edit Confirmation Hotfix
 
 - Fixed the Builder runtime error `this._insertManualCardRelative is not a function` when using **insert before** or **insert after**. ApplicationV2 action callbacks run with the app instance as `this`, so the shared relative-insertion helper now correctly lives on the instance prototype.

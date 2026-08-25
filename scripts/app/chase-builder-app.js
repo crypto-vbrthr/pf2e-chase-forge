@@ -1773,6 +1773,7 @@ function getAppClass() {
 
     static async _actionAppendBranchCard(_event, target) {
       this._syncDraftFromForm();
+      this._captureScrollPosition();
       try {
         this._draft = appendCardToBranchRoute(this._draft, target.dataset.edgeId);
         return this.render({ force: true });

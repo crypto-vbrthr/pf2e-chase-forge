@@ -1,12 +1,12 @@
-PF2E Chase Forge 0.1.0-dev.16.6
+PF2E Chase Forge 0.1.0-dev.16.7
 
-Automated test suite: 350/350 passed
+Automated test suite: 353/353 passed
 JavaScript syntax check: 88/88 files passed
 Localization parity: DE/EN 555/555 keys
 
 Focused regression coverage in this hotfix:
-- ApplicationV2 relative-card insertion action binding
-- Insert-before / insert-after helper availability on the Builder instance
-- Card deletion confirmation
-- Branch deletion confirmation and destructive-content warning
-- Scroll-position capture during branch deletion
+- Stable left/right visual branch-lane ordering after relative insertion
+- Empty branch route can be repopulated after deleting its only obstacle
+- Branch-entry ID/label/visibility/type/lane metadata are preserved during repopulation
+- Inline add-obstacle control for empty visual branch lanes
+- Scroll-position capture while extending/repopulating a branch route

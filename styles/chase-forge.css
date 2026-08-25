@@ -1822,3 +1822,17 @@
 @media (max-width: 900px) {
   .chase-route-insert-actions { grid-template-columns: 1fr; }
 }
+
+/* 0.1.0-dev.16.7: empty branch routes can be repopulated directly in the diagram. */
+.chase-route-lane-empty {
+  gap: 6px;
+  padding: 7px;
+}
+
+.chase-route-lane-empty .chase-route-empty-add {
+  width: auto !important;
+  min-height: 28px;
+  padding: 4px 8px !important;
+  opacity: 1;
+  font-size: .92em;
+}

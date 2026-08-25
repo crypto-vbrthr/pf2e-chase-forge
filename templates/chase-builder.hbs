@@ -514,7 +514,14 @@
                               </button>
                               <div class="chase-route-lane-line"><i class="fa-solid fa-arrow-down"></i></div>
                             {{else}}
-                              <div class="chase-route-lane-empty">{{localize "PF2E_CHASE_FORGE.Builder.RoutePathEmpty"}}</div>
+                              <div class="chase-route-lane-empty">
+                                <span>{{localize "PF2E_CHASE_FORGE.Builder.RoutePathEmpty"}}</span>
+                                {{#if route.editable}}
+                                  <button type="button" class="chase-route-empty-add" data-action="appendBranchCard" data-edge-id="{{route.edgeId}}" title="{{localize 'PF2E_CHASE_FORGE.Builder.AppendBranchCard'}}">
+                                    <i class="fa-solid fa-plus"></i> {{localize "PF2E_CHASE_FORGE.Builder.AppendBranchCard"}}
+                                  </button>
+                                {{/if}}
+                              </div>
                               <div class="chase-route-lane-line"><i class="fa-solid fa-arrow-down"></i></div>
                             {{/each}}
                           </div>
