@@ -11,7 +11,7 @@ Extension Contract version: `1`
 Basic Builder Contract version: `1`  
 Branching Builder Contract version: `1`
 
-Dev.16 hardens Campaign Forge runtime/lifecycle integration and raises the public API to `16`. Campaign Integration Contract v1, Session Lifecycle Hook Contract v1, and persisted schema versions remain unchanged.
+Dev.16 hardens Campaign Forge runtime/lifecycle integration and raises the public API to `16`. Campaign Integration Contract v2 adds exact-link reopen/resume semantics plus explicit forced-new starts. Session Lifecycle Hook Contract v1 and persisted schema versions remain unchanged.
 
 ## Current dev.14 capabilities
 

@@ -3,7 +3,7 @@ import { cloneData, nowIso } from "../data/utils.js";
 import { createChaseReference } from "../persistence/references.js";
 
 export const CAMPAIGN_FORGE_MODULE_ID = "campaign-forge";
-export const CHASE_CAMPAIGN_INTEGRATION_CONTRACT_VERSION = 1;
+export const CHASE_CAMPAIGN_INTEGRATION_CONTRACT_VERSION = 2;
 export const CHASE_CAMPAIGN_PROVIDER_ID = "chaseForge";
 
 function i18n(key, fallback) {
@@ -213,7 +213,19 @@ export function createCampaignForgeBridge({ getApi = () => globalThis.game?.modu
     };
   }
 
-  async function start(kind, targetId, { campaign = {}, openRunner = true, openPlayerView = true } = {}) {
+  async function findReusableCampaignSession(kind, targetId, campaign = {}) {
+    const entryId = campaign.entryId ? String(campaign.entryId) : null;
+    const linkId = campaign.linkId ? String(campaign.linkId) : null;
+    if (!entryId || !linkId) return null;
+    const targetKind = normalizeKind(kind);
+    const id = String(targetId ?? "");
+    const sessions = await getApi()?.persistence?.sessions?.list?.({ blueprintId: id }) ?? [];
+    const reusable = sessions.filter(session => new Set(["draft", "active", "paused"]).has(String(session?.status ?? ""))
+      && campaignMatches(session?.metadata?.campaign, { kind: targetKind, targetId: id, entryId, linkId }));
+    return latestActivity(reusable);
+  }
+
+  async function start(kind, targetId, { campaign = {}, openRunner = true, openPlayerView = true, forceNew = false } = {}) {
     requireGm();
     const targetKind = normalizeKind(kind);
     const blueprint = await resolve(targetKind, targetId);
@@ -223,6 +235,49 @@ export function createCampaignForgeBridge({ getApi = () => globalThis.game?.modu
       const error = new Error(`Campaign Chase target '${targetKind}:${targetId}' is unavailable or invalid.`);
       error.code = "CHASE_CAMPAIGN_TARGET_INVALID";
       throw error;
+    }
+
+    if (!forceNew) {
+      const reusable = await findReusableCampaignSession(targetKind, blueprint.id, campaign);
+      if (reusable) {
+        let session = reusable;
+        let disposition = "opened";
+        if (session.status === "paused") {
+          session = await api.sessionManager.resumeSession(session.id);
+          disposition = "resumed";
+        } else if (session.status === "draft") {
+          session = await api.sessionManager.startSession(session.id);
+          disposition = "started";
+        }
+        const campaignInfo = cloneData(session.metadata?.campaign ?? campaignMetadata(targetKind, blueprint.id, campaign));
+        if (openPlayerView) {
+          try { await api.sync?.publishSession?.(session, { open: true }); }
+          catch { /* Existing Campaign Chases remain usable without a connected player socket. */ }
+        }
+        if (openRunner) {
+          try { await api.ui?.openRunner?.({ sessionId: session.id }); }
+          catch (error) {
+            console.warn(`${MODULE_ID} | Existing Campaign Chase '${session.id}' is available, but the GM Runner could not be opened.`, error);
+            notify("warn", format("PF2E_CHASE_FORGE.Campaign.RunnerOpenFailedExisting", { name: blueprint.name }, `${blueprint.name} läuft bereits, aber der GM-Runner konnte nicht geöffnet werden.`));
+          }
+        }
+        const notificationKey = disposition === "resumed"
+          ? "PF2E_CHASE_FORGE.Campaign.Resumed"
+          : (disposition === "opened" ? "PF2E_CHASE_FORGE.Campaign.Opened" : "PF2E_CHASE_FORGE.Campaign.Started");
+        const fallback = disposition === "resumed"
+          ? `${blueprint.name} fortgesetzt.`
+          : (disposition === "opened" ? `${blueprint.name} geöffnet.` : `${blueprint.name} gestartet.`);
+        notify("info", format(notificationKey, { name: blueprint.name }, fallback));
+        return frozen({
+          session: cloneData(session),
+          sessionId: session.id,
+          sessionReference: createChaseReference("session", session.id),
+          target: descriptor(targetKind, blueprint),
+          campaign: campaignInfo,
+          reused: true,
+          disposition
+        });
+      }
     }
 
     const campaignInfo = campaignMetadata(targetKind, blueprint.id, campaign);
@@ -266,7 +321,9 @@ export function createCampaignForgeBridge({ getApi = () => globalThis.game?.modu
       sessionId: session.id,
       sessionReference: createChaseReference("session", session.id),
       target: descriptor(targetKind, blueprint),
-      campaign: campaignInfo
+      campaign: campaignInfo,
+      reused: false,
+      disposition: "started"
     });
   }
 
@@ -303,7 +360,8 @@ export function createCampaignForgeBridge({ getApi = () => globalThis.game?.modu
       entryId,
       linkId
     }));
-    const session = latestActivity(filtered);
+    const nonTerminal = filtered.filter(candidate => new Set(["draft", "active", "paused"]).has(String(candidate?.status ?? "")));
+    const session = latestActivity(nonTerminal) ?? latestActivity(filtered);
     if (!session) return null;
     const result = session.status === "completed"
       ? (await getApi()?.persistence?.results?.list?.({ sessionId: session.id }) ?? [])[0] ?? null

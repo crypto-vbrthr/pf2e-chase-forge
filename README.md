@@ -1,19 +1,37 @@
 # PF2E Chase Forge
 
-**Version:** 0.1.0-dev.16.7  
+**Version:** 0.1.0-dev.16.8  
 **Foundry VTT:** 14  
 **System:** Pathfinder 2e
 
-PF2E Chase Forge is a modular Pathfinder 2e chase framework for Foundry VTT. `0.1.0-dev.16.7` builds on the Campaign Forge runtime workflow so linked chases remain traceable across start, completion, abort, relinking, and missing-target cases without transferring ownership of Chase data.
+PF2E Chase Forge is a modular Pathfinder 2e chase framework for Foundry VTT. `0.1.0-dev.16.8` improves the Campaign Forge runtime workflow so a linked campaign chase can be reopened or resumed without accidentally creating a duplicate Session.
 
 The underlying architecture remains intact: DAG route graphs, synchronized GM/Player runtime views, add-on registries, template-based generation, the 72-card Core Library, the shared Visual System, PF2e chase rules, consequence orchestration, optional Critical Forge / Effect Forge integration, Weather Forge prefill, and protected restart-safe Blueprint/Session persistence.
 
+
+## dev.16.8 Campaign Session Reopen & Resume
+
+Campaign Integration Contract v2 treats a normal Campaign Forge start as **continue this linked chase** when the same Campaign entry and external-link id already own a non-terminal Session. Active Sessions are simply reopened, paused Sessions are resumed, and draft Sessions are started. Completed or aborted attempts remain terminal, so the next normal start creates a fresh Session.
+
+Campaign Forge can still deliberately request an additional independent attempt with `forceNew: true`. This keeps the earlier snapshot/immutability guarantees while preventing accidental duplicate Sessions from a normal campaign workflow.
+
+```js
+await forge.integrations.campaignForge.start("blueprint", "blueprint-id", {
+  campaign: { entryId: "quest-1", linkId: "external-1" }
+});
+
+// Explicit parallel/new attempt:
+await forge.integrations.campaignForge.start("blueprint", "blueprint-id", {
+  campaign: { entryId: "quest-1", linkId: "external-1" },
+  forceNew: true
+});
+```
 
 ## dev.16 Campaign Forge Runtime & Lifecycle Hardening
 
 Campaign-started chases now expose a live `getLatestRun()` summary in addition to completed `ChaseResult` lookup. The run summary can distinguish active, paused, completed, and aborted attempts and is filtered by Campaign entry and external-link provenance, preventing an old result from a removed/recreated link from masquerading as the current attempt.
 
-World and Library starts remain independent Session snapshots. Repeated starts create distinct Sessions, Library definitions stay immutable, and a GM Runner rendering failure no longer rolls back or hides an already-started Chase. Missing or disabled targets continue to fail explicitly before any Session is created.
+World and Library runs remain independent Session snapshots from their source definitions. As of dev.16.8, a repeated normal Campaign start for the same entry/link reopens or resumes that non-terminal Session; `forceNew: true` deliberately creates a distinct Session. Library definitions stay immutable, and a GM Runner rendering failure no longer rolls back or hides an already-started Chase. Missing or disabled targets continue to fail explicitly before any new Session is created.
 
 Session Lifecycle Contract v1 remains stable and now includes additive top-level `outcome` and `terminal` fields. Aborted Campaign runs therefore report `outcome: "aborted"` immediately through the existing lifecycle hook channel.
 
@@ -474,7 +492,6 @@ See:
 ## Deliberately not implemented yet
 
 - free-form graphical route canvas and nested branch editing;
-- Campaign Forge integration;
 - advanced arbitrary party-splitting controls beyond the existing multi-group runtime model.
 
 ## Testing

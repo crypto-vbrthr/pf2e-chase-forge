@@ -553,5 +553,8 @@
   "PF2E_CHASE_FORGE.Builder.RemoveCardTitle": "Delete card",
   "PF2E_CHASE_FORGE.Builder.RemoveCardConfirm": "Really remove the card “{name}” from this chase?",
   "PF2E_CHASE_FORGE.Builder.RemoveBranchTitle": "Delete branch",
-  "PF2E_CHASE_FORGE.Builder.RemoveBranchConfirm": "Really delete this branch? All cards within its branch routes will also be removed."
+  "PF2E_CHASE_FORGE.Builder.RemoveBranchConfirm": "Really delete this branch? All cards within its branch routes will also be removed.",
+  "PF2E_CHASE_FORGE.Campaign.Opened": "{name} is already running and was opened.",
+  "PF2E_CHASE_FORGE.Campaign.Resumed": "{name} was resumed.",
+  "PF2E_CHASE_FORGE.Campaign.RunnerOpenFailedExisting": "{name} is already running, but the GM Runner could not be opened."
 }

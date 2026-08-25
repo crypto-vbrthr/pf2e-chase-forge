@@ -1,3 +1,12 @@
+## 0.1.0-dev.16.8 – Campaign Run Resume & Reopen Hotfix
+
+- Raises the Campaign Forge Integration Contract to v2 while keeping persisted Chase schemas and the public API version unchanged.
+- Starting a Chase from the same Campaign entry + external-link id now reopens the existing active Session instead of creating a duplicate.
+- Paused Campaign Sessions are resumed and reopened; draft Sessions are started; completed or aborted runs still create a fresh Session on the next normal start.
+- Adds an explicit `forceNew` start option so Campaign Forge can deliberately create an additional parallel Session after confirmation.
+- Keeps world Blueprints and read-only Library definitions immutable while reusing the current Session snapshot.
+- Adds regression coverage for active reopen, paused resume, forced-new Session creation, and Library immutability.
+
 ## 0.1.0-dev.16.7 – Stable Branch Lanes & Empty Route Repair Hotfix
 
 - Keeps left/right branch lanes visually stable when inserting a card before the first obstacle in a route.

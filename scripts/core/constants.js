@@ -1,5 +1,5 @@
 export const MODULE_ID = "pf2e-chase-forge";
-export const MODULE_VERSION = "0.1.0-dev.16.7";
+export const MODULE_VERSION = "0.1.0-dev.16.8";
 export const API_VERSION = 16;
 export const EXTENSION_CONTRACT_VERSION = 1;
 

@@ -553,5 +553,8 @@
   "PF2E_CHASE_FORGE.Builder.RemoveCardTitle": "Karte löschen",
   "PF2E_CHASE_FORGE.Builder.RemoveCardConfirm": "Die Karte „{name}“ wirklich aus der Verfolgungsjagd löschen?",
   "PF2E_CHASE_FORGE.Builder.RemoveBranchTitle": "Gabelung löschen",
-  "PF2E_CHASE_FORGE.Builder.RemoveBranchConfirm": "Diese Gabelung wirklich löschen? Alle Karten innerhalb ihrer Zweige werden ebenfalls entfernt."
+  "PF2E_CHASE_FORGE.Builder.RemoveBranchConfirm": "Diese Gabelung wirklich löschen? Alle Karten innerhalb ihrer Zweige werden ebenfalls entfernt.",
+  "PF2E_CHASE_FORGE.Campaign.Opened": "{name} läuft bereits und wurde geöffnet.",
+  "PF2E_CHASE_FORGE.Campaign.Resumed": "{name} wurde fortgesetzt.",
+  "PF2E_CHASE_FORGE.Campaign.RunnerOpenFailedExisting": "{name} läuft bereits, aber der GM-Runner konnte nicht geöffnet werden."
 }

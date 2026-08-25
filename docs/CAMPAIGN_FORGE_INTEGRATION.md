@@ -1,4 +1,4 @@
-# Campaign Forge Integration Contract v1
+# Campaign Forge Integration Contract v2
 
 ## Ownership
 
@@ -25,7 +25,7 @@ const chase = game.modules.get("pf2e-chase-forge")?.api;
 const caps = chase?.getCapabilities?.();
 
 caps.campaignForgeBridge === true;
-chase.contracts.campaignForgeIntegration === 1;
+chase.contracts.campaignForgeIntegration === 2;
 ```
 
 Campaign Forge itself is optional. `chase.integrations.campaignForge.inspect()` reports installation, activity, API version, and compatibility without making it a dependency.
@@ -62,10 +62,12 @@ const started = await chase.integrations.campaignForge.start("blueprint", bluepr
 });
 ```
 
-Direct start:
+Contract v2 start semantics:
 
 - validates the target through the normal Chase Blueprint validator;
-- creates and starts a normal Chase Session;
+- when both `campaign.entryId` and `campaign.linkId` match an existing non-terminal Session, reuses that Session by reopening an active run, resuming a paused run, or starting a draft run;
+- creates a fresh normal Chase Session when no matching non-terminal run exists, including after completion or abort;
+- accepts `forceNew: true` to deliberately create an additional independent Session even while one is already active/paused for the same link;
 - stores campaign provenance in `session.metadata.campaign`;
 - opens the GM Runner;
 - publishes the sanitized Player View through the normal session synchronization service when available;
@@ -89,7 +91,7 @@ await chase.integrations.campaignForge.getLatestRun(kind, targetId, { entryId, l
 
 Chase Forge does not automatically complete quests, change Campaign entry status, or execute Campaign transitions. Campaign Forge remains authoritative for campaign progression.
 
-`getLatestRun()` is run-aware rather than result-only. It returns the newest Campaign-started Session matching the target and optional entry/link provenance, with `status`, `outcome`, terminal timestamps, and the completed ChaseResult when one exists. An aborted Session reports `outcome: "aborted"` even though Chase Forge does not fabricate a persisted ChaseResult for aborts.
+`getLatestRun()` is run-aware rather than result-only. If a matching non-terminal Campaign Session exists, it reports that current run preferentially; otherwise it returns the newest terminal Campaign-started Session matching the target and optional entry/link provenance. The descriptor includes `status`, `outcome`, terminal timestamps, and the completed ChaseResult when one exists. An aborted Session reports `outcome: "aborted"` even though Chase Forge does not fabricate a persisted ChaseResult for aborts.
 
 Passing `linkId` is recommended for Campaign entry UI. If a link is removed and later recreated for the same Chase target, the new link does not inherit the old link's displayed result.
 
@@ -148,3 +150,8 @@ await chase.integrations.campaignForge.linkToCampaignEntry(
 ```
 
 This is the only Campaign-persistence write performed by the bridge, and it happens only on an explicit GM call.
+
+
+## Contract v2 continuation semantics
+
+For calls that include both `campaign.entryId` and `campaign.linkId`, `start()` reuses a matching non-terminal Session unless `forceNew: true` is supplied. Active Sessions are reopened, paused Sessions are resumed, and draft Sessions are started. Completed/aborted Sessions are never reused. Calls without exact entry/link provenance retain fresh-session behavior.

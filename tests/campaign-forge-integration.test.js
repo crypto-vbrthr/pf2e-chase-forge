@@ -100,7 +100,7 @@ test("completed Campaign-started Chase returns a ChaseResult carrying Campaign p
   } finally { env.cleanup(); }
 });
 
-test("Campaign integration is optional, capability-detected, and exposed as Contract v1", () => {
+test("Campaign integration is optional, capability-detected, and exposed as Contract v2", () => {
   const env = installGame({ campaignApi: { apiVersion: 1, stability: "stable", addExternalLink() {}, removeExternalLink() {}, integrations: { getStatus() {} } } });
   try {
     const api = createPublicApi();
@@ -113,7 +113,7 @@ test("Campaign integration is optional, capability-detected, and exposed as Cont
   } finally { env.cleanup(); }
 });
 
-test("Campaign runtime starts are independent and never mutate world or Library source content", async () => {
+test("Campaign starts reuse the current link run while forceNew remains independent and source-safe", async () => {
   const env = installGame();
   try {
     const api = createPublicApi({ ui: { async openRunner() {} }, sync: { async publishSession() {} } });
@@ -122,10 +122,27 @@ test("Campaign runtime starts are independent and never mutate world or Library 
     const first = await api.integrations.campaignForge.start("blueprint", "blueprint-1", {
       campaign: { entryId: "quest-repeat", linkId: "link-repeat" }
     });
-    const second = await api.integrations.campaignForge.start("blueprint", "blueprint-1", {
+    const opened = await api.integrations.campaignForge.start("blueprint", "blueprint-1", {
       campaign: { entryId: "quest-repeat", linkId: "link-repeat" }
     });
-    assert.notEqual(first.sessionId, second.sessionId);
+    assert.equal(opened.sessionId, first.sessionId);
+    assert.equal(opened.reused, true);
+    assert.equal(opened.disposition, "opened");
+
+    await api.sessionManager.pauseSession(first.sessionId);
+    const resumed = await api.integrations.campaignForge.start("blueprint", "blueprint-1", {
+      campaign: { entryId: "quest-repeat", linkId: "link-repeat" }
+    });
+    assert.equal(resumed.sessionId, first.sessionId);
+    assert.equal(resumed.session.status, "active");
+    assert.equal(resumed.disposition, "resumed");
+
+    const forced = await api.integrations.campaignForge.start("blueprint", "blueprint-1", {
+      campaign: { entryId: "quest-repeat", linkId: "link-repeat" },
+      forceNew: true
+    });
+    assert.notEqual(forced.sessionId, first.sessionId);
+    assert.equal(forced.reused, false);
     assert.deepEqual(await api.persistence.blueprints.get("blueprint-1"), worldBefore);
 
     api.extensions.forModule("campaign-addon").registerPack({
@@ -137,6 +154,10 @@ test("Campaign runtime starts are independent and never mutate world or Library 
     const libraryStart = await api.integrations.campaignForge.start("library", libraryId, {
       campaign: { entryId: "quest-library", linkId: "link-library" }
     });
+    const libraryOpened = await api.integrations.campaignForge.start("library", libraryId, {
+      campaign: { entryId: "quest-library", linkId: "link-library" }
+    });
+    assert.equal(libraryOpened.sessionId, libraryStart.sessionId);
     assert.equal(libraryStart.session.metadata.libraryOrigin.blueprintId, libraryId);
     assert.deepEqual(api.library.get(libraryId), libraryBefore);
   } finally { env.cleanup(); }
@@ -209,6 +230,29 @@ test("Campaign result lookup is isolated by current external-link provenance and
     const abortedHook = env.hooks.find(call => call.name === CHASE_LIFECYCLE_HOOKS.aborted && call.payload.sessionId === currentRun.sessionId);
     assert.equal(abortedHook.payload.outcome, "aborted");
     assert.equal(abortedHook.payload.terminal, true);
+  } finally { env.cleanup(); }
+});
+
+test("Campaign latest-run status prefers an existing non-terminal link Session over newer terminal history", async () => {
+  const env = installGame();
+  try {
+    const api = createPublicApi({ ui: { async openRunner() {} }, sync: { async publishSession() {} } });
+    await api.persistence.blueprints.create(sampleBlueprint());
+    const original = await api.integrations.campaignForge.start("blueprint", "blueprint-1", {
+      campaign: { entryId: "quest-parallel", linkId: "link-parallel" }
+    });
+    const parallel = await api.integrations.campaignForge.start("blueprint", "blueprint-1", {
+      campaign: { entryId: "quest-parallel", linkId: "link-parallel" },
+      forceNew: true
+    });
+    await api.sessionManager.finishSession(parallel.sessionId, {
+      ended: true, outcome: "goalReached", endingNodeId: "end", winnerGroupIds: [], loserGroupIds: [], reason: "test", details: {}
+    });
+    const latest = await api.integrations.campaignForge.getLatestRun("blueprint", "blueprint-1", {
+      entryId: "quest-parallel", linkId: "link-parallel"
+    });
+    assert.equal(latest.sessionId, original.sessionId);
+    assert.equal(latest.status, "active");
   } finally { env.cleanup(); }
 });
 

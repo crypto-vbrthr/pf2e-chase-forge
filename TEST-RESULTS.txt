@@ -1,12 +1,15 @@
-PF2E Chase Forge 0.1.0-dev.16.7
+PF2E Chase Forge 0.1.0-dev.16.8
 
-Automated test suite: 353/353 passed
-JavaScript syntax check: 88/88 files passed
-Localization parity: DE/EN 555/555 keys
+Automated tests: 354/354 passed
+JavaScript syntax: 88/88 files passed node --check
+Localization: DE/EN 558/558 flattened keys synchronized
+Campaign Integration Contract: v2
+Cross-package Campaign Forge smoke test: PASS
 
-Focused regression coverage in this hotfix:
-- Stable left/right visual branch-lane ordering after relative insertion
-- Empty branch route can be repopulated after deleting its only obstacle
-- Branch-entry ID/label/visibility/type/lane metadata are preserved during repopulation
-- Inline add-obstacle control for empty visual branch lanes
-- Scroll-position capture while extending/repopulating a branch route
+Coverage added in this build:
+- same Campaign entry + external-link id reopens an active Session
+- paused linked Session resumes instead of duplicating
+- forceNew deliberately creates an additional independent Session
+- completed/aborted Sessions remain terminal and are not reused
+- current non-terminal run is preferred over newer terminal history
+- Library source definitions remain immutable
