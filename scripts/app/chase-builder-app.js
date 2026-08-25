@@ -26,9 +26,11 @@ import {
   convertToBranchingBuilder,
   isBranchingBuilderBlueprint,
   isBuilderEditableBlueprint,
+  insertManualCardRelativeToBuilderCard,
   listBranchGroups,
   listEditableCards,
   removeApproachFromBuilderCard,
+  removeBuilderCardByRef,
   removeBranchGroup,
   validateBranchingBuilderBlueprint
 } from "../builder/branching-builder-model.js";
@@ -442,6 +444,8 @@ function getAppClass() {
         refreshBuilder: this._actionRefreshBuilder,
         addManualCard: this._actionAddManualCard,
         addRegisteredCard: this._actionAddRegisteredCard,
+        insertManualCardBefore: this._actionInsertManualCardBefore,
+        insertManualCardAfter: this._actionInsertManualCardAfter,
         moveCardUp: this._actionMoveCardUp,
         moveCardDown: this._actionMoveCardDown,
         removeCard: this._actionRemoveCard,
@@ -739,12 +743,15 @@ function getAppClass() {
         .map(group => ({ ...group, count: group.chases.length }))
         .sort((a, b) => String(a.label).localeCompare(String(b.label)));
 
+      const branchSourceNodeIds = new Set(branchGroups.map(group => group.sourceNodeId).filter(Boolean));
       const cardViews = cards.map(item => ({
         ...item,
         displayIndex: item.index + 1,
         typeLabel: i18n(`PF2E_CHASE_FORGE.CardType.${item.card?.type ?? "obstacle"}`, item.card?.type ?? "obstacle"),
         editable,
         linearEditable,
+        canDelete: editable && (linearEditable || !branchSourceNodeIds.has(item.node?.id)),
+        deleteProtected: editable && !linearEditable && branchSourceNodeIds.has(item.node?.id),
         card: item.card ? {
           ...item.card,
           tagsText: item.card.tags.join(", "),
@@ -1192,6 +1199,39 @@ function getAppClass() {
       return globalThis.confirm?.(i18n("PF2E_CHASE_FORGE.Builder.DeleteConfirm", "Diese vorbereitete Verfolgungsjagd wirklich löschen?")) ?? false;
     }
 
+    async _confirmCardRemoval(cardRef) {
+      const card = listEditableCards(this._draft).find(item => item.ref === cardRef);
+      const name = card?.card?.name ?? card?.node?.label ?? i18n("PF2E_CHASE_FORGE.Builder.Card", "Karte");
+      const message = format(
+        "PF2E_CHASE_FORGE.Builder.RemoveCardConfirm",
+        { name },
+        `Die Karte „${name}“ wirklich aus der Verfolgungsjagd löschen?`
+      );
+      if (DialogV2?.confirm) {
+        return DialogV2.confirm({
+          window: { title: i18n("PF2E_CHASE_FORGE.Builder.RemoveCardTitle", "Karte löschen") },
+          content: `<p>${escapeHtml(message)}</p>`,
+          modal: true
+        });
+      }
+      return globalThis.confirm?.(message) ?? false;
+    }
+
+    async _confirmBranchRemoval() {
+      const message = i18n(
+        "PF2E_CHASE_FORGE.Builder.RemoveBranchConfirm",
+        "Diese Gabelung wirklich löschen? Alle Karten innerhalb ihrer Zweige werden ebenfalls entfernt."
+      );
+      if (DialogV2?.confirm) {
+        return DialogV2.confirm({
+          window: { title: i18n("PF2E_CHASE_FORGE.Builder.RemoveBranchTitle", "Gabelung löschen") },
+          content: `<p>${escapeHtml(message)}</p>`,
+          modal: true
+        });
+      }
+      return globalThis.confirm?.(message) ?? false;
+    }
+
     async _handleDrop(event, explicitZone = null) {
       if (this._libraryBlueprintId) return;
       const zone = explicitZone ?? event.target?.closest?.("[data-participant-drop]");
@@ -1596,6 +1636,7 @@ function getAppClass() {
 
     static async _actionAddManualCard() {
       this._syncDraftFromForm();
+      this._captureScrollPosition();
       const result = isBranchingBuilderBlueprint(this._draft)
         ? appendMainlineManualCard(this._draft)
         : addManualCardToBasicBlueprint(this._draft);
@@ -1606,6 +1647,7 @@ function getAppClass() {
 
     static async _actionAddRegisteredCard() {
       this._syncDraftFromForm();
+      this._captureScrollPosition();
       const select = this.element?.querySelector?.('[name="registeredCard"]');
       const cardId = select?.value;
       if (!cardId) return;
@@ -1627,6 +1669,36 @@ function getAppClass() {
       return this.render({ force: true });
     }
 
+    async _insertManualCardRelative(target, position) {
+      this._syncDraftFromForm();
+      this._captureScrollPosition();
+      const cardRef = target?.dataset?.cardRef ?? this._selectedInspector?.id ?? null;
+      if (!cardRef) return null;
+      const cards = listEditableCards(this._draft);
+      const selected = cards.find(item => item.ref === cardRef);
+      if (!selected) return null;
+      try {
+        const result = isBranchingBuilderBlueprint(this._draft)
+          ? insertManualCardRelativeToBuilderCard(this._draft, cardRef, { position })
+          : addManualCardToBasicBlueprint(this._draft, { index: selected.index + (position === "after" ? 1 : 0) });
+        this._draft = result.blueprint;
+        this._selectedInspector = result.ref ? { type: "card", id: result.ref } : this._selectedInspector;
+        return this.render({ force: true });
+      } catch (error) {
+        console.warn(`${MODULE_ID} | Failed to insert Chase card ${position}.`, error);
+        notify("error", i18n("PF2E_CHASE_FORGE.Builder.InsertCardFailed", "Das Hindernis konnte an dieser Stelle nicht eingefügt werden."));
+        return null;
+      }
+    }
+
+    static async _actionInsertManualCardBefore(_event, target) {
+      return this._insertManualCardRelative(target, "before");
+    }
+
+    static async _actionInsertManualCardAfter(_event, target) {
+      return this._insertManualCardRelative(target, "after");
+    }
+
     static async _actionMoveCardUp(_event, target) {
       this._syncDraftFromForm();
       const index = Number(target.dataset.cardIndex);
@@ -1643,8 +1715,23 @@ function getAppClass() {
 
     static async _actionRemoveCard(_event, target) {
       this._syncDraftFromForm();
+      this._captureScrollPosition();
       const cardRef = target.dataset.cardRef ?? null;
-      this._draft = removeCardFromBasicBlueprint(this._draft, Number(target.dataset.cardIndex));
+      if (!cardRef && !Number.isInteger(Number(target.dataset.cardIndex))) return null;
+      if (!await this._confirmCardRemoval(cardRef)) return null;
+      try {
+        this._draft = isBranchingBuilderBlueprint(this._draft)
+          ? removeBuilderCardByRef(this._draft, cardRef)
+          : removeCardFromBasicBlueprint(this._draft, Number(target.dataset.cardIndex));
+      } catch (error) {
+        if (error?.code === "BRANCH_SOURCE_CARD") {
+          notify("warn", i18n("PF2E_CHASE_FORGE.Builder.RemoveBranchSourceFirst", "Diese Karte erzeugt eine Gabelung. Entferne zuerst die Gabelung, bevor du die Karte löschst."));
+          return null;
+        }
+        console.error(`${MODULE_ID} | Failed to remove Chase card.`, error);
+        notify("error", i18n("PF2E_CHASE_FORGE.Builder.RemoveCardFailed", "Die Karte konnte nicht entfernt werden."));
+        return null;
+      }
       if (cardRef && this._selectedInspector?.type === "card" && this._selectedInspector.id === cardRef) this._selectedInspector = null;
       return this.render({ force: true });
     }
@@ -1697,8 +1784,10 @@ function getAppClass() {
 
     static async _actionRemoveBranchGroup(_event, target) {
       this._syncDraftFromForm();
+      this._captureScrollPosition();
       const branchGroupId = target.dataset.branchGroupId;
       if (!branchGroupId) return;
+      if (!await this._confirmBranchRemoval()) return null;
       const group = listBranchGroups(this._draft).find(candidate => candidate.branchGroupId === branchGroupId);
       const sourceRef = group?.sourceNodeId ? this._draft.graph?.nodes?.find(node => node.id === group.sourceNodeId)?.cardRef ?? null : null;
       this._draft = removeBranchGroup(this._draft, branchGroupId);

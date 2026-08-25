@@ -542,5 +542,16 @@
   "PF2E_CHASE_FORGE.Outcome.aborted": "Die Verfolgungsjagd wurde abgebrochen",
   "PF2E_CHASE_FORGE.Common.Close": "Schließen",
   "PF2E_CHASE_FORGE.Runner.WaitingForQuarry": "Wartet auf die Flüchtigen",
-  "PF2E_CHASE_FORGE.Player.WaitingForQuarry": "Die Flüchtigen handeln zuerst. Bitte kurz warten."
+  "PF2E_CHASE_FORGE.Player.WaitingForQuarry": "Die Flüchtigen handeln zuerst. Bitte kurz warten.",
+  "PF2E_CHASE_FORGE.Builder.RemoveBranchSourceFirst": "Diese Karte erzeugt eine Gabelung. Entferne zuerst die Gabelung, bevor du die Karte löschst.",
+  "PF2E_CHASE_FORGE.Builder.RemoveCardFailed": "Die Karte konnte nicht entfernt werden.",
+  "PF2E_CHASE_FORGE.Builder.InsertCardBefore": "Hindernis davor einfügen",
+  "PF2E_CHASE_FORGE.Builder.InsertCardAfter": "Hindernis dahinter einfügen",
+  "PF2E_CHASE_FORGE.Builder.InsertCardBeforeHint": "Fügt direkt vor diesem Hindernis ein neues Hindernis ein.",
+  "PF2E_CHASE_FORGE.Builder.InsertCardAfterHint": "Fügt direkt hinter diesem Hindernis ein neues Hindernis ein. Bei einer unmittelbar folgenden Gabelung bleibt die Gabelung direkt am auslösenden Hindernis und das neue Hindernis wird hinter der Zusammenführung eingefügt.",
+  "PF2E_CHASE_FORGE.Builder.InsertCardFailed": "Das Hindernis konnte an dieser Stelle nicht eingefügt werden.",
+  "PF2E_CHASE_FORGE.Builder.RemoveCardTitle": "Karte löschen",
+  "PF2E_CHASE_FORGE.Builder.RemoveCardConfirm": "Die Karte „{name}“ wirklich aus der Verfolgungsjagd löschen?",
+  "PF2E_CHASE_FORGE.Builder.RemoveBranchTitle": "Gabelung löschen",
+  "PF2E_CHASE_FORGE.Builder.RemoveBranchConfirm": "Diese Gabelung wirklich löschen? Alle Karten innerhalb ihrer Zweige werden ebenfalls entfernt."
 }

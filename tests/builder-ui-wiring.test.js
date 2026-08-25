@@ -353,3 +353,50 @@ test("GM Runner presents the acting participant's current-round outcome", async 
   assert.match(template, /participant\.lastResult/);
   assert.match(template, /chase-runner-participant-result/);
 });
+
+
+test("Builder exposes branch-aware before/after insertion controls and preserves scroll for route mutations", async () => {
+  const template = await readFile(new URL("../templates/chase-builder.hbs", import.meta.url), "utf8");
+  const source = await readFile(new URL("../scripts/app/chase-builder-app.js", import.meta.url), "utf8");
+  const css = await readFile(new URL("../styles/chase-forge.css", import.meta.url), "utf8");
+  assert.match(template, /data-action="insertManualCardBefore"/);
+  assert.match(template, /data-action="insertManualCardAfter"/);
+  assert.match(source, /insertManualCardRelativeToBuilderCard/);
+  assert.match(source, /_insertManualCardRelative\(target, position\)/);
+  assert.match(source, /addManualCardToBasicBlueprint\(this\._draft, \{ index: selected\.index \+ \(position === "after" \? 1 : 0\) \}\)/);
+  assert.match(css, /\.chase-route-insert-actions/);
+
+  const addManualStart = source.indexOf("static async _actionAddManualCard()");
+  const addManualEnd = source.indexOf("static async _actionAddRegisteredCard()", addManualStart);
+  assert.match(source.slice(addManualStart, addManualEnd), /this\._captureScrollPosition\(\)/);
+  const removeStart = source.indexOf("static async _actionRemoveCard");
+  const removeEnd = source.indexOf("static async _actionAddApproach", removeStart);
+  assert.match(source.slice(removeStart, removeEnd), /this\._captureScrollPosition\(\)/);
+});
+
+test("relative insertion helper is an instance method and destructive route edits require confirmation", async () => {
+  const source = await readFile(new URL("../scripts/app/chase-builder-app.js", import.meta.url), "utf8");
+  const de = JSON.parse(await readFile(new URL("../lang/de.json", import.meta.url), "utf8"));
+  const en = JSON.parse(await readFile(new URL("../lang/en.json", import.meta.url), "utf8"));
+
+  // ApplicationV2 action callbacks are rebound to the application instance. The shared helper
+  // therefore has to live on the instance prototype, not only as a static class method.
+  assert.match(source, /\n\s+async _insertManualCardRelative\(target, position\) \{/);
+  assert.doesNotMatch(source, /static async _insertManualCardRelative\(target, position\)/);
+  assert.match(source, /return this\._insertManualCardRelative\(target, "before"\)/);
+  assert.match(source, /return this\._insertManualCardRelative\(target, "after"\)/);
+
+  const removeCardStart = source.indexOf("static async _actionRemoveCard");
+  const removeCardEnd = source.indexOf("static async _actionAddApproach", removeCardStart);
+  assert.match(source.slice(removeCardStart, removeCardEnd), /await this\._confirmCardRemoval\(cardRef\)/);
+
+  const removeBranchStart = source.indexOf("static async _actionRemoveBranchGroup");
+  const removeBranchEnd = source.indexOf("static async _actionSelectRouteCard", removeBranchStart);
+  assert.match(source.slice(removeBranchStart, removeBranchEnd), /await this\._confirmBranchRemoval\(\)/);
+  assert.match(source.slice(removeBranchStart, removeBranchEnd), /this\._captureScrollPosition\(\)/);
+
+  assert.ok(de["PF2E_CHASE_FORGE.Builder.RemoveCardConfirm"]?.includes("{name}"));
+  assert.ok(en["PF2E_CHASE_FORGE.Builder.RemoveCardConfirm"]?.includes("{name}"));
+  assert.ok(de["PF2E_CHASE_FORGE.Builder.RemoveBranchConfirm"]?.includes("Zweige"));
+  assert.ok(en["PF2E_CHASE_FORGE.Builder.RemoveBranchConfirm"]?.includes("branch routes"));
+});

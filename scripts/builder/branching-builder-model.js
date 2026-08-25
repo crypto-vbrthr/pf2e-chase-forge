@@ -297,6 +297,192 @@ export function removeApproachFromBuilderCard(input, cardRef, approachIndex) {
   });
 }
 
+
+
+/**
+ * Insert a card immediately before or after an existing card in a managed
+ * branching graph. Branch-lane membership and branch-entry/continuation
+ * edge semantics are preserved. If the target card owns a branch, an
+ * "after" insertion is placed after the branch merge so the branch remains
+ * attached directly to the obstacle that triggers it.
+ */
+export function insertCardRelativeToBuilderCard(input, targetCardRef, card, { position = "after", originCardRef = null } = {}) {
+  const blueprint = createChaseBlueprint(input);
+  if (!isBranchingBuilderBlueprint(blueprint)) throw new Error("Relative card insertion requires a Branching Builder Blueprint.");
+  if (!["before", "after"].includes(position)) throw new Error(`Unsupported relative insertion position '${position}'.`);
+
+  const next = cloneData(blueprint);
+  const targetNode = next.graph.nodes.find(node => node.type === "card" && node.cardRef === targetCardRef);
+  if (!targetNode) throw new Error("Unknown Chase card for relative insertion.");
+
+  const branchGroupId = targetNode.metadata?.branchGroupId ?? null;
+  const branchLane = targetNode.metadata?.branchLane ?? null;
+  const nodeId = createId("node-card");
+  const record = createCardRecord(next, card, { originCardRef, nodeId, branchGroupId });
+  const nodeMetadata = branchGroupId ? { branchGroupId, branchLane } : {};
+  const newNode = createChaseNode({
+    id: nodeId,
+    type: "card",
+    label: record.data.name,
+    description: record.data.description ?? "",
+    cardRef: record.ref,
+    metadata: nodeMetadata
+  });
+
+  const copyEdge = (edge, { id = edge.id, from = edge.from, to = edge.to, metadata = edge.metadata } = {}) => createChaseEdge({
+    id, from, to,
+    type: edge.type,
+    visibility: edge.visibility,
+    label: edge.label,
+    description: edge.description,
+    conditions: edge.conditions,
+    metadata: cloneData(metadata ?? {})
+  });
+  const laneMetadata = branchGroupId ? { branchGroupId, branchLane } : {};
+
+  next.contentSnapshots.cards.push(record);
+  next.graph.nodes.push(newNode);
+
+  if (position === "before") {
+    const incoming = next.graph.edges.filter(edge => edge.to === targetNode.id);
+    if (incoming.length !== 1) throw new Error("The Builder cannot determine a unique route immediately before this card.");
+    const edge = incoming[0];
+    next.graph.edges = next.graph.edges.filter(candidate => candidate.id !== edge.id);
+    next.graph.edges.push(
+      copyEdge(edge, { to: nodeId }),
+      createChaseEdge({ id: createId("edge"), from: nodeId, to: targetNode.id, type: "normal", visibility: "public", metadata: laneMetadata })
+    );
+    const incomingMerge = next.graph.nodes.find(candidate => candidate.id === edge.from && candidate.type === "merge");
+    if (incomingMerge?.metadata?.continuationNodeId === targetNode.id) incomingMerge.metadata.continuationNodeId = nodeId;
+  } else {
+    // A mainline card that owns a branch must continue to own that branch.
+    // Therefore "after" means after the complete split/merge block rather
+    // than re-anchoring the decision to the newly inserted obstacle.
+    const ownedMerge = next.graph.nodes.find(node =>
+      node.type === "merge"
+      && node.metadata?.sourceNodeId === targetNode.id
+      && node.metadata?.branchGroupId
+    );
+    if (ownedMerge) {
+      const outgoing = next.graph.edges.filter(edge => edge.from === ownedMerge.id);
+      if (outgoing.length !== 1) throw new Error("The Builder cannot determine a unique continuation after this branch.");
+      const edge = outgoing[0];
+      next.graph.edges = next.graph.edges.filter(candidate => candidate.id !== edge.id);
+      next.graph.edges.push(
+        copyEdge(edge, { to: nodeId }),
+        createChaseEdge({ id: createId("edge"), from: nodeId, to: edge.to, type: "normal", visibility: "public" })
+      );
+      ownedMerge.metadata ??= {};
+      ownedMerge.metadata.continuationNodeId = nodeId;
+    } else {
+      const outgoing = next.graph.edges.filter(edge => edge.from === targetNode.id);
+      if (outgoing.length !== 1) throw new Error("The Builder cannot determine a unique route immediately after this card.");
+      const edge = outgoing[0];
+      next.graph.edges = next.graph.edges.filter(candidate => candidate.id !== edge.id);
+      next.graph.edges.push(
+        createChaseEdge({ id: createId("edge"), from: targetNode.id, to: nodeId, type: "normal", visibility: "public", metadata: laneMetadata }),
+        copyEdge(edge, { from: nodeId })
+      );
+    }
+  }
+
+  next.updatedAt = nowIso();
+  return { blueprint: createChaseBlueprint(next), ref: record.ref, nodeId };
+}
+
+export function insertManualCardRelativeToBuilderCard(input, targetCardRef, { position = "after", name = "Neues Hindernis", requiredPoints = null } = {}) {
+  const blueprint = createChaseBlueprint(input);
+  const largestGroup = Math.max(1, ...(blueprint.groups ?? []).map(group => group.participants?.length ?? 0));
+  const points = requiredPoints ?? Math.max(1, largestGroup - 1);
+  return insertCardRelativeToBuilderCard(blueprint, targetCardRef, createManualChaseCard({ requiredPoints: points, name }), { position });
+}
+
+export function removeBuilderCardByRef(input, cardRef) {
+  const blueprint = createChaseBlueprint(input);
+  if (isBasicLinearBlueprint(blueprint)) {
+    const cards = listEditableCards(blueprint);
+    const index = cards.findIndex(item => item.ref === cardRef);
+    if (index < 0) return blueprint;
+    const next = cloneData(blueprint);
+    const records = [...(next.contentSnapshots?.cards ?? [])];
+    const recordIndex = records.findIndex(record => record.ref === cardRef);
+    if (recordIndex >= 0) records.splice(recordIndex, 1);
+    next.contentSnapshots.cards = records;
+    // Rebuild the simple linear graph without importing the basic helper and
+    // creating a circular module dependency. The caller normally uses the
+    // Basic Builder helper for linear blueprints; this branch is defensive.
+    const start = next.graph.nodes.find(node => node.id === next.graph.startNodeId);
+    const endIds = new Set(next.graph.endNodeIds ?? []);
+    const end = next.graph.nodes.find(node => endIds.has(node.id) && node.type === "end");
+    if (!start || !end) return blueprint;
+    const snapshots = new Map(records.map(record => [record.ref, record]));
+    const cardNodes = cards.filter(item => item.ref !== cardRef).map(item => {
+      const node = cloneData(item.node);
+      const record = snapshots.get(item.ref);
+      if (record?.data) {
+        node.label = record.data.name;
+        node.description = record.data.description ?? "";
+      }
+      return node;
+    });
+    next.graph.nodes = [cloneData(start), ...cardNodes, cloneData(end)];
+    next.graph.edges = [];
+    let priorId = start.id;
+    for (const node of cardNodes) {
+      next.graph.edges.push(createChaseEdge({ id: createId("edge"), from: priorId, to: node.id, type: "normal", visibility: "public" }));
+      priorId = node.id;
+    }
+    next.graph.edges.push(createChaseEdge({ id: createId("edge"), from: priorId, to: end.id, type: "normal", visibility: "public" }));
+    next.updatedAt = nowIso();
+    return createChaseBlueprint(next);
+  }
+  if (!isBranchingBuilderBlueprint(blueprint)) throw new Error("The Blueprint is not editable by the Chase Builder.");
+
+  const next = cloneData(blueprint);
+  const node = next.graph.nodes.find(candidate => candidate.type === "card" && candidate.cardRef === cardRef);
+  if (!node) return blueprint;
+
+  const isBranchSource = next.graph.nodes.some(candidate =>
+    candidate.type === "merge"
+    && candidate.metadata?.sourceNodeId === node.id
+    && candidate.metadata?.branchGroupId
+  );
+  if (isBranchSource) {
+    const error = new Error("A card that owns a branch cannot be removed until the branch is removed.");
+    error.code = "BRANCH_SOURCE_CARD";
+    throw error;
+  }
+
+  const incoming = next.graph.edges.filter(edge => edge.to === node.id);
+  const outgoing = next.graph.edges.filter(edge => edge.from === node.id);
+  if (incoming.length !== 1 || outgoing.length !== 1) {
+    const error = new Error("The Builder cannot safely reconnect this card's route edges.");
+    error.code = "CARD_ROUTE_AMBIGUOUS";
+    throw error;
+  }
+
+  const inEdge = incoming[0];
+  const outEdge = outgoing[0];
+  const reconnect = createChaseEdge({
+    id: inEdge.id,
+    from: inEdge.from,
+    to: outEdge.to,
+    type: inEdge.metadata?.branchEntry ? inEdge.type : outEdge.type,
+    visibility: inEdge.metadata?.branchEntry ? inEdge.visibility : outEdge.visibility,
+    label: inEdge.metadata?.branchEntry ? inEdge.label : outEdge.label,
+    description: inEdge.metadata?.branchEntry ? inEdge.description : outEdge.description,
+    conditions: inEdge.metadata?.branchEntry ? inEdge.conditions : outEdge.conditions,
+    metadata: { ...(outEdge.metadata ?? {}), ...(inEdge.metadata ?? {}) }
+  });
+
+  next.graph.nodes = next.graph.nodes.filter(candidate => candidate.id !== node.id);
+  next.graph.edges = next.graph.edges.filter(edge => edge.id !== inEdge.id && edge.id !== outEdge.id);
+  next.graph.edges.push(reconnect);
+  next.contentSnapshots.cards = (next.contentSnapshots?.cards ?? []).filter(record => record.ref !== cardRef);
+  next.updatedAt = nowIso();
+  return createChaseBlueprint(next);
+}
+
 export function removeBranchGroup(input, branchGroupId) {
   const blueprint = createChaseBlueprint(input);
   if (!isBranchingBuilderBlueprint(blueprint)) throw new Error("The Blueprint is not editable by the Branching Builder.");

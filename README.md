@@ -1,10 +1,10 @@
 # PF2E Chase Forge
 
-**Version:** 0.1.0-dev.16  
+**Version:** 0.1.0-dev.16.6  
 **Foundry VTT:** 14  
 **System:** Pathfinder 2e
 
-PF2E Chase Forge is a modular Pathfinder 2e chase framework for Foundry VTT. `0.1.0-dev.16` hardens the Campaign Forge runtime workflow so linked chases remain traceable across start, completion, abort, relinking, and missing-target cases without transferring ownership of Chase data.
+PF2E Chase Forge is a modular Pathfinder 2e chase framework for Foundry VTT. `0.1.0-dev.16.6` builds on the Campaign Forge runtime workflow so linked chases remain traceable across start, completion, abort, relinking, and missing-target cases without transferring ownership of Chase data.
 
 The underlying architecture remains intact: DAG route graphs, synchronized GM/Player runtime views, add-on registries, template-based generation, the 72-card Core Library, the shared Visual System, PF2e chase rules, consequence orchestration, optional Critical Forge / Effect Forge integration, Weather Forge prefill, and protected restart-safe Blueprint/Session persistence.
 

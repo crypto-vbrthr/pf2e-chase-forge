@@ -1,3 +1,28 @@
+## 0.1.0-dev.16.6 – Relative Insertion Runtime & Destructive Edit Confirmation Hotfix
+
+- Fixed the Builder runtime error `this._insertManualCardRelative is not a function` when using **insert before** or **insert after**. ApplicationV2 action callbacks run with the app instance as `this`, so the shared relative-insertion helper now correctly lives on the instance prototype.
+- Added explicit confirmation dialogs before deleting an obstacle card. The confirmation names the affected card where available.
+- Added an explicit confirmation dialog before deleting a branch and warns that all cards contained in its branch routes are removed with it.
+- Branch deletion now also preserves the Builder's independent scroll positions.
+- Added regression coverage for the ApplicationV2 action-binding failure and destructive route-edit confirmations.
+
+## 0.1.0-dev.16.5 – Relative Card Insertion & Scroll Position Hotfix
+
+- Adds explicit **insert before** and **insert after** controls to the selected route-card inspector.
+- Supports relative insertion on linear mainlines, inside branch lanes, directly before branch-lane cards, and around branch continuations.
+- If a card owns a branch, inserting after it places the new obstacle after the branch merge so the branch remains directly attached to the obstacle that triggers it.
+- Preserves branch-entry labels/visibility and merge-continuation metadata while inserting cards.
+- Adding manual/registered obstacles, inserting relative obstacles, and deleting obstacles now preserve both independent Builder pane scroll positions instead of jumping to the top.
+- Adds regression coverage for branch-aware insertion, branch removal after insertion, UI wiring, and scroll-position capture.
+
+## 0.1.0-dev.16.4 – Branch Card Deletion Hotfix
+
+- Restored the delete control for editable cards while a chase uses branching routes.
+- Branch-lane cards can now be removed safely, including the first or last card of a route; the route edges are reconnected automatically.
+- Ordinary mainline cards in a branching chase can also be removed safely.
+- Cards that currently own a branch show a disabled delete control with a clear tooltip; remove the branch block first, then the source card.
+- Added regression coverage for branch-card deletion and graph validity.
+
 ## 0.1.0-dev.16.3 – Quarry-First Turn Order & Builder Unicode Hotfix
 
 - Enforces the PF2e chase rule that the quarry acts before pursuers during each pursuit/escape round.

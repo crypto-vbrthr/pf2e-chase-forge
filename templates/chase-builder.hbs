@@ -554,11 +554,22 @@
                         {{#if selectedCard.linearEditable}}
                           <button type="button" class="icon" data-action="moveCardUp" data-card-index="{{selectedCard.index}}" data-card-ref="{{selectedCard.ref}}" {{#if selectedCard.first}}disabled{{/if}} title="{{localize 'PF2E_CHASE_FORGE.Builder.MoveUp'}}"><i class="fa-solid fa-arrow-up"></i></button>
                           <button type="button" class="icon" data-action="moveCardDown" data-card-index="{{selectedCard.index}}" data-card-ref="{{selectedCard.ref}}" {{#if selectedCard.last}}disabled{{/if}} title="{{localize 'PF2E_CHASE_FORGE.Builder.MoveDown'}}"><i class="fa-solid fa-arrow-down"></i></button>
-                          <button type="button" class="icon danger" data-action="removeCard" data-card-index="{{selectedCard.index}}" data-card-ref="{{selectedCard.ref}}" title="{{localize 'PF2E_CHASE_FORGE.Builder.RemoveCard'}}"><i class="fa-solid fa-trash"></i></button>
                         {{/if}}
+                        <button type="button" class="icon danger" data-action="removeCard" data-card-index="{{selectedCard.index}}" data-card-ref="{{selectedCard.ref}}" {{#unless selectedCard.canDelete}}disabled{{/unless}} title="{{#if selectedCard.deleteProtected}}{{localize 'PF2E_CHASE_FORGE.Builder.RemoveBranchSourceFirst'}}{{else}}{{localize 'PF2E_CHASE_FORGE.Builder.RemoveCard'}}{{/if}}"><i class="fa-solid fa-trash"></i></button>
                       </div>
                     {{/if}}
                   </div>
+
+                  {{#if selectedCard.editable}}
+                    <div class="chase-route-insert-actions">
+                      <button type="button" data-action="insertManualCardBefore" data-card-ref="{{selectedCard.ref}}" title="{{localize 'PF2E_CHASE_FORGE.Builder.InsertCardBeforeHint'}}">
+                        <i class="fa-solid fa-plus"></i><i class="fa-solid fa-arrow-up"></i> {{localize "PF2E_CHASE_FORGE.Builder.InsertCardBefore"}}
+                      </button>
+                      <button type="button" data-action="insertManualCardAfter" data-card-ref="{{selectedCard.ref}}" title="{{localize 'PF2E_CHASE_FORGE.Builder.InsertCardAfterHint'}}">
+                        <i class="fa-solid fa-plus"></i><i class="fa-solid fa-arrow-down"></i> {{localize "PF2E_CHASE_FORGE.Builder.InsertCardAfter"}}
+                      </button>
+                    </div>
+                  {{/if}}
 
                   {{#if selectedCard.card.imagePreviewPath}}
                     <div class="chase-route-inspector-preview">

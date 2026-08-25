@@ -1,12 +1,12 @@
-PF2E Chase Forge 0.1.0-dev.16.3
+PF2E Chase Forge 0.1.0-dev.16.6
 
-Automated test suite: 340/340 passed
-JavaScript syntax check: passed for all packaged .js files
-Localization parity: de/en 544/544 keys
+Automated test suite: 350/350 passed
+JavaScript syntax check: 88/88 files passed
+Localization parity: DE/EN 555/555 keys
 
-Focused regression coverage includes:
-- PF2e quarry-first pursuit/escape turn order
-- steady quarry movement at round start
-- rules-engine blocking of premature pursuer actions
-- GM/Player waiting-state UI wiring
-- German Unicode-safe Builder inspector headings
+Focused regression coverage in this hotfix:
+- ApplicationV2 relative-card insertion action binding
+- Insert-before / insert-after helper availability on the Builder instance
+- Card deletion confirmation
+- Branch deletion confirmation and destructive-content warning
+- Scroll-position capture during branch deletion

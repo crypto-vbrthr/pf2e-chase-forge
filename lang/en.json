@@ -542,5 +542,16 @@
   "PF2E_CHASE_FORGE.Outcome.aborted": "The chase was aborted",
   "PF2E_CHASE_FORGE.Common.Close": "Close",
   "PF2E_CHASE_FORGE.Runner.WaitingForQuarry": "Waiting for the quarry",
-  "PF2E_CHASE_FORGE.Player.WaitingForQuarry": "The quarry acts first. Please wait."
+  "PF2E_CHASE_FORGE.Player.WaitingForQuarry": "The quarry acts first. Please wait.",
+  "PF2E_CHASE_FORGE.Builder.RemoveBranchSourceFirst": "This card owns a branch. Remove the branch first before deleting the card.",
+  "PF2E_CHASE_FORGE.Builder.RemoveCardFailed": "The card could not be removed.",
+  "PF2E_CHASE_FORGE.Builder.InsertCardBefore": "Insert obstacle before",
+  "PF2E_CHASE_FORGE.Builder.InsertCardAfter": "Insert obstacle after",
+  "PF2E_CHASE_FORGE.Builder.InsertCardBeforeHint": "Insert a new obstacle directly before this obstacle.",
+  "PF2E_CHASE_FORGE.Builder.InsertCardAfterHint": "Insert a new obstacle directly after this obstacle. If the obstacle immediately owns a branch, the branch stays attached to its triggering obstacle and the new obstacle is inserted after the merge.",
+  "PF2E_CHASE_FORGE.Builder.InsertCardFailed": "The obstacle could not be inserted at this position.",
+  "PF2E_CHASE_FORGE.Builder.RemoveCardTitle": "Delete card",
+  "PF2E_CHASE_FORGE.Builder.RemoveCardConfirm": "Really remove the card “{name}” from this chase?",
+  "PF2E_CHASE_FORGE.Builder.RemoveBranchTitle": "Delete branch",
+  "PF2E_CHASE_FORGE.Builder.RemoveBranchConfirm": "Really delete this branch? All cards within its branch routes will also be removed."
 }
