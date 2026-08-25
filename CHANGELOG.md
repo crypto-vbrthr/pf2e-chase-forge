@@ -1,3 +1,11 @@
+## 0.1.0-rc.1 – Release Candidate & Final Integration Review
+
+- Promotes the validated dev.17.4 code line to the first release candidate after a complete Builder → Session → GM/Player runtime → branching → completion/abort → Campaign Forge continuation review.
+- Re-ran the complete Chase Forge and Campaign Forge automated suites, JavaScript syntax validation, localization parity checks, and package-level verification.
+- Confirmed race initiative, quarry-first pursuit order, group-aware Chase Point scaling, steady pacing, route branching/editing, ending visuals, image popouts, consequence integration, protected persistence, and Campaign Forge Contract v2 continuation/force-new behavior remain compatible.
+- Keeps public API v17, all persisted schema versions, Extension Contract v1, Session Lifecycle Contract v1, and Campaign Forge Integration Contract v2 unchanged.
+- No migration is required from dev.17.x.
+
 ## 0.1.0-dev.17.4 – Point Scaling Controls & Skill Modifier Display
 
 - Replaced the ambiguous “points may scale later” checkbox in the card inspector with an explicit Chase Point Scaling selector: fixed, group size − 1, or group size − 2.

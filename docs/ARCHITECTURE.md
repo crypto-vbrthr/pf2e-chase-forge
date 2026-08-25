@@ -2,7 +2,7 @@
 
 ## Baseline
 
-Version `0.1.0-dev.17.4` keeps the layered Chase architecture while completing final PF2e rules/runtime hardening. UI, transport, persistence, route traversal, PF2e rules, consequences, Journal integration, Campaign Forge integration, and optional Forge Suite bridges remain separate layers. The synchronized GM/Player runtime surfaces remain authoritative for route choices, race initiative, and group-aware Chase Point requirements. Builder ApplicationV2 renders additionally re-assert editability after runtime lifecycle refreshes so stale DOM `disabled` state cannot leak from a prior read-only render.
+Version `0.1.0-rc.1` keeps the layered Chase architecture while completing final PF2e rules/runtime hardening. UI, transport, persistence, route traversal, PF2e rules, consequences, Journal integration, Campaign Forge integration, and optional Forge Suite bridges remain separate layers. The synchronized GM/Player runtime surfaces remain authoritative for route choices, race initiative, and group-aware Chase Point requirements. Builder ApplicationV2 renders additionally re-assert editability after runtime lifecycle refreshes so stale DOM `disabled` state cannot leak from a prior read-only render.
 
 ```text
 External Chase Add-ons
