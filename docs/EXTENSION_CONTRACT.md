@@ -85,6 +85,11 @@ extension.registerPack({
 
 If the pack omits `version`, the controller's extension version is inherited.
 
+## Generator templates (dev.11)
+
+Templates registered in `templates` are executable by `forge.generator`. Add-ons can use the existing `filters` block to restrict/prefer cards and the `generator` block to control card count, branch count, duplicate policy, route labels, and localized fallback-card naming. No new extension contract version is required because these payloads were already open template fields. See `GENERATOR.md`.
+
+
 ## Namespaces
 
 An extension may use local ids:
@@ -150,6 +155,10 @@ persistence.sessions
 persistence.jsonTransfer
 persistence.contentSnapshots
 builder.basic
+builder.branching
+generator.templates
+generator.seededSelection
+generator.fallbackCards
 ```
 
 Version expressions support exact values and `>`, `>=`, `<`, `<=`, `^`, and `~`.

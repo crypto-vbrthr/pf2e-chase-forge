@@ -1,5 +1,30 @@
 # Changelog
 
+## 0.1.0-dev.11.1 – Generator Localization Hotfix
+
+- Core generator template names and descriptions are now localized lazily at display/use time instead of being frozen during Foundry's `init` hook.
+- Generated placeholder card names now use the active language as well.
+- Builder skill selectors now prefer PF2e's localized skill labels and fall back to Chase Forge's own DE/EN skill translations, including Perception.
+- Core template-pack source labels are localized in the Builder.
+- Added regression coverage for late template localization and localized skill labels.
+
+## 0.1.0-dev.11 – Generator & Templates
+
+- Adds Generator Contract v1 and raises the public API to version 12 without changing persisted schema versions.
+- Registers five built-in structural Core templates: Classic Pursuit, Branching Pursuit, Escape, Against the Clock, and Race.
+- Adds a Builder **Generator & Templates** panel with template selection, route generation, and seeded regeneration.
+- Treats templates as normal registered Chase Pack content, so add-ons can contribute their own generator presets and card pools.
+- Filters candidate cards by card type, level range, required/excluded tags, and optional hard environment/tone requirements.
+- Scores eligible cards using preferred tags plus current environment, tone, movement, and time-of-day context.
+- Adds deterministic weighted card selection when a seed is supplied and avoids duplicate cards by default.
+- Creates editable placeholder obstacles when the active card pool cannot fill the requested route, allowing templates to remain usable before the large Core Card Library is added.
+- Generates managed split → branch lanes → merge graphs for branching templates and preserves the requested obstacle count along every complete route path.
+- Supports up to two sequential managed branch blocks for `highlyBranched` generation while keeping nested branch-lane editing out of the current Builder contract.
+- Preserves a world Blueprint's id, participants, name, GM notes, image/tags, and environment context when regenerating its route.
+- Records generator provenance, seed, template source, candidate count, registered-card count, fallback count, and generation context in `metadata.generator`.
+- Displays generation statistics and warns visibly when placeholder cards were required.
+- Adds `docs/GENERATOR.md` and automated coverage for Core template registration, contextual filtering, seeded selection, fallback generation, branch path length, Blueprint identity/participant preservation, public API, and Builder controls.
+
 ## 0.1.0-dev.10.2 – Visual Route Diagram & Card Inspector
 
 - Replaces the long expanded route-card stack with a compact activity-diagram style route view.

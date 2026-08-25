@@ -7,6 +7,7 @@ import { createChaseBuilderUiService, registerChaseBuilderSceneControls } from "
 import { createChaseRunnerUiService } from "./app/chase-runner-app.js";
 import { createChasePlayerUiService } from "./app/chase-player-app.js";
 import { createChaseSessionSyncService } from "./sync/chase-session-sync.js";
+import { createCoreTemplatePack } from "./content/core-templates.js";
 
 let registryService = null;
 let builderUi = null;
@@ -41,6 +42,8 @@ function startSessionSyncWithRetry() {
 Hooks.once("init", () => {
   registerSettings();
   registryService = createRegistryService({ stateStore: new FoundryPackStateStore() });
+  try { registryService.registerPack(MODULE_ID, createCoreTemplatePack()); }
+  catch (error) { console.error(`${MODULE_ID} | Failed to register Core Chase templates.`, error); }
   builderUi = createChaseBuilderUiService();
   runnerUi = createChaseRunnerUiService();
   playerUi = createChasePlayerUiService();
@@ -57,7 +60,7 @@ Hooks.once("init", () => {
     const api = game.modules.get(MODULE_ID)?.api ?? null;
     Promise.resolve(api?.sync?.publishActiveSessions?.()).catch(error => console.warn(`${MODULE_ID} | Failed to sync active Chases to connected player.`, error));
   });
-  console.info(`${MODULE_ID} | ${MODULE_VERSION} GM/Player Chase views, session sync, Chat workflow, Basic Builder, and protected persistence initialized.`);
+  console.info(`${MODULE_ID} | ${MODULE_VERSION} Generator/Templates, visual Builder, GM/Player Chase views, session sync, Chat workflow, and protected persistence initialized.`);
 });
 
 Hooks.once("ready", async () => {

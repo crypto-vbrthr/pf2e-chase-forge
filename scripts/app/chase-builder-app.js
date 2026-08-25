@@ -91,11 +91,26 @@ const SKILLS = [
   "stealth", "survival", "thievery"
 ];
 
-function skillLabel(slug) {
-  const key = `PF2E.Skill.${slug}`;
-  const translated = i18n(key, "");
-  if (translated && translated !== key) return translated;
+export function skillLabel(slug) {
+  const entry = globalThis.CONFIG?.PF2E?.skills?.[slug] ?? globalThis.CONFIG?.PF2E?.skillList?.[slug] ?? null;
+  const configuredKey = typeof entry === "string" ? entry : (entry?.label ?? entry?.name ?? null);
+  const candidates = [
+    configuredKey,
+    `PF2E_CHASE_FORGE.Skill.${slug}`,
+    `PF2E.Skill.${slug.charAt(0).toUpperCase()}${slug.slice(1)}`,
+    `PF2E.Skill.${slug}`
+  ].filter(Boolean);
+  for (const key of candidates) {
+    const translated = i18n(key, "");
+    if (translated && translated !== key) return translated;
+  }
   return slug.charAt(0).toUpperCase() + slug.slice(1);
+}
+
+function packLabel(pack, fallback = "") {
+  if (!pack) return fallback;
+  const key = pack.metadata?.i18n?.label ?? null;
+  return key ? i18n(key, pack.label ?? fallback) : (pack.label ?? fallback);
 }
 
 function resolveOwnerUserIds(actor) {
@@ -443,7 +458,9 @@ function getAppClass() {
         appendBranchCard: this._actionAppendBranchCard,
         removeBranchGroup: this._actionRemoveBranchGroup,
         selectRouteCard: this._actionSelectRouteCard,
-        selectBranchGroup: this._actionSelectBranchGroup
+        selectBranchGroup: this._actionSelectBranchGroup,
+        generateFromTemplate: this._actionGenerateFromTemplate,
+        rerollGeneratedRoute: this._actionRerollGeneratedRoute
       }
     };
 
@@ -468,6 +485,7 @@ function getAppClass() {
       this._pendingScrollTop = null;
       this._dropBoundElement = null;
       this._participantDropHandlers = null;
+      this._generatorTemplateId = null;
     }
 
     get draft() { return cloneData(this._draft); }
@@ -480,6 +498,7 @@ function getAppClass() {
       this._libraryBlueprintId = null;
       this._lastValidation = null;
       this._selectedInspector = null;
+      this._generatorTemplateId = this._draft.metadata?.generator?.templateId ?? null;
       await this.render({ force: true });
       return this.draft;
     }
@@ -492,6 +511,7 @@ function getAppClass() {
       this._libraryBlueprintId = blueprint.id;
       this._lastValidation = null;
       this._selectedInspector = null;
+      this._generatorTemplateId = null;
       await this.render({ force: true });
       return this.draft;
     }
@@ -573,6 +593,7 @@ function getAppClass() {
       this._libraryBlueprintId = null;
       this._lastValidation = null;
       this._selectedInspector = null;
+      this._generatorTemplateId = null;
       await this._applyWeatherForgePrefill({ onlyUnset: true, notifyUser: false });
       return this._draft;
     }
@@ -592,6 +613,35 @@ function getAppClass() {
       const cards = builderSupported ? listEditableCards(this._draft) : [];
       const branchGroups = branchingEditable ? listBranchGroups(this._draft) : [];
       const registeredCards = this.chaseApi.cards.list({ includeDisabled: false }) ?? [];
+      const generatorTemplates = this.chaseApi.generator?.listTemplates?.({ includeDisabled: false }) ?? [];
+      if (!this._generatorTemplateId || !generatorTemplates.some(template => template.id === this._generatorTemplateId)) {
+        this._generatorTemplateId = this._draft.metadata?.generator?.templateId ?? generatorTemplates[0]?.id ?? null;
+      }
+      const generatorTemplateViews = generatorTemplates
+        .map(template => {
+          const pack = template.source?.packId ? this.chaseApi.packs?.get?.(template.source.packId) : null;
+          return {
+            id: template.id,
+            name: template.name,
+            description: template.description,
+            chaseType: template.settings?.chaseType ?? "pursuit",
+            chaseTypeLabel: i18n(`PF2E_CHASE_FORGE.ChaseType.${template.settings?.chaseType ?? "pursuit"}`, template.settings?.chaseType ?? "pursuit"),
+            length: template.settings?.length ?? "medium",
+            lengthLabel: i18n(`PF2E_CHASE_FORGE.Length.${template.settings?.length ?? "medium"}`, template.settings?.length ?? "medium"),
+            routeComplexity: template.settings?.routeComplexity ?? "linear",
+            sourceLabel: packLabel(pack, template.source?.moduleId ?? i18n("PF2E_CHASE_FORGE.Generator.UnknownSource", "Unbekannte Quelle")),
+            sourcePackId: template.source?.packId ?? template.source?.moduleId ?? "templates",
+            selected: template.id === this._generatorTemplateId
+          };
+        })
+        .sort((a, b) => String(a.sourceLabel).localeCompare(String(b.sourceLabel)) || String(a.name).localeCompare(String(b.name)));
+      const generatorTemplateGroupMap = new Map();
+      for (const template of generatorTemplateViews) {
+        if (!generatorTemplateGroupMap.has(template.sourcePackId)) generatorTemplateGroupMap.set(template.sourcePackId, { id: template.sourcePackId, label: template.sourceLabel, templates: [] });
+        generatorTemplateGroupMap.get(template.sourcePackId).templates.push(template);
+      }
+      const generatorTemplateGroups = [...generatorTemplateGroupMap.values()].sort((a, b) => String(a.label).localeCompare(String(b.label)));
+      const generationMeta = this._draft.metadata?.generator ?? null;
       const validation = linearEditable
         ? validateBasicBuilderBlueprint(this._draft)
         : (branchingEditable ? validateBranchingBuilderBlueprint(this._draft) : this.chaseApi.validation.blueprint(this._draft));
@@ -728,6 +778,16 @@ function getAppClass() {
         hasOpenableSessions: openableSessions.length > 0,
         registeredCards: registeredCards.map(card => ({ id: card.id, name: card.name, type: card.type, source: card.source?.moduleId ?? "" })),
         hasRegisteredCards: registeredCards.length > 0,
+        generatorTemplateGroups,
+        hasGeneratorTemplates: generatorTemplateViews.length > 0,
+        selectedGeneratorTemplateId: this._generatorTemplateId,
+        generationMeta: generationMeta ? {
+          ...cloneData(generationMeta),
+          hasFallbacks: Number(generationMeta.fallbackCards ?? 0) > 0,
+          templateName: generatorTemplateViews.find(template => template.id === generationMeta.templateId)?.name ?? generationMeta.templateId ?? "",
+          generatedCardCount: Number(generationMeta.selectedRegisteredCards ?? 0) + Number(generationMeta.fallbackCards ?? 0)
+        } : null,
+        generated: Boolean(generationMeta),
         validation,
         validationErrors: validation.errors,
         validationWarnings: validation.warnings,
@@ -1165,6 +1225,100 @@ function getAppClass() {
     }
 
     static async _actionRefreshBuilder() { return this.render({ force: true }); }
+
+    async _confirmGenerateRoute() {
+      const cardCount = isBuilderEditableBlueprint(this._draft) ? listEditableCards(this._draft).length : 0;
+      if (cardCount === 0) return true;
+      const message = i18n("PF2E_CHASE_FORGE.Generator.ReplaceRouteConfirm", "Die vorhandene Route wird durch die neu generierte Route ersetzt. Fortfahren?");
+      if (DialogV2?.confirm) {
+        return DialogV2.confirm({
+          window: { title: i18n("PF2E_CHASE_FORGE.Generator.ReplaceRouteTitle", "Route neu generieren") },
+          content: `<p>${escapeHtml(message)}</p>`,
+          modal: true
+        });
+      }
+      return globalThis.confirm?.(message) ?? false;
+    }
+
+    _generatorOptionsFromDraft() {
+      const draft = this._draft;
+      return {
+        sourceBlueprint: draft,
+        name: draft.name,
+        description: draft.description,
+        gmNotes: draft.gmNotes,
+        partyLevel: draft.settings?.partyLevel,
+        environmentTags: draft.settings?.environmentTags?.length ? draft.settings.environmentTags : undefined,
+        toneTags: draft.settings?.toneTags?.length ? draft.settings.toneTags : undefined,
+        movementModes: draft.settings?.movementModes?.length ? draft.settings.movementModes : undefined,
+        timeOfDay: draft.settings?.timeOfDay ?? undefined,
+        weather: draft.settings?.weather ?? undefined,
+        tags: draft.tags,
+        image: draft.image,
+        actionLevel: draft.metadata?.builder?.actionLevel,
+        humorLevel: draft.metadata?.builder?.humorLevel
+      };
+    }
+
+    _notifyGeneration(report = {}) {
+      const registered = Number(report.selectedRegisteredCards ?? 0);
+      const fallback = Number(report.fallbackCards ?? 0);
+      const branches = Number(report.branchCount ?? 0);
+      notify(fallback > 0 ? "warn" : "info", format(
+        fallback > 0 ? "PF2E_CHASE_FORGE.Generator.GeneratedWithFallbacks" : "PF2E_CHASE_FORGE.Generator.Generated",
+        { cards: registered, fallbacks: fallback, branches },
+        fallback > 0
+          ? `Route generiert: ${registered} Bibliothekskarten, ${fallback} Platzhalter, ${branches} Gabelungen.`
+          : `Route generiert: ${registered} Bibliothekskarten, ${branches} Gabelungen.`
+      ));
+    }
+
+    static async _actionGenerateFromTemplate() {
+      if (this._libraryBlueprintId) return null;
+      this._syncDraftFromForm();
+      const select = this.element?.querySelector?.('[name="generatorTemplate"]');
+      const templateId = select?.value || this._generatorTemplateId;
+      if (!templateId) {
+        notify("warn", i18n("PF2E_CHASE_FORGE.Generator.NoTemplate", "Es ist keine Generatorvorlage verfügbar."));
+        return null;
+      }
+      if (!await this._confirmGenerateRoute()) return null;
+      try {
+        this._generatorTemplateId = templateId;
+        const result = this.chaseApi.generator.generate(templateId, this._generatorOptionsFromDraft());
+        this._draft = result.blueprint;
+        this._selectedInspector = listEditableCards(this._draft)[0]?.ref ? { type: "card", id: listEditableCards(this._draft)[0].ref } : null;
+        this._lastValidation = null;
+        this._notifyGeneration(result.report);
+        return this.render({ force: true });
+      } catch (error) {
+        console.error(`${MODULE_ID} | Chase generation failed.`, error);
+        notify("error", format("PF2E_CHASE_FORGE.Generator.Failed", { message: error?.message ?? String(error) }, `Generierung fehlgeschlagen: ${error?.message ?? error}`));
+        return null;
+      }
+    }
+
+    static async _actionRerollGeneratedRoute() {
+      if (this._libraryBlueprintId) return null;
+      this._syncDraftFromForm();
+      const templateId = this._draft.metadata?.generator?.templateId ?? this._generatorTemplateId;
+      if (!templateId) return this._actionGenerateFromTemplate();
+      if (!await this._confirmGenerateRoute()) return null;
+      try {
+        this._generatorTemplateId = templateId;
+        const result = this.chaseApi.generator.reroll(this._draft, this._generatorOptionsFromDraft());
+        this._draft = result.blueprint;
+        const first = listEditableCards(this._draft)[0];
+        this._selectedInspector = first?.ref ? { type: "card", id: first.ref } : null;
+        this._lastValidation = null;
+        this._notifyGeneration(result.report);
+        return this.render({ force: true });
+      } catch (error) {
+        console.error(`${MODULE_ID} | Chase regeneration failed.`, error);
+        notify("error", format("PF2E_CHASE_FORGE.Generator.Failed", { message: error?.message ?? String(error) }, `Generierung fehlgeschlagen: ${error?.message ?? error}`));
+        return null;
+      }
+    }
 
     static async _actionAddManualCard() {
       this._syncDraftFromForm();

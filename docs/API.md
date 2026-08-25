@@ -1,4 +1,4 @@
-# PF2E Chase Forge Public API - dev.10.2
+# PF2E Chase Forge Public API - dev.11
 
 ## Access
 
@@ -6,14 +6,14 @@
 const forge = game.modules.get("pf2e-chase-forge")?.api;
 ```
 
-Current public API version: `11`  
+Current public API version: `12`  
 Extension Contract version: `1`  
 Basic Builder Contract version: `1`  
 Branching Builder Contract version: `1`
 
-Dev.10.2 is primarily a Builder presentation/update release. Public API version `11` and persisted schema versions are unchanged.
+Dev.11 adds Generator Contract v1 and raises the public API to `12`. Persisted schema versions remain unchanged.
 
-## Current dev.10.2 capabilities
+## Current dev.11 capabilities
 
 ```text
 chaseLibrary
@@ -21,6 +21,9 @@ readOnlyLibraryBlueprints
 basicBuilder
 branchingBuilder
 interactiveRouteDecisions
+generatorTemplates
+seededGeneration
+generatorFallbackCards
 builderUi
 gmRunner
 playerView
@@ -30,6 +33,24 @@ chatWorkflow
 ```
 
 `gmRunner` and `playerView` are true in normal Foundry initialization. `sessionSync` and `playerIntents` expose the module-socket bridge that keeps player-safe projections synchronized while the GM remains authoritative. Campaign Forge integration remains false.
+
+
+## Generator & Templates
+
+```js
+forge.generator.contractVersion; // 1
+forge.generator.listTemplates();
+forge.generator.inspect(templateId, options);
+forge.generator.generate(templateId, options);
+forge.generator.reroll(blueprint, options);
+
+// Pure helpers for integrations/tests
+forge.generator.generateFromTemplate(template, cards, options);
+forge.generator.inspectCandidates(template, cards, options);
+forge.generator.selectCards(template, cards, options);
+```
+
+Generation accepts a deterministic `seed`, preserves the source world Blueprint identity when `sourceBlueprint` is supplied, filters cards by template/context, and emits editable placeholder cards if the selected card pool is too small. Generator provenance is stored under `blueprint.metadata.generator`. See `docs/GENERATOR.md`.
 
 
 ## Prepared Chase Library
@@ -270,6 +291,7 @@ forge.guidelines
 forge.routeConditions
 forge.cards
 forge.templates
+forge.generator
 forge.packs
 forge.images
 forge.extensions

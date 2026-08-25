@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { createPublicApi } from "../scripts/api/public-api.js";
 import { sampleBlueprint } from "./helpers.js";
 
-test("dev.10.2 public API advertises builder, persistence, route, rules, consequence, branching, and library capabilities", () => {
+test("dev.11 public API advertises builder, persistence, route, rules, consequence, branching, and library capabilities", () => {
   const api = createPublicApi();
   const caps = api.getCapabilities();
   assert.equal(caps.coreDataModel, true);
@@ -35,6 +35,9 @@ test("dev.10.2 public API advertises builder, persistence, route, rules, consequ
   assert.equal(caps.contentSnapshots, true);
   assert.equal(caps.sessionLifecycle, true);
   assert.equal(caps.basicBuilder, true);
+  assert.equal(caps.generatorTemplates, true);
+  assert.equal(caps.seededGeneration, true);
+  assert.equal(caps.generatorFallbackCards, true);
   assert.equal(caps.builderUi, false);
   assert.equal(caps.gmRunner, false);
   assert.equal(caps.chatWorkflow, true);
@@ -89,6 +92,7 @@ test("public API containers are frozen", () => {
   assert.equal(Object.isFrozen(api.integrations.effectForge), true);
   assert.equal(Object.isFrozen(api.integrations.weatherForge), true);
   assert.equal(Object.isFrozen(api.builder), true);
+  assert.equal(Object.isFrozen(api.generator), true);
   assert.equal(Object.isFrozen(api.presentation), true);
   assert.equal(Object.isFrozen(api.presentation.chat), true);
   assert.equal(Object.isFrozen(api.ui), true);
@@ -180,11 +184,11 @@ test("Weather Forge availability capability is detected dynamically from its pub
   }
 });
 
-test("dev.10.2 advertises Player View, synchronization and branching Builder support", () => {
+test("dev.11 advertises Player View, synchronization and branching Builder support", () => {
   const ui = { openPlayerView() {}, getOpenPlayerViews() { return []; } };
   const sync = { sendIntent() {}, publishSession() {} };
   const api = createPublicApi({ ui, sync });
-  assert.equal(api.version, 11);
+  assert.equal(api.version, 12);
   assert.equal(api.contracts.playerView, 1);
   assert.equal(api.contracts.playerStateProjector, 1);
   assert.equal(api.contracts.sessionSync, 1);

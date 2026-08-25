@@ -130,6 +130,58 @@
     {{/if}}
 
     <div class="chase-builder-editor-scroll">
+      {{#if editable}}
+        {{#if hasGeneratorTemplates}}
+          <section class="chase-builder-section chase-generator-section">
+            <div class="chase-builder-section-heading">
+              <div>
+                <h3><i class="fa-solid fa-wand-magic-sparkles"></i> {{localize "PF2E_CHASE_FORGE.Generator.Title"}}</h3>
+                <p>{{localize "PF2E_CHASE_FORGE.Generator.Hint"}}</p>
+              </div>
+            </div>
+            <div class="chase-generator-controls">
+              <label class="chase-generator-template-select">
+                <span>{{localize "PF2E_CHASE_FORGE.Generator.Template"}}</span>
+                <select name="generatorTemplate">
+                  {{#each generatorTemplateGroups}}
+                    <optgroup label="{{label}}">
+                      {{#each templates}}
+                        <option value="{{id}}" {{#if selected}}selected{{/if}}>{{name}} · {{chaseTypeLabel}} · {{lengthLabel}}</option>
+                      {{/each}}
+                    </optgroup>
+                  {{/each}}
+                </select>
+              </label>
+              <div class="chase-generator-actions">
+                <button type="button" class="chase-builder-primary" data-action="generateFromTemplate">
+                  <i class="fa-solid fa-dice"></i> {{localize "PF2E_CHASE_FORGE.Generator.Generate"}}
+                </button>
+                {{#if generated}}
+                  <button type="button" data-action="rerollGeneratedRoute">
+                    <i class="fa-solid fa-arrows-rotate"></i> {{localize "PF2E_CHASE_FORGE.Generator.Reroll"}}
+                  </button>
+                {{/if}}
+              </div>
+            </div>
+            <p class="chase-generator-footnote"><i class="fa-solid fa-circle-info"></i> {{localize "PF2E_CHASE_FORGE.Generator.CardPoolHint"}}</p>
+            {{#if generationMeta}}
+              <div class="chase-generator-report {{#if generationMeta.hasFallbacks}}warning{{/if}}">
+                <div>
+                  <strong>{{generationMeta.templateName}}</strong>
+                  <span>{{localize "PF2E_CHASE_FORGE.Generator.Seed"}}: <code>{{generationMeta.seed}}</code></span>
+                </div>
+                <div class="chase-generator-report-stats">
+                  <span><i class="fa-solid fa-signs-post"></i> {{generationMeta.targetLength}} {{localize "PF2E_CHASE_FORGE.Generator.PathCards"}}</span>
+                  <span><i class="fa-solid fa-code-branch"></i> {{generationMeta.branchCount}} {{localize "PF2E_CHASE_FORGE.Builder.BranchesShort"}}</span>
+                  <span><i class="fa-solid fa-layer-group"></i> {{generationMeta.selectedRegisteredCards}} {{localize "PF2E_CHASE_FORGE.Generator.LibraryCards"}}</span>
+                  {{#if generationMeta.hasFallbacks}}<span class="fallback"><i class="fa-solid fa-pen-ruler"></i> {{generationMeta.fallbackCards}} {{localize "PF2E_CHASE_FORGE.Generator.Placeholders"}}</span>{{/if}}
+                </div>
+              </div>
+            {{/if}}
+          </section>
+        {{/if}}
+      {{/if}}
+
       <section class="chase-builder-section">
         <div class="chase-builder-section-heading">
           <div>

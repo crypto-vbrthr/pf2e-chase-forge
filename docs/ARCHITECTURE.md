@@ -2,7 +2,7 @@
 
 ## Baseline
 
-Version `0.1.0-dev.10` adds managed split/merge authoring to the Builder while keeping UI, transport, persistence, route traversal, PF2e rules, consequences, and integrations as separate layers. The synchronized GM/Player runtime surfaces from dev.9 remain authoritative and are reused for interactive route choices.
+Version `0.1.0-dev.11.1` adds template-driven generation as a separate content-selection layer above the existing Builder/data model. UI, transport, persistence, route traversal, PF2e rules, consequences, and integrations remain separate layers. The synchronized GM/Player runtime surfaces from dev.9 remain authoritative and are reused for interactive route choices.
 
 ```text
 External Chase Add-ons
@@ -10,6 +10,9 @@ External Chase Add-ons
         v
 Extension Contract / Registries
         |
+        +----> Generator / Templates
+        |      seeded card selection
+        |      split/merge construction
         v
 +----------------------------------+
 | Core Data Model                  |
@@ -39,7 +42,7 @@ Extension Contract / Registries
         +--------+---------+
         |                  |
         v                  v
- Basic Chase Builder      GM Chase Runner
+ Visual Chase Builder     GM Chase Runner
         |                     |
         v                     v
  Prepared Blueprint      ChaseSession
@@ -70,7 +73,12 @@ BlueprintRepository
 
 Registered add-on cards are cloned into Blueprint-local snapshots before editing. The Builder therefore never mutates a registry-owned card.
 
-Advanced route graphs are detected and treated as read/start-only in dev.7. The later advanced Route Builder will own branch/merge editing.
+Managed split/merge graphs are editable through the Branching Builder contract introduced in dev.10. Arbitrary foreign/free-form graphs remain protected from Builder rewriting. Dev.11 generation emits only Basic/Branching Builder-compatible graphs.
+
+## Generator boundary
+
+The Generator reads registered `ChaseTemplate` and `ChaseCard` content through the public registry surfaces. It never mutates registry-owned resources. Selected cards are cloned into Blueprint-local snapshots, and insufficient pools become editable placeholder cards. A supplied seed makes weighted selection deterministic. Generated split/merge structures use the same managed Branching Builder contract as hand-authored routes.
+
 
 ## Engine boundaries
 

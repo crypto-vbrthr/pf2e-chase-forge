@@ -1,8 +1,15 @@
-# Chase Builder - Basic + Branching + Libraries - dev.10.2
+# Chase Builder - Basic + Branching + Libraries + Generator - dev.11
+
+## Generator panel (dev.11)
+
+The Generator panel appears for editable world Blueprints when at least one active `ChaseTemplate` is registered. Generating replaces the current route after confirmation, but preserves the world Blueprint identity and participant context. The resulting cards are ordinary local Blueprint snapshots and remain editable in the visual inspector.
+
+When registered cards are insufficient for the selected template/context, the generator inserts editable placeholder cards instead of failing. See `GENERATOR.md` for filtering, weighting, branch generation, and provenance details.
+
 
 ## Purpose
 
-The Chase Builder began as the linear Basic Builder in dev.7. Dev.10 adds managed Branching Builder routes. Dev.10.1 adds an explicit New Chase workflow and separates editable world Blueprints from read-only prepared Chase libraries supplied by Core/add-on packs. Dev.10.2 replaces the expanded card stack with a visual route diagram plus a click-to-open card/branch inspector.
+The Chase Builder began as the linear Basic Builder in dev.7. Dev.10 adds managed Branching Builder routes. Dev.10.1 adds an explicit New Chase workflow and separates editable world Blueprints from read-only prepared Chase libraries supplied by Core/add-on packs. Dev.10.2 replaces the expanded card stack with a visual route diagram plus a click-to-open card/branch inspector. Dev.11 adds template-driven route generation and seeded regeneration on top of the same editable Blueprint contracts.
 
 
 ## Visual route diagram and inspector

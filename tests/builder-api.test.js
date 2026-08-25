@@ -2,9 +2,9 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { createPublicApi } from "../scripts/api/public-api.js";
 
-test("dev.10.2 public API exposes Basic and Branching Builder helpers", () => {
+test("dev.11 public API exposes Basic and Branching Builder helpers", () => {
   const api = createPublicApi();
-  assert.equal(api.version, 11);
+  assert.equal(api.version, 12);
   assert.equal(api.getCapabilities().basicBuilder, true);
   assert.equal(api.getCapabilities().builderUi, false);
   assert.equal(api.builder.contractVersion, 1);

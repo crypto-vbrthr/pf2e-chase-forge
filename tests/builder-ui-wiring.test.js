@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
-import { registerChaseBuilderSceneControls } from "../scripts/app/chase-builder-app.js";
+import { registerChaseBuilderSceneControls, skillLabel } from "../scripts/app/chase-builder-app.js";
 
 test("GM scene controls receive a Chase Forge Builder button on object-style controls", async () => {
   const handlers = new Map();
@@ -272,4 +272,34 @@ test("Builder exposes a permanent New Chase action and separates world Chases fr
   assert.match(source, /sessionManager\.createSession\(saved/);
   assert.equal(de["PF2E_CHASE_FORGE.Builder.NewChase"], "Neue Verfolgungsjagd");
   assert.equal(de["PF2E_CHASE_FORGE.Builder.CopyFromLibrary"], "Als eigene Chase übernehmen");
+});
+
+test("Builder exposes template generation and seeded reroll controls", async () => {
+  const template = await readFile(new URL("../templates/chase-builder.hbs", import.meta.url), "utf8");
+  const source = await readFile(new URL("../scripts/app/chase-builder-app.js", import.meta.url), "utf8");
+  assert.match(template, /name="generatorTemplate"/);
+  assert.match(template, /data-action="generateFromTemplate"/);
+  assert.match(template, /data-action="rerollGeneratedRoute"/);
+  assert.match(template, /generationMeta/);
+  assert.match(source, /this\.chaseApi\.generator\.generate/);
+  assert.match(source, /this\.chaseApi\.generator\.reroll/);
+  assert.match(source, /_confirmGenerateRoute/);
+});
+
+
+test("Builder skill labels use PF2e/local module localization instead of English slug fallbacks", () => {
+  const previousGame = globalThis.game;
+  const previousConfig = globalThis.CONFIG;
+  globalThis.CONFIG = { PF2E: { skills: { athletics: "PF2E.Skill.Athletics" } } };
+  globalThis.game = { i18n: { localize: key => ({
+    "PF2E.Skill.Athletics": "Athletik",
+    "PF2E_CHASE_FORGE.Skill.perception": "Wahrnehmung"
+  })[key] ?? key } };
+  try {
+    assert.equal(skillLabel("athletics"), "Athletik");
+    assert.equal(skillLabel("perception"), "Wahrnehmung");
+  } finally {
+    if (previousGame === undefined) delete globalThis.game; else globalThis.game = previousGame;
+    if (previousConfig === undefined) delete globalThis.CONFIG; else globalThis.CONFIG = previousConfig;
+  }
 });

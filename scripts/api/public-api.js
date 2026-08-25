@@ -47,6 +47,7 @@ import { GM_RUNNER_CONTRACT_VERSION } from "../app/chase-runner-app.js";
 import { PLAYER_CHASE_VIEW_CONTRACT_VERSION } from "../app/chase-player-app.js";
 import { CHASE_SESSION_SYNC_CONTRACT_VERSION } from "../sync/chase-session-sync.js";
 import { PLAYER_STATE_PROJECTOR_CONTRACT_VERSION, projectChasePublicState } from "../player/public-state-projector.js";
+import { CHASE_GENERATOR_CONTRACT_VERSION, createChaseGenerator, generateChaseFromTemplate, inspectGenerationCandidates, selectGenerationCards } from "../generator/chase-generator.js";
 import {
   BASIC_BUILDER_CONTRACT_VERSION,
   addApproachToBasicCard,
@@ -124,6 +125,7 @@ function contentApi(registries) {
 
 export function createPublicApi({ registries = createRegistryService(), persistenceStore = createMemoryChaseStore(), ui = null, sync = null } = {}) {
   const content = contentApi(registries);
+  const generator = createChaseGenerator({ templates: content.templates, cards: content.cards });
   const extensions = createExtensionPublicApi(registries);
   const route = createRouteGraphEngine();
   const rules = createChaseRulesEngine({ registries, routeEngine: route });
@@ -164,7 +166,8 @@ export function createPublicApi({ registries = createRegistryService(), persiste
       playerView: PLAYER_CHASE_VIEW_CONTRACT_VERSION,
       playerStateProjector: PLAYER_STATE_PROJECTOR_CONTRACT_VERSION,
       sessionSync: CHASE_SESSION_SYNC_CONTRACT_VERSION,
-      chatPresenter: CHASE_CHAT_PRESENTER_CONTRACT_VERSION
+      chatPresenter: CHASE_CHAT_PRESENTER_CONTRACT_VERSION,
+      generator: CHASE_GENERATOR_CONTRACT_VERSION
     }),
     getCapabilities: () => Object.freeze({
       coreDataModel: true,
@@ -200,6 +203,9 @@ export function createPublicApi({ registries = createRegistryService(), persiste
       basicBuilder: true,
       branchingBuilder: true,
       interactiveRouteDecisions: true,
+      generatorTemplates: true,
+      seededGeneration: true,
+      generatorFallbackCards: true,
       builderUi: Boolean(ui?.openBuilder),
       gmRunner: Boolean(ui?.openRunner),
       chatWorkflow: true,
@@ -284,6 +290,16 @@ export function createPublicApi({ registries = createRegistryService(), persiste
       execute: consequences.execute,
       executeRulesResult: consequences.executeRulesResult,
       records: consequences.records
+    }),
+    generator: Object.freeze({
+      contractVersion: CHASE_GENERATOR_CONTRACT_VERSION,
+      listTemplates: generator.listTemplates,
+      inspect: generator.inspect,
+      generate: generator.generate,
+      reroll: generator.reroll,
+      generateFromTemplate: generateChaseFromTemplate,
+      inspectCandidates: inspectGenerationCandidates,
+      selectCards: selectGenerationCards
     }),
     integrations: Object.freeze({
       effectForge: Object.freeze({
