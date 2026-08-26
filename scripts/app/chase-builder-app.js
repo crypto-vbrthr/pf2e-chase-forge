@@ -96,9 +96,17 @@ const SKILLS = [
   "medicine", "nature", "occultism", "performance", "perception", "religion", "society",
   "stealth", "survival", "thievery"
 ];
+const SPECIAL_STATISTICS = ["fortitude", "reflex", "will", "attack"];
+const ROLL_STATISTICS = [...SKILLS, ...SPECIAL_STATISTICS];
+const MINIMUM_PROFICIENCY_VALUES = ["", "trained", "expert", "master", "legendary"];
 
 export function skillLabel(slug) {
   return localizeSkillLabel(slug);
+}
+
+function statisticLabel(slug) {
+  if (SPECIAL_STATISTICS.includes(slug)) return i18n(`PF2E_CHASE_FORGE.Statistic.${slug}`, slug);
+  return skillLabel(slug);
 }
 
 function packLabel(pack, fallback = "") {
@@ -778,7 +786,8 @@ function getAppClass() {
             approachIndex,
             cardRef: item.ref,
             cardIndex: item.index,
-            statisticOptions: SKILLS.map(value => ({ value, selected: value === approach.statistic, label: skillLabel(value) })),
+            statisticOptions: ROLL_STATISTICS.map(value => ({ value, selected: value === approach.statistic, label: statisticLabel(value) })),
+            minimumProficiencyOptions: MINIMUM_PROFICIENCY_VALUES.map(value => ({ value, selected: value === (approach.minimumProficiency ?? ""), label: value ? i18n(`PF2E_CHASE_FORGE.Proficiency.${value}`, value) : i18n("PF2E_CHASE_FORGE.Builder.MinimumProficiencyNone", "Keine") })),
             dcModeOptions: optionList(DC_MODE_VALUES, approach.dc?.mode ?? "gm", "PF2E_CHASE_FORGE.DcMode"),
             proficiencyOptions: optionList(PROFICIENCY_VALUES, approach.dc?.proficiency ?? "trained", "PF2E_CHASE_FORGE.Proficiency"),
             adjustmentOptions: DIFFICULTY_ADJUSTMENTS.map(value => ({ value, selected: Number(approach.dc?.difficultyAdjustment ?? 0) === value, label: value > 0 ? `+${value}` : String(value) }))
@@ -892,6 +901,7 @@ function getAppClass() {
         validationErrors: validation.errors,
         validationWarnings: validation.warnings,
         chaseTypeOptions: optionList(CHASE_TYPE_VALUES, this._draft.settings.chaseType, "PF2E_CHASE_FORGE.ChaseType"),
+        isAgainstClock: this._draft.settings.chaseType === "againstClock",
         lengthOptions: optionList(LENGTH_VALUES, this._draft.settings.length, "PF2E_CHASE_FORGE.Length"),
         difficultyOptions: optionList(DIFFICULTY_VALUES, this._draft.settings.difficulty, "PF2E_CHASE_FORGE.Difficulty"),
         imageModeOptions: optionList(IMAGE_MODE_VALUES, this._draft.settings.imageMode, "PF2E_CHASE_FORGE.ImageMode"),
@@ -1122,6 +1132,9 @@ function getAppClass() {
         value: Math.max(0, Number(value("settings.roundDuration.value")) || 0),
         unit: value("settings.roundDuration.unit") || "rounds"
       };
+      next.settings.victory ??= {};
+      const roundLimit = numberOrNull(value("settings.victory.roundLimit"));
+      next.settings.victory.roundLimit = roundLimit === null ? null : Math.max(1, Math.trunc(roundLimit));
       next.settings.environmentTags = csv(value("settings.environmentTags"));
       next.settings.movementModes = csv(value("settings.movementModes"));
       next.settings.toneTags = csv(value("settings.toneTags"));
@@ -1212,6 +1225,7 @@ function getAppClass() {
           if (!approach) continue;
           approach.label = row.querySelector('[data-approach-field="label"]')?.value?.trim() || approach.label;
           approach.statistic = row.querySelector('[data-approach-field="statistic"]')?.value || null;
+          approach.minimumProficiency = row.querySelector('[data-approach-field="minimumProficiency"]')?.value || null;
           approach.dc.mode = row.querySelector('[data-approach-field="dcMode"]')?.value || "gm";
           approach.dc.value = numberOrNull(row.querySelector('[data-approach-field="dcValue"]')?.value);
           approach.dc.levelOffset = Number(row.querySelector('[data-approach-field="levelOffset"]')?.value ?? 0) || 0;

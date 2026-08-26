@@ -1,3 +1,14 @@
+## 0.1.0-rc.3 – Final PF2e Rules Alignment
+
+- Exposes the existing against-the-clock `roundLimit` in the Chase Builder, gives new Against-the-Clock drafts/templates a rules-appropriate default limit, and blocks start validation when that chase type has no usable limit.
+- Changes newly authored and Core Library Chase approaches to PF2e simple-DC defaults while retaining fixed, level-based, and GM-provided DC modes as explicit alternatives. The Builder now separates the simple-DC rank from an optional true minimum-proficiency requirement.
+- Expands authored check statistics beyond skills/perception to Fortitude, Reflex, Will, and an attack-roll option resolved through PF2e actor/strike statistics.
+- Enforces optional minimum proficiency in GM Runner, Player View projection, and GM-authoritative player intent handling.
+- Corrects the separated-character critical-success bonus so it belongs to the character who earned it, survives split/merge/transfer operations with that participant, and cannot be consumed by another member after reunion.
+- Applies that +2 as a typed PF2e circumstance modifier to the actual check whenever the PF2e Modifier API is available, allowing normal circumstance-bonus stacking rules to decide its effect; a compatibility fallback remains for runtimes without the modifier constructor.
+- Keeps API v18, persisted schema versions, Extension Contract v1, Session Lifecycle Contract v1, and Campaign Forge Integration Contract v2 unchanged. Older Session data is normalized into the participant-bound pending-bonus representation without a migration step.
+- Adds focused regression coverage for round-limit defaults, simple-DC authoring, proficiency gating, saves/attack statistics, typed modifier forwarding, and participant-bound separated-PC bonuses across subgroup reunion.
+
 ## 0.1.0-rc.2 – Final Integration Review with Advanced Routing
 
 - Promotes the validated dev.18 Advanced Routing & Party Splitting code line to the second release candidate after a focused end-to-end review of dynamic runtime groups, branch divergence/rejoin, group-order assistance, Player View projection, Campaign Forge continuation, race initiative, and scalable Chase Point recalculation.

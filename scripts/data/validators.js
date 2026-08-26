@@ -155,6 +155,9 @@ export function validateChaseCard(card) {
     validateUniqueIds(card.approaches, c, "approaches");
     card.approaches.forEach((approach, index) => {
       requireNonEmptyString(approach.id, c, `approaches[${index}].id`);
+      if (approach.minimumProficiency !== null && approach.minimumProficiency !== undefined && !PF2E_PROFICIENCY_RANKS.includes(approach.minimumProficiency)) {
+        c.error("MINIMUM_PROFICIENCY", `approaches[${index}].minimumProficiency`, "Approach minimum proficiency must be null or a supported proficiency rank.");
+      }
       if (!isPlainObject(approach.dc)) {
         c.error("DC", `approaches[${index}].dc`, "Approach DC must be an object.");
       } else {
@@ -395,9 +398,21 @@ export function validateChaseSession(session) {
         if (!Number.isFinite(group.rules.steadyProgress) || group.rules.steadyProgress < 0) {
           c.error("PACE_PROGRESS", `groups[${index}].rules.steadyProgress`, "Steady progress must be a non-negative finite number.");
         }
+        if (!Array.isArray(group.rules.pendingCheckBonuses)) {
+          c.error("PENDING_BONUSES", `groups[${index}].rules.pendingCheckBonuses`, "Pending check bonuses must be an array.");
+        } else {
+          group.rules.pendingCheckBonuses.forEach((bonus, bonusIndex) => {
+            const path = `groups[${index}].rules.pendingCheckBonuses[${bonusIndex}]`;
+            if (!isPlainObject(bonus)) c.error("PENDING_BONUS", path, "Pending check bonus must be an object.");
+            else {
+              if (bonus.participantId !== null && (typeof bonus.participantId !== "string" || !bonus.participantId.trim())) c.error("PENDING_BONUS_PARTICIPANT", `${path}.participantId`, "Pending check bonus participantId must be null or a non-empty string.");
+              if (!Number.isFinite(bonus.value)) c.error("PENDING_BONUS_VALUE", `${path}.value`, "Pending check bonus value must be finite.");
+            }
+          });
+        }
         if (group.rules.pendingCheckBonus !== null) {
-          if (!isPlainObject(group.rules.pendingCheckBonus)) c.error("PENDING_BONUS", `groups[${index}].rules.pendingCheckBonus`, "Pending check bonus must be null or an object.");
-          else if (!Number.isFinite(group.rules.pendingCheckBonus.value)) c.error("PENDING_BONUS_VALUE", `groups[${index}].rules.pendingCheckBonus.value`, "Pending check bonus value must be finite.");
+          if (!isPlainObject(group.rules.pendingCheckBonus)) c.error("PENDING_BONUS_LEGACY", `groups[${index}].rules.pendingCheckBonus`, "Legacy pending check bonus must be null or an object.");
+          else if (!Number.isFinite(group.rules.pendingCheckBonus.value)) c.error("PENDING_BONUS_LEGACY_VALUE", `groups[${index}].rules.pendingCheckBonus.value`, "Legacy pending check bonus value must be finite.");
         }
       }
     });

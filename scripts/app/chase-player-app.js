@@ -207,10 +207,26 @@ function getAppClass() {
           && candidate.approach?.id === target.dataset.approachId);
         if (!action) throw new Error(i18n("PF2E_CHASE_FORGE.Player.ActionExpired", "Diese Aktion ist nicht mehr verfügbar."));
         if (!action.actorUuid) throw new Error(i18n("PF2E_CHASE_FORGE.Player.ActorMissing", "Für diesen Beteiligten ist kein Actor verknüpft."));
+        const modifiers = [];
+        let pendingBonusApplied = false;
+        if (action.pendingCheckBonus) {
+          try {
+            modifiers.push(this.chaseApi.pf2e.adapter.createModifier({
+              value: action.pendingCheckBonus.value,
+              type: action.pendingCheckBonus.type || "circumstance",
+              label: i18n("PF2E_CHASE_FORGE.Rules.SeparatedCriticalBonus", "Getrennter SC: Kritischer Erfolg"),
+              slug: "chase-forge-separated-critical"
+            }));
+            pendingBonusApplied = true;
+          } catch (error) {
+            console.warn(`${MODULE_ID} | Typed PF2e separated-PC bonus unavailable; GM authority will apply the compatibility fallback.`, error);
+          }
+        }
         const roll = await this.chaseApi.pf2e.adapter.rollStatistic({
           actorUuid: action.actorUuid,
           statistic: action.approach.statistic,
-          label: action.approach.label || state.title
+          label: action.approach.label || state.title,
+          modifiers
         });
         const total = rollTotal(roll);
         if (!Number.isFinite(total)) throw new Error(i18n("PF2E_CHASE_FORGE.Player.RollUnreadable", "Das PF2e-Wurfergebnis konnte nicht ausgewertet werden."));
@@ -219,7 +235,8 @@ function getAppClass() {
           participantId: action.participantId,
           approachId: action.approach.id,
           total,
-          natural: rollNatural(roll)
+          natural: rollNatural(roll),
+          pendingBonusApplied
         });
       } catch (error) {
         console.error(`${MODULE_ID} | Player Chase roll failed.`, error);

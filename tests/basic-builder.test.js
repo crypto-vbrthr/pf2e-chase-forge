@@ -141,3 +141,22 @@ test("Basic Builder refuses to edit a branched graph", () => {
   assert.equal(isBasicLinearBlueprint(branched), false);
   assert.throws(() => addManualCardToBasicBlueprint(branched), /linear Blueprints/);
 });
+
+test("against-the-clock Builder drafts and type changes receive a usable round limit", () => {
+  const direct = createBasicBuilderDraft({ name: "Deadline", chaseType: "againstClock", length: "short" });
+  assert.equal(direct.settings.victory.roundLimit, 6);
+
+  let switched = createBasicBuilderDraft({ name: "Switch", length: "medium" });
+  switched = replaceBasicGroupsForChaseType(switched, "againstClock", { preserveParticipants: false });
+  assert.equal(switched.settings.victory.roundLimit, 8);
+  assert.ok(validateBasicBuilderBlueprint(switched).warnings.every(issue => issue.code !== "BASIC_BUILDER_ROUND_LIMIT"));
+});
+
+test("new manual Chase approaches default to a simple DC and no minimum proficiency", () => {
+  let blueprint = createBasicBuilderDraft();
+  blueprint = addManualCardToBasicBlueprint(blueprint, { name: "Rule-Aligned Obstacle" }).blueprint;
+  const approach = listBasicCards(blueprint)[0].card.approaches[0];
+  assert.equal(approach.dc.mode, "simple");
+  assert.equal(approach.dc.proficiency, "trained");
+  assert.equal(approach.minimumProficiency, null);
+});

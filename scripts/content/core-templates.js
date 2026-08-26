@@ -1,6 +1,6 @@
 import { MODULE_ID, MODULE_VERSION } from "../core/constants.js";
 
-function coreTemplate({ id, name, nameKey, description, descriptionKey, chaseType, length = "medium", routeComplexity = "linear", branchCount = 0, icon }) {
+function coreTemplate({ id, name, nameKey, description, descriptionKey, chaseType, length = "medium", routeComplexity = "linear", branchCount = 0, victory = {}, icon }) {
   return {
     id,
     name,
@@ -12,7 +12,8 @@ function coreTemplate({ id, name, nameKey, description, descriptionKey, chaseTyp
       routeComplexity,
       movementModes: ["land"],
       environmentTags: [],
-      toneTags: []
+      toneTags: [],
+      victory
     },
     filters: { cardTypes: ["obstacle", "complication", "opportunity"], requireLevelMatch: true },
     generator: {
@@ -83,6 +84,7 @@ export function createCoreTemplatePack() {
         descriptionKey: "PF2E_CHASE_FORGE.Generator.TemplateAgainstClockHint",
         chaseType: "againstClock",
         length: "short",
+        victory: { roundLimit: 6 },
         icon: "fa-clock"
       }),
       coreTemplate({

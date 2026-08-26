@@ -17,7 +17,8 @@ function coreCard({ id, category, name, description, skills, type = "obstacle", 
     obstacle: { requiredPoints: 2, scalable: true },
     approaches: skills.map((statistic, index) => ({
       id: `${slug}-${statistic}-${index + 1}`, label: statistic, type: "check", statistic,
-      dc: { mode: "level", levelOffset: 0, difficultyAdjustment: 0, hidden: true }, traits: [], requirements: []
+      minimumProficiency: null,
+      dc: { mode: "simple", proficiency: "trained", levelOffset: 0, difficultyAdjustment: 0, hidden: true }, traits: [], requirements: []
     })),
     image: { mode: "automatic", path: null, providerId: null, imageId: null, alt: "", candidates: [] },
     metadata: {
@@ -398,7 +399,7 @@ export function createCoreCardPack() {
   return {
     id: "core:cards",
     label: "Chase Forge Core Card Library",
-    description: "Reusable level-scaled Chase obstacle cards for city, wilderness, dungeon, coast, mountain, and social routes.",
+    description: "Reusable Chase obstacle cards with PF2e simple-DC defaults for city, wilderness, dungeon, coast, mountain, and social routes.",
     version: MODULE_VERSION, priority: 90, enabledByDefault: true,
     cards: CORE_CARDS.map(card => structuredClone(card)), templates: [], blueprints: [], imageProviders: [],
     metadata: { core: true, coreCards: true, sourceModule: MODULE_ID, i18n: { label: "PF2E_CHASE_FORGE.CoreCards.Pack", description: "PF2E_CHASE_FORGE.CoreCards.PackHint" } }

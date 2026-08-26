@@ -613,5 +613,12 @@ export function validateBranchingBuilderBlueprint(input, { forStart = false } = 
   const cards = listBranchingCards(blueprint);
   if (cards.some(item => !item.card)) errors.push({ code: "BRANCHING_BUILDER_CARD_MISSING", path: "contentSnapshots.cards", message: "A route card snapshot is missing." });
   if (forStart && cards.length === 0) errors.push({ code: "BRANCHING_BUILDER_NO_CARDS", path: "graph", message: "A chase needs at least one card before it can start." });
+  if (blueprint.settings?.chaseType === "againstClock") {
+    const roundLimit = Number(blueprint.settings?.victory?.roundLimit);
+    if (!Number.isInteger(roundLimit) || roundLimit < 1) {
+      const issue = { code: "BRANCHING_BUILDER_ROUND_LIMIT", path: "settings.victory.roundLimit", message: "Against-the-clock chases require a round limit of at least 1." };
+      if (forStart) errors.push(issue); else warnings.push(issue);
+    }
+  }
   return Object.freeze({ valid: errors.length === 0, errors, warnings, blueprint });
 }

@@ -178,7 +178,7 @@ test("Runner abort uses Foundry DialogV2 confirmation to avoid native-modal keyb
 test("GM Runner shows each participant's PF2e approach modifier beside the skill button", async () => {
   const source = await readFile(new URL("../scripts/app/chase-runner-app.js", import.meta.url), "utf8");
   const template = await readFile(new URL("../templates/chase-runner.hbs", import.meta.url), "utf8");
-  assert.match(source, /participantApproachModifiers/);
+  assert.match(source, /participantApproachStats/);
   assert.match(source, /getStatisticModifier/);
   assert.match(template, /participant\.approaches/);
   assert.match(template, /chase-skill-modifier/);

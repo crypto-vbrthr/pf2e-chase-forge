@@ -230,6 +230,11 @@
             <span>{{localize "PF2E_CHASE_FORGE.Builder.StartDistance"}}</span>
             <input type="number" name="settings.startDistance" min="0" max="20" value="{{draft.settings.startDistance}}" {{#unless editable}}disabled{{/unless}}>
           </label>
+          <label class="{{#unless isAgainstClock}}chase-builder-conditional-field{{/unless}}">
+            <span>{{localize "PF2E_CHASE_FORGE.Builder.RoundLimit"}}</span>
+            <input type="number" name="settings.victory.roundLimit" min="1" value="{{draft.settings.victory.roundLimit}}" placeholder="{{localize 'PF2E_CHASE_FORGE.Builder.RoundLimitPlaceholder'}}" {{#unless editable}}disabled{{/unless}}>
+            <small>{{#if isAgainstClock}}{{localize "PF2E_CHASE_FORGE.Builder.RoundLimitHint"}}{{else}}{{localize "PF2E_CHASE_FORGE.Builder.RoundLimitInactiveHint"}}{{/if}}</small>
+          </label>
           <div class="chase-builder-inline-field">
             <label>
               <span>{{localize "PF2E_CHASE_FORGE.Builder.RoundDuration"}}</span>
@@ -677,11 +682,12 @@
                       <div class="chase-builder-approach" data-builder-approach data-approach-index="{{approachIndex}}">
                         <label><span>{{localize "PF2E_CHASE_FORGE.Builder.ApproachLabel"}}</span><input type="text" data-approach-field="label" value="{{label}}" {{#unless ../selectedCard.editable}}disabled{{/unless}}></label>
                         <label><span>{{localize "PF2E_CHASE_FORGE.Builder.Statistic"}}</span><select data-approach-field="statistic" {{#unless ../selectedCard.editable}}disabled{{/unless}}>{{#each statisticOptions}}<option value="{{value}}" {{#if selected}}selected{{/if}}>{{label}}</option>{{/each}}</select></label>
+                        <label><span>{{localize "PF2E_CHASE_FORGE.Builder.MinimumProficiency"}}</span><select data-approach-field="minimumProficiency" {{#unless ../selectedCard.editable}}disabled{{/unless}}>{{#each minimumProficiencyOptions}}<option value="{{value}}" {{#if selected}}selected{{/if}}>{{label}}</option>{{/each}}</select></label>
                         <label><span>{{localize "PF2E_CHASE_FORGE.Builder.DcMode"}}</span><select data-approach-field="dcMode" {{#unless ../selectedCard.editable}}disabled{{/unless}}>{{#each dcModeOptions}}<option value="{{value}}" {{#if selected}}selected{{/if}}>{{label}}</option>{{/each}}</select></label>
                         <label class="small-number"><span>{{localize "PF2E_CHASE_FORGE.Builder.DcValue"}}</span><input type="number" data-approach-field="dcValue" value="{{dc.value}}" {{#unless ../selectedCard.editable}}disabled{{/unless}}></label>
                         <label class="small-number"><span>{{localize "PF2E_CHASE_FORGE.Builder.LevelOffset"}}</span><input type="number" data-approach-field="levelOffset" value="{{dc.levelOffset}}" {{#unless ../selectedCard.editable}}disabled{{/unless}}></label>
                         <label><span>{{localize "PF2E_CHASE_FORGE.Builder.DifficultyAdjustment"}}</span><select data-approach-field="difficultyAdjustment" {{#unless ../selectedCard.editable}}disabled{{/unless}}>{{#each adjustmentOptions}}<option value="{{value}}" {{#if selected}}selected{{/if}}>{{label}}</option>{{/each}}</select></label>
-                        <label><span>{{localize "PF2E_CHASE_FORGE.Builder.Proficiency"}}</span><select data-approach-field="proficiency" {{#unless ../selectedCard.editable}}disabled{{/unless}}>{{#each proficiencyOptions}}<option value="{{value}}" {{#if selected}}selected{{/if}}>{{label}}</option>{{/each}}</select></label>
+                        <label><span>{{localize "PF2E_CHASE_FORGE.Builder.SimpleDcProficiency"}}</span><select data-approach-field="proficiency" {{#unless ../selectedCard.editable}}disabled{{/unless}}>{{#each proficiencyOptions}}<option value="{{value}}" {{#if selected}}selected{{/if}}>{{label}}</option>{{/each}}</select></label>
                         <label class="chase-builder-checkbox bottom"><input type="checkbox" data-approach-field="hidden" {{#if dc.hidden}}checked{{/if}} {{#unless ../selectedCard.editable}}disabled{{/unless}}><span>{{localize "PF2E_CHASE_FORGE.Builder.HiddenDc"}}</span></label>
                         {{#if ../selectedCard.editable}}<button type="button" class="icon danger approach-delete" data-action="removeApproach" data-card-index="{{cardIndex}}" data-card-ref="{{cardRef}}" data-approach-index="{{approachIndex}}"><i class="fa-solid fa-xmark"></i></button>{{/if}}
                       </div>

@@ -216,7 +216,7 @@
               <div class="chase-runner-approaches">
                 <h4>{{localize "PF2E_CHASE_FORGE.Runner.Approaches"}}</h4>
                 {{#each group.approaches as |approach|}}
-                  <div class="chase-runner-approach"><strong>{{approach.label}}</strong><span>{{approach.statistic}}</span>{{#if approach.needsGmDc}}<label class="chase-runner-gm-dc"><span>{{localize "PF2E_CHASE_FORGE.Runner.DC"}}</span><input type="number" data-gm-dc data-approach-id="{{approach.id}}" min="0" max="99" value="{{approach.storedGmDc}}" placeholder="{{localize 'PF2E_CHASE_FORGE.Runner.DC'}}"></label>{{else}}<span>{{localize "PF2E_CHASE_FORGE.Runner.DC"}} {{approach.dcResolved}}</span>{{/if}}{{#if approach.description}}<span class="grow">{{approach.description}}</span>{{/if}}</div>
+                  <div class="chase-runner-approach"><strong>{{approach.label}}</strong><span>{{approach.statistic}}</span>{{#if approach.needsGmDc}}<label class="chase-runner-gm-dc"><span>{{localize "PF2E_CHASE_FORGE.Runner.DC"}}</span><input type="number" data-gm-dc data-approach-id="{{approach.id}}" min="0" max="99" value="{{approach.storedGmDc}}" placeholder="{{localize 'PF2E_CHASE_FORGE.Runner.DC'}}"></label>{{else}}<span>{{localize "PF2E_CHASE_FORGE.Runner.DC"}} {{approach.dcResolved}}</span>{{/if}}{{#if approach.description}}<span class="grow">{{approach.description}}</span>{{/if}}{{#if approach.minimumProficiencyLabel}}<span>{{localize "PF2E_CHASE_FORGE.Runner.MinimumProficiencyRequired"}}: {{approach.minimumProficiencyLabel}}</span>{{/if}}</div>
                 {{/each}}
               </div>
             {{/if}}
@@ -240,7 +240,7 @@
                     <div class="chase-runner-participant-actions">
                       {{#each participant.approaches as |approach|}}
                         {{#if approach.statistic}}
-                          <button type="button" data-action="rollApproach" data-runtime-group-id="{{group.runtime.id}}" data-participant-id="{{participant.id}}" data-approach-id="{{approach.id}}"><i class="fa-solid fa-dice-d20"></i> {{approach.label}}{{#if approach.modifierLabel}} <span class="chase-skill-modifier">{{approach.modifierLabel}}</span>{{/if}}</button>
+                          <button type="button" data-action="rollApproach" data-runtime-group-id="{{group.runtime.id}}" data-participant-id="{{participant.id}}" data-approach-id="{{approach.id}}" {{#unless approach.eligible}}disabled title="{{localize 'PF2E_CHASE_FORGE.Runner.MinimumProficiencyRequired'}}: {{approach.minimumProficiencyLabel}}"{{/unless}}><i class="fa-solid fa-dice-d20"></i> {{approach.label}}{{#if approach.modifierLabel}} <span class="chase-skill-modifier">{{approach.modifierLabel}}</span>{{/if}}{{#if approach.minimumProficiencyLabel}} <span class="chase-approach-requirement">{{localize "PF2E_CHASE_FORGE.Runner.MinimumProficiencyShort"}} {{approach.minimumProficiencyLabel}}</span>{{/if}}</button>
                         {{/if}}
                       {{/each}}
                       {{#if group.approaches.length}}

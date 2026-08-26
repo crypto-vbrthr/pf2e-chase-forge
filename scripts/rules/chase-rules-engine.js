@@ -487,16 +487,39 @@ function moveThroughChoice(session, runtimeGroupId, edgeId, routeEngine, { conte
   };
 }
 
-function setPendingSeparatedBonus(session, runtimeGroupId) {
+function pendingBonusesForGroup(group) {
+  if (!group?.rules) return [];
+  if (Array.isArray(group.rules.pendingCheckBonuses)) return group.rules.pendingCheckBonuses;
+  return group.rules.pendingCheckBonus ? [group.rules.pendingCheckBonus] : [];
+}
+
+function setGroupPendingBonuses(group, bonuses = []) {
+  group.rules ??= {};
+  const list = Array.isArray(bonuses) ? bonuses.filter(Boolean).map(cloneData) : [];
+  group.rules.pendingCheckBonuses = list;
+  // Keep a legacy mirror so external integrations reading the pre-rc.3 field do
+  // not break. All authoritative rules logic uses the participant-bound array.
+  group.rules.pendingCheckBonus = list[0] ? cloneData(list[0]) : null;
+  return group;
+}
+
+function setPendingSeparatedBonus(session, runtimeGroupId, participantId) {
   const next = cloneData(session);
   const group = getRuntimeGroup(next, runtimeGroupId);
-  group.rules.pendingCheckBonus = {
+  if (!group) throw rulesError("UNKNOWN_RUNTIME_GROUP", `Unknown runtime group '${runtimeGroupId}'.`);
+  if (!participantId || !(group.participantIds ?? []).includes(participantId)) {
+    throw rulesError("PARTICIPANT_NOT_IN_GROUP", `Participant '${participantId ?? ""}' does not belong to runtime group '${runtimeGroupId}'.`, { runtimeGroupId, participantId });
+  }
+  const bonus = {
+    participantId,
     value: 2,
     type: "circumstance",
     source: "separatedCriticalSuccess",
     grantedAtRound: next.round
   };
-  next.events = [...(next.events ?? []), event("separatedCriticalBonus", next, { runtimeGroupId, value: 2 })];
+  const existing = pendingBonusesForGroup(group).filter(item => item?.participantId !== participantId);
+  setGroupPendingBonuses(group, [...existing, bonus]);
+  next.events = [...(next.events ?? []), event("separatedCriticalBonus", next, { runtimeGroupId, participantId, value: 2 })];
   next.updatedAt = nowIso();
   return createChaseSession(next);
 }
@@ -722,12 +745,15 @@ export function createChaseRulesEngine({ registries = null, cardResolver = null,
     if (selected.length >= source.participantIds.length) {
       throw rulesError("GROUP_SPLIT_WHOLE_GROUP", "At least one participant must remain in the original runtime group.", { runtimeGroupId, participantIds: selected });
     }
+    const originalPendingBonuses = pendingBonusesForGroup(source).map(cloneData);
     const remaining = source.participantIds.filter(id => !selected.includes(id));
     source.participantIds = remaining;
     const childId = createId("runtime-group");
     const child = cloneData(source);
     child.id = childId;
     child.participantIds = selected;
+    setGroupPendingBonuses(source, originalPendingBonuses.filter(bonus => bonus.participantId === null || remaining.includes(bonus.participantId)));
+    setGroupPendingBonuses(child, originalPendingBonuses.filter(bonus => bonus.participantId && selected.includes(bonus.participantId)));
     child.parentRuntimeGroupId = runtimeGroupId;
     child.metadata = {
       ...(child.metadata ?? {}),
@@ -803,8 +829,17 @@ export function createChaseRulesEngine({ registries = null, cardResolver = null,
     target.participantIds = uniqueStrings(groups.flatMap(group => group.participantIds ?? []));
     target.position.progress = groups.reduce((sum, group) => sum + Number(group.position?.progress ?? 0), 0);
     target.parentRuntimeGroupId = target.parentRuntimeGroupId ?? groups.find(group => group.id !== targetId)?.parentRuntimeGroupId ?? null;
-    const pendingBonuses = groups.map(group => group.rules?.pendingCheckBonus).filter(Boolean);
-    target.rules.pendingCheckBonus = pendingBonuses.sort((a, b) => Number(b.value ?? 0) - Number(a.value ?? 0))[0] ?? null;
+    const mergedPendingBonuses = [];
+    const seenPendingParticipants = new Set();
+    for (const group of groups) {
+      for (const bonus of pendingBonusesForGroup(group)) {
+        const participantId = bonus?.participantId ?? null;
+        if (participantId && seenPendingParticipants.has(participantId)) continue;
+        if (participantId) seenPendingParticipants.add(participantId);
+        mergedPendingBonuses.push(cloneData(bonus));
+      }
+    }
+    setGroupPendingBonuses(target, mergedPendingBonuses);
     target.metadata = {
       ...(target.metadata ?? {}),
       mergedAtRound: next.round,
@@ -892,8 +927,14 @@ export function createChaseRulesEngine({ registries = null, cardResolver = null,
       const merged = mergeRuntimeGroups(session, { runtimeGroupIds: [fromRuntimeGroupId, toRuntimeGroupId], targetRuntimeGroupId: toRuntimeGroupId });
       return Object.freeze({ ...merged, transferredParticipantIds: selected });
     }
+    const sourcePending = pendingBonusesForGroup(source).map(cloneData);
+    const targetPending = pendingBonusesForGroup(target).map(cloneData);
+    const movingPending = sourcePending.filter(bonus => bonus.participantId && selected.includes(bonus.participantId));
     source.participantIds = source.participantIds.filter(id => !selected.includes(id));
     target.participantIds = uniqueStrings([...(target.participantIds ?? []), ...selected]);
+    setGroupPendingBonuses(source, sourcePending.filter(bonus => !bonus.participantId || !selected.includes(bonus.participantId)));
+    const targetParticipantBonusIds = new Set(targetPending.map(bonus => bonus?.participantId).filter(Boolean));
+    setGroupPendingBonuses(target, [...targetPending, ...movingPending.filter(bonus => !targetParticipantBonusIds.has(bonus.participantId))]);
     next.events = [...(next.events ?? []), event("runtimeParticipantsTransferred", next, {
       fromRuntimeGroupId, toRuntimeGroupId, participantIds: selected, nodeId: source.position.nodeId
     })];
@@ -1030,22 +1071,30 @@ export function createChaseRulesEngine({ registries = null, cardResolver = null,
     });
   }
 
-  function pendingCheckBonus(session, runtimeGroupId) {
+  function pendingCheckBonus(session, runtimeGroupId, participantId = null) {
     assertSession(session);
     const group = getRuntimeGroup(session, runtimeGroupId);
     if (!group) throw rulesError("UNKNOWN_RUNTIME_GROUP", `Unknown runtime group '${runtimeGroupId}'.`);
-    return cloneData(group.rules.pendingCheckBonus);
+    const bonuses = pendingBonusesForGroup(group);
+    const bonus = participantId
+      ? bonuses.find(item => item?.participantId === participantId) ?? null
+      : bonuses[0] ?? null;
+    return cloneData(bonus);
   }
 
-  function consumePendingCheckBonus(session, runtimeGroupId) {
+  function consumePendingCheckBonus(session, runtimeGroupId, participantId = null) {
     assertSession(session);
     const next = cloneData(session);
     const group = getRuntimeGroup(next, runtimeGroupId);
     if (!group) throw rulesError("UNKNOWN_RUNTIME_GROUP", `Unknown runtime group '${runtimeGroupId}'.`);
-    const bonus = cloneData(group.rules.pendingCheckBonus);
-    group.rules.pendingCheckBonus = null;
+    const bonuses = pendingBonusesForGroup(group).map(cloneData);
+    const index = participantId
+      ? bonuses.findIndex(item => item?.participantId === participantId)
+      : (bonuses.length > 0 ? 0 : -1);
+    const bonus = index >= 0 ? bonuses.splice(index, 1)[0] : null;
+    setGroupPendingBonuses(group, bonuses);
     if (bonus) {
-      next.events = [...(next.events ?? []), event("pendingCheckBonusConsumed", next, { runtimeGroupId, bonus })];
+      next.events = [...(next.events ?? []), event("pendingCheckBonusConsumed", next, { runtimeGroupId, participantId: bonus.participantId ?? participantId ?? null, bonus })];
       next.updatedAt = nowIso();
     }
     return { session: createChaseSession(next), bonus };
@@ -1099,7 +1148,7 @@ export function createChaseRulesEngine({ registries = null, cardResolver = null,
       const copy = cloneData(next);
       getRuntimeGroup(copy, runtimeGroupId).position.progress = requiredPoints;
       next = markNodeCleared(createChaseSession(copy), node.id, runtimeGroupId, requiredPoints);
-      if (group.participantIds.length === 1 && degree === "criticalSuccess") next = setPendingSeparatedBonus(next, runtimeGroupId);
+      if (group.participantIds.length === 1 && degree === "criticalSuccess") next = setPendingSeparatedBonus(next, runtimeGroupId, participantId);
       if (!routeResolutionDeferred) {
         const route = advanceFromClearedCard(next, runtimeGroupId, routeEngine, { context });
         next = route.session;
@@ -1140,7 +1189,7 @@ export function createChaseRulesEngine({ registries = null, cardResolver = null,
         approachId,
         degree
       }),
-      pendingCheckBonus: cloneData(currentGroup.rules.pendingCheckBonus)
+      pendingCheckBonus: pendingCheckBonus(next, runtimeGroupId, participantId)
     });
   }
 
@@ -1166,10 +1215,10 @@ export function createChaseRulesEngine({ registries = null, cardResolver = null,
     if (dc.value === null) throw rulesError("CHECK_DC_UNAVAILABLE", `Approach '${approach.id}' does not use a check DC.`);
 
     let working = session;
-    const pending = pendingCheckBonus(working, runtimeGroupId);
+    const pending = pendingCheckBonus(working, runtimeGroupId, participantId);
     let appliedPendingBonus = 0;
     if (pending) {
-      const consumed = consumePendingCheckBonus(working, runtimeGroupId);
+      const consumed = consumePendingCheckBonus(working, runtimeGroupId, participantId);
       working = consumed.session;
       if (!pendingBonusAlreadyApplied) appliedPendingBonus = Number(consumed.bonus?.value ?? 0);
     }

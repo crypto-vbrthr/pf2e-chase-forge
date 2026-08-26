@@ -193,13 +193,20 @@ export function createChaseSessionSyncService({
   }
 
   async function handleRollIntent(api, message, sender, session) {
-    const { runtimeGroupId, participantId, approachId, total, natural = null } = message.payload ?? {};
+    const { runtimeGroupId, participantId, approachId, total, natural = null, pendingBonusApplied = false } = message.payload ?? {};
     const participant = await authorizeParticipant(session, participantId, sender);
     if (!Number.isFinite(Number(total))) throw new Error("Das Wurfergebnis ist ungültig.");
     const obstacle = api.rules.currentObstacle(session, runtimeGroupId);
     if (!obstacle?.card) throw new Error("Die Gruppe befindet sich an keinem würfelbaren Hindernis.");
     const approach = obstacle.card.approaches.find(item => item.id === approachId) ?? null;
     if (!approach?.statistic) throw new Error("Diese Vorgehensweise besitzt keine würfelbare PF2e-Fertigkeit.");
+    const actorUuid = participant.uuid ?? participant.metadata?.actorUuid ?? null;
+    if (actorUuid) {
+      const actor = await api.pf2e.adapter.resolveActor(actorUuid);
+      if (!api.pf2e.adapter.meetsMinimumProficiency(actor, approach.statistic, approach.minimumProficiency)) {
+        throw new Error("Der erforderliche Kompetenzgrad für diese Vorgehensweise ist nicht erreicht.");
+      }
+    }
     const gmDc = storedGmDc(session, obstacle.card.id, approachId);
     const dc = api.pf2e.dc.resolveApproach(approach, { partyLevel: session.blueprintSnapshot.settings.partyLevel, gmDc });
     if (!Number.isFinite(Number(dc.value))) throw new Error("Die Spielleitung muss für diese Probe zuerst einen SG festlegen.");
@@ -207,7 +214,8 @@ export function createChaseSessionSyncService({
       runtimeGroupId, participantId, approachId,
       total: Number(total),
       natural: Number.isFinite(Number(natural)) ? Number(natural) : null,
-      gmDc
+      gmDc,
+      pendingBonusAlreadyApplied: pendingBonusApplied === true && Boolean(api.rules.pendingCheckBonus(session, runtimeGroupId, participantId))
     });
     const consequenceSession = await applyConsequences(api, result);
     const persisted = await saveOrFinish(api, consequenceSession);

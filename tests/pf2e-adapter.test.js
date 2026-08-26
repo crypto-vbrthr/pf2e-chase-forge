@@ -49,3 +49,37 @@ test("PF2e adapter exposes the numeric statistic modifier for Chase approach pre
   assert.equal(adapter.getStatisticModifier({ getStatistic: () => ({ check: { modifier: -2 } }) }, "stealth"), -2);
   assert.equal(adapter.getStatisticModifier({ getStatistic: () => ({ check: { roll() {} } }) }, "acrobatics"), null);
 });
+
+test("PF2e adapter reads proficiency ranks and enforces optional Chase minimum proficiency", () => {
+  const adapter = createPf2eChaseAdapter({ fromUuid: async () => null });
+  const actor = { getStatistic: () => ({ rank: 2, check: { roll() {} } }) };
+  assert.equal(adapter.getStatisticRank(actor, "athletics"), 2);
+  assert.equal(adapter.meetsMinimumProficiency(actor, "athletics", "trained"), true);
+  assert.equal(adapter.meetsMinimumProficiency(actor, "athletics", "expert"), true);
+  assert.equal(adapter.meetsMinimumProficiency(actor, "athletics", "master"), false);
+});
+
+test("PF2e adapter forwards typed modifiers into the PF2e statistic roll", async () => {
+  let captured = null;
+  const statistic = { check: { async roll(options) { captured = options; return { total: 22 }; } } };
+  const actor = { getStatistic: () => statistic };
+  const adapter = createPf2eChaseAdapter({ fromUuid: async () => actor });
+  const modifier = { slug: "test-circumstance", modifier: 2, type: "circumstance" };
+  await adapter.rollStatistic({ actor, statistic: "athletics", modifiers: [modifier] });
+  assert.deepEqual(captured.modifiers, [modifier]);
+});
+
+test("PF2e adapter supports saves and a strike-backed attack statistic", async () => {
+  let attackCalled = false;
+  const fortitude = { rank: 2, mod: 11, check: { async roll() { return { total: 21 }; } } };
+  const actor = {
+    getStatistic: slug => slug === "fortitude" ? fortitude : null,
+    system: { actions: [{ type: "strike", label: "Sword", totalModifier: 14, variants: [{ async roll() { attackCalled = true; return { total: 24 }; } }] }] }
+  };
+  const adapter = createPf2eChaseAdapter({ fromUuid: async () => actor });
+  assert.equal(adapter.getStatistic(actor, "fortitude"), fortitude);
+  assert.equal(adapter.getStatisticModifier(actor, "attack"), 14);
+  const roll = await adapter.rollStatistic({ actor, statistic: "attack" });
+  assert.equal(roll.total, 24);
+  assert.equal(attackCalled, true);
+});

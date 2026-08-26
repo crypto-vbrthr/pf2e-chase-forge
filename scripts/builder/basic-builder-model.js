@@ -1,4 +1,5 @@
 import {
+  CHASE_LENGTH_GUIDELINES,
   CHASE_TYPES,
   DEFAULTS,
   GROUP_ROLES,
@@ -75,12 +76,13 @@ export function createBasicApproach(input = {}) {
     description: input.description ?? "",
     type: input.type ?? "check",
     statistic: input.statistic ?? DEFAULT_SKILL,
+    minimumProficiency: input.minimumProficiency ?? null,
     dc: {
-      mode: input.dc?.mode ?? "level",
+      mode: input.dc?.mode ?? "simple",
       value: input.dc?.value ?? null,
       levelOffset: Number(input.dc?.levelOffset ?? 0),
       difficultyAdjustment: Number(input.dc?.difficultyAdjustment ?? 0),
-      proficiency: input.dc?.proficiency ?? null,
+      proficiency: input.dc?.proficiency ?? "trained",
       hidden: input.dc?.hidden !== false
     },
     traits: Array.isArray(input.traits) ? [...input.traits] : [],
@@ -205,6 +207,10 @@ export function createBasicBuilderDraft(input = {}) {
     return blueprint;
   }
   const chaseType = CHASE_TYPES.includes(input.chaseType) ? input.chaseType : DEFAULTS.chaseType;
+  const length = input.length ?? "medium";
+  const defaultVictory = chaseType === "againstClock"
+    ? { roundLimit: CHASE_LENGTH_GUIDELINES[length] ?? CHASE_LENGTH_GUIDELINES.short }
+    : {};
   const blueprint = createChaseBlueprint({
     id: input.id || createId("blueprint"),
     source: builderSource(),
@@ -213,7 +219,7 @@ export function createBasicBuilderDraft(input = {}) {
     gmNotes: input.gmNotes ?? "",
     settings: {
       chaseType,
-      length: input.length ?? "medium",
+      length,
       difficulty: input.difficulty ?? "moderate",
       routeComplexity: "linear",
       partyLevel: input.partyLevel ?? 1,
@@ -225,7 +231,7 @@ export function createBasicBuilderDraft(input = {}) {
       timeOfDay: input.timeOfDay ?? null,
       weather: input.weather ?? null,
       imageMode: input.imageMode ?? "none",
-      victory: input.victory ?? {},
+      victory: input.victory ?? defaultVictory,
       gmOptions: input.gmOptions ?? {}
     },
     groups: input.groups ?? defaultGroupsForChaseType(chaseType),
@@ -429,6 +435,13 @@ export function replaceBasicGroupsForChaseType(input, chaseType, { preserveParti
   if (preserveParticipants && priorParticipants.length > 0) groups[0].participants = priorParticipants;
   next.groups = groups;
   next.settings.chaseType = chaseType;
+  next.settings.victory ??= {};
+  if (chaseType === "againstClock") {
+    const currentLimit = Number(next.settings.victory.roundLimit);
+    if (!Number.isInteger(currentLimit) || currentLimit < 1) {
+      next.settings.victory.roundLimit = CHASE_LENGTH_GUIDELINES[next.settings.length] ?? CHASE_LENGTH_GUIDELINES.short;
+    }
+  }
   // Group resets are also allowed on branching Blueprints, so retain the
   // existing Builder mode instead of invalidating the visual route editor.
   ensureBuilderMetadata(next, { preserveMode: true });
@@ -460,6 +473,13 @@ export function validateBasicBuilderBlueprint(input, { forStart = false } = {}) 
   }
   if (type === "race" && (blueprint.groups ?? []).filter(group => group.role === "competitor").length < 2) {
     errors.push({ code: "BASIC_BUILDER_RACE_GROUPS", path: "groups", message: "Race chases require at least two competitor groups." });
+  }
+  if (type === "againstClock") {
+    const roundLimit = Number(blueprint.settings?.victory?.roundLimit);
+    if (!Number.isInteger(roundLimit) || roundLimit < 1) {
+      const issue = { code: "BASIC_BUILDER_ROUND_LIMIT", path: "settings.victory.roundLimit", message: "Against-the-clock chases require a round limit of at least 1." };
+      if (forStart) errors.push(issue); else warnings.push(issue);
+    }
   }
   if (forStart) {
     if (cards.length === 0) errors.push({ code: "BASIC_BUILDER_NO_CARDS", path: "graph", message: "A chase needs at least one card before it can start." });

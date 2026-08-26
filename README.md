@@ -1,12 +1,21 @@
 # PF2E Chase Forge
 
-**Version:** 0.1.0-rc.2  
+**Version:** 0.1.0-rc.3  
 **Foundry VTT:** 14  
 **System:** Pathfinder 2e
 
-PF2E Chase Forge is a modular Pathfinder 2e chase framework for Foundry VTT. `0.1.0-rc.2` is the final integration review candidate for the Advanced Routing & Party Splitting code line introduced in dev.18. Runtime groups can split, move independently across mainline and branch nodes, reunite later, and be scheduled by an automatic or GM-selected group order. The public API remains v18; persisted schemas and Campaign Forge Integration Contract v2 remain unchanged.
+PF2E Chase Forge is a modular Pathfinder 2e chase framework for Foundry VTT. `0.1.0-rc.3` is the final PF2e rules-alignment candidate built on the validated Advanced Routing & Party Splitting runtime. It adds explicit Against-the-Clock round limits, PF2e simple-DC authoring with separate minimum-proficiency requirements, save/attack-roll approaches, and character-bound separated-PC critical-success bonuses. The public API remains v18; persisted schemas and Campaign Forge Integration Contract v2 remain unchanged.
 
 The underlying architecture remains intact: DAG route graphs, synchronized GM/Player runtime views, add-on registries, template-based generation, the 72-card Core Library, the shared Visual System, PF2e chase rules, consequence orchestration, optional Critical Forge / Effect Forge integration, Weather Forge prefill, and protected restart-safe Blueprint/Session persistence.
+
+
+## rc.3 Final PF2e Rules Alignment
+
+Against-the-Clock chases now expose their round limit directly in the Builder and receive a usable default from the selected chase length. New manual and Core Library approaches default to PF2e **simple DCs**; fixed, level-based, and GM-entered DCs remain available when the fiction calls for them. The simple-DC rank is intentionally separate from **Minimum Proficiency**, because PF2e's simple-DC table rank normally describes task complexity rather than an automatic proficiency prerequisite.
+
+Approaches may now use Fortitude, Reflex, Will, or an attack roll in addition to skills and Perception. Optional minimum proficiency is enforced before a GM or player roll can proceed.
+
+The separated-character critical-success benefit is now participant-bound. If a solo character earns the +2 circumstance bonus and later rejoins companions, only that character can consume it. Chase Forge injects the bonus into the PF2e roll as a typed circumstance modifier when possible, so ordinary PF2e stacking rules remain authoritative. Legacy Session data is normalized forward without changing the persisted Session schema.
 
 
 ## dev.18 Advanced Routing & Party Splitting
@@ -17,7 +26,7 @@ For pursuit and escape chases, Chase Forge now schedules runtime groups inside t
 
 The GM Runner includes a compact full-route monitor with card names, branch rows, current runtime-group markers, the active/recommended group, shortest remaining distance to an ending, and graph distance between the selected group and the other groups. The Player View stays local: it shows the participant's current runtime group and companions without receiving the GM's full route monitor.
 
-PF2e separated-character handling remains authoritative: a singleton subgroup clears an obstacle on one success, and a critical success grants the existing +2 circumstance bonus to its first check against the next obstacle. Automatically scalable Chase Point thresholds are recalculated from the current runtime-group size after splits, merges, or transfers. Split/transfer operations are blocked after partial Chase Point progress to avoid changing the threshold mid-attempt; merging preserves existing progress and re-evaluates the new requirement.
+PF2e separated-character handling remains authoritative: a singleton subgroup clears an obstacle on one success, and a critical success grants that participant a +2 circumstance bonus to their first check against the next obstacle. Automatically scalable Chase Point thresholds are recalculated from the current runtime-group size after splits, merges, or transfers. Split/transfer operations are blocked after partial Chase Point progress to avoid changing the threshold mid-attempt; merging preserves existing progress and re-evaluates the new requirement.
 
 Split quarry groups are resolved independently. Catching or escaping one subgroup no longer terminates the entire chase while another quarry subgroup is still active. If all quarry groups eventually resolve with mixed outcomes, the final ChaseResult records a custom mixed result with per-runtime-group resolution metadata.
 

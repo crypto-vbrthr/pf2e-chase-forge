@@ -152,7 +152,7 @@ function signedModifier(value) {
   return amount >= 0 ? `+${amount}` : String(amount);
 }
 
-async function participantApproachModifiers(api, participant, approaches) {
+async function participantApproachStats(api, participant, approaches) {
   const actorUuid = participant?.uuid ?? participant?.metadata?.actorUuid ?? null;
   if (!actorUuid) return new Map();
   let actor = null;
@@ -163,8 +163,10 @@ async function participantApproachModifiers(api, participant, approaches) {
     if (!approach?.statistic) continue;
     try {
       const modifier = api?.pf2e?.adapter?.getStatisticModifier?.(actor, approach.statistic);
-      if (Number.isFinite(Number(modifier))) result.set(approach.id, Number(modifier));
-    } catch { /* Statistic not present on this actor. */ }
+      const rank = api?.pf2e?.adapter?.getStatisticRank?.(actor, approach.statistic) ?? null;
+      const eligible = api?.pf2e?.adapter?.meetsMinimumProficiency?.(actor, approach.statistic, approach.minimumProficiency) ?? true;
+      result.set(approach.id, { modifier: Number.isFinite(Number(modifier)) ? Number(modifier) : null, rank, eligible });
+    } catch { result.set(approach.id, { modifier: null, rank: null, eligible: false }); }
   }
   return result;
 }
@@ -467,7 +469,8 @@ function getAppClass() {
             dcResolved: dc?.value ?? savedGmDc ?? null,
             dcMode: dc?.mode ?? approach.dc?.mode ?? null,
             storedGmDc: savedGmDc,
-            needsGmDc: (approach.dc?.mode ?? "gm") === "gm"
+            needsGmDc: (approach.dc?.mode ?? "gm") === "gm",
+            minimumProficiencyLabel: approach.minimumProficiency ? i18n(`PF2E_CHASE_FORGE.Proficiency.${approach.minimumProficiency}`, approach.minimumProficiency) : null
           };
         });
         const groupTurnAllowed = this.chaseApi.rules.canGroupAct?.(session, runtimeGroup.id) ?? true;
@@ -476,7 +479,7 @@ function getAppClass() {
           const participant = resolveParticipant(session, participantId) ?? { id: participantId, name: participantId, uuid: null, image: null };
           const participantTurnAllowed = this.chaseApi.rules.canParticipantAct?.(session, runtimeGroup.id, participantId)
             ?? (activeRound && groupTurnAllowed && runtimeGroup.rules.paceMode === "roll" && !runtimeGroup.completed && !session.roundState.actedParticipantIds.includes(participantId));
-          const modifiers = await participantApproachModifiers(this.chaseApi, participant, approaches);
+          const approachStats = await participantApproachStats(this.chaseApi, participant, approaches);
           participants.push({
             ...cloneData(participant),
             acted: session.roundState.actedParticipantIds.includes(participantId),
@@ -485,8 +488,15 @@ function getAppClass() {
             lastResult: lastParticipantResult(session, runtimeGroup.id, participantId),
             degreeOptions: degreeOptions("success"),
             approaches: approaches.map(approach => {
-              const statisticModifier = modifiers.get(approach.id);
-              return { ...cloneData(approach), statisticModifier, modifierLabel: signedModifier(statisticModifier) };
+              const stats = approachStats.get(approach.id) ?? { modifier: null, rank: null, eligible: true };
+              return {
+                ...cloneData(approach),
+                statisticModifier: stats.modifier,
+                modifierLabel: signedModifier(stats.modifier),
+                statisticRank: stats.rank,
+                eligible: stats.eligible !== false,
+                minimumProficiencyLabel: approach.minimumProficiency ? i18n(`PF2E_CHASE_FORGE.Proficiency.${approach.minimumProficiency}`, approach.minimumProficiency) : null
+              };
             }),
             manualApproaches: approaches.map(approach => ({ value: approach.id, label: approach.label || approach.statistic || approach.id }))
           });
@@ -776,16 +786,37 @@ function getAppClass() {
         const obstacle = this.chaseApi.rules.currentObstacle(session, runtimeGroupId);
         const approach = obstacle.card.approaches.find(item => item.id === approachId);
         if (!approach?.statistic) throw new Error("Diese Vorgehensweise besitzt keine würfelbare PF2e-Fertigkeit.");
+        const actor = await this.chaseApi.pf2e.adapter.resolveActor(participant.uuid);
+        if (!this.chaseApi.pf2e.adapter.meetsMinimumProficiency(actor, approach.statistic, approach.minimumProficiency)) {
+          const rankLabel = i18n(`PF2E_CHASE_FORGE.Proficiency.${approach.minimumProficiency}`, approach.minimumProficiency);
+          throw new Error(format("PF2E_CHASE_FORGE.Runner.MinimumProficiencyNotMet", { rank: rankLabel }, `Mindestkompetenz ${rankLabel} ist erforderlich.`));
+        }
         const groupElement = target.closest?.(".chase-runner-group");
         const gmDcRaw = groupElement?.querySelector?.(`[data-gm-dc][data-approach-id="${approachId}"]`)?.value ?? null;
         const gmDc = gmDcRaw === null || gmDcRaw === "" ? storedGmDc(session, obstacle.card.id, approachId) : Number(gmDcRaw);
         if (Number.isFinite(Number(gmDc)) && approach.dc?.mode === "gm") session = setStoredGmDc(this.chaseApi, session, obstacle.card.id, approachId, gmDc);
         const dc = this.chaseApi.pf2e.dc.resolveApproach(approach, { partyLevel: session.blueprintSnapshot.settings.partyLevel, gmDc });
         if (!Number.isFinite(Number(dc.value))) throw new Error("Für diese Probe ist noch kein SG festgelegt.");
-        const roll = await this.chaseApi.pf2e.adapter.rollStatistic({ actorUuid: participant.uuid, statistic: approach.statistic, dc: dc.value, label: approach.label || obstacle.card.name });
+        const pendingBonus = this.chaseApi.rules.pendingCheckBonus(session, runtimeGroupId, participantId);
+        const modifiers = [];
+        let pendingBonusAlreadyApplied = false;
+        if (pendingBonus) {
+          try {
+            modifiers.push(this.chaseApi.pf2e.adapter.createModifier({
+              value: pendingBonus.value,
+              type: pendingBonus.type || "circumstance",
+              label: i18n("PF2E_CHASE_FORGE.Rules.SeparatedCriticalBonus", "Getrennter SC: Kritischer Erfolg"),
+              slug: "chase-forge-separated-critical"
+            }));
+            pendingBonusAlreadyApplied = true;
+          } catch (error) {
+            console.warn(`${MODULE_ID} | Typed PF2e separated-PC bonus unavailable; falling back to rules-engine total adjustment.`, error);
+          }
+        }
+        const roll = await this.chaseApi.pf2e.adapter.rollStatistic({ actorUuid: participant.uuid, statistic: approach.statistic, dc: dc.value, label: approach.label || obstacle.card.name, modifiers });
         const total = rollTotal(roll);
         if (!Number.isFinite(total)) throw new Error("Das PF2e-Wurfergebnis konnte nicht ausgewertet werden.");
-        const result = this.chaseApi.rules.resolveCheck(session, { runtimeGroupId, participantId, approachId, total, natural: rollNatural(roll), gmDc });
+        const result = this.chaseApi.rules.resolveCheck(session, { runtimeGroupId, participantId, approachId, total, natural: rollNatural(roll), gmDc, pendingBonusAlreadyApplied });
         return this._applyRulesResult(result, { participantName: participant.name, approachLabel: approach.label });
       } catch (error) { console.error(`${MODULE_ID} | Chase roll failed.`, error); notify("error", error.message); }
     }

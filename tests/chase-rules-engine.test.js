@@ -481,3 +481,37 @@ test("completeSession produces a persisted result summary", () => {
   assert.equal(completed.result.outcome, "quarryCaught");
   assert.equal(completed.result.sessionId, session.id);
 });
+
+test("separated critical bonus stays bound to its participant after subgroups merge", () => {
+  const rules = engine();
+  let session = activeSingleGroupSession({ participantIds: ["hero-1", "hero-2"] });
+  const split = rules.splitRuntimeGroup(session, { runtimeGroupId: "runtime-heroes", participantIds: ["hero-2"] });
+  session = rules.setGroupOrderMode(split.session, "manual");
+  const childId = split.childRuntimeGroupId;
+  session = rules.selectActiveGroup(session, "runtime-heroes");
+
+  let first = rules.applyDegree(session, { runtimeGroupId: "runtime-heroes", participantId: "hero-1", approachId: "athletics", degree: "criticalSuccess" });
+  assert.equal(first.session.groups.find(group => group.id === "runtime-heroes").position.nodeId, "c2");
+  assert.equal(rules.pendingCheckBonus(first.session, "runtime-heroes", "hero-1")?.value, 2);
+  session = rules.selectActiveGroup(first.session, childId);
+
+  const second = rules.applyDegree(session, { runtimeGroupId: childId, participantId: "hero-2", approachId: "athletics", degree: "success" });
+  assert.equal(second.session.groups.find(group => group.id === childId).position.nodeId, "c2");
+  session = second.session;
+
+  const merged = rules.mergeRuntimeGroups(session, { runtimeGroupIds: ["runtime-heroes", childId], targetRuntimeGroupId: "runtime-heroes" });
+  session = merged.session;
+  assert.equal(rules.pendingCheckBonus(session, "runtime-heroes", "hero-2"), null, "another participant must not inherit the bonus");
+  assert.equal(rules.pendingCheckBonus(session, "runtime-heroes", "hero-1")?.value, 2);
+
+  session = rules.endRound(session, { advanceSteady: false, completeOnOutcome: false }).session;
+  session = rules.beginRound(session);
+  const otherActsFirst = rules.resolveCheck(session, { runtimeGroupId: "runtime-heroes", participantId: "hero-2", approachId: "athletics", total: 18 });
+  assert.equal(otherActsFirst.appliedPendingBonus, 0);
+  assert.equal(rules.pendingCheckBonus(otherActsFirst.session, "runtime-heroes", "hero-1")?.value, 2, "the owner's bonus remains pending");
+
+  const ownerActs = rules.resolveCheck(otherActsFirst.session, { runtimeGroupId: "runtime-heroes", participantId: "hero-1", approachId: "athletics", total: 18 });
+  assert.equal(ownerActs.appliedPendingBonus, 2);
+  assert.equal(ownerActs.effectiveTotal, 20);
+  assert.equal(rules.pendingCheckBonus(ownerActs.session, "runtime-heroes", "hero-1"), null);
+});

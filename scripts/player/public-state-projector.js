@@ -107,6 +107,7 @@ function safeApproach(approach, { ready = true } = {}) {
     description: approach.description || "",
     type: approach.type,
     statistic: approach.statistic,
+    minimumProficiency: approach.minimumProficiency ?? null,
     traits: [...(approach.traits ?? [])],
     ready
   };
@@ -207,15 +208,28 @@ export async function projectChasePublicState(api, session, {
       const participantTurnAllowed = api?.rules?.canParticipantAct?.(session, runtimeGroup.id, participantId)
         ?? (activeRound && groupTurnAllowed && runtimeGroup.rules?.paceMode === "roll" && !runtimeGroup.completed && !acted);
       if (owned && participantTurnAllowed && card && !cleared) {
+        const actorUuid = participant.uuid ?? participant.metadata?.actorUuid ?? null;
+        let actor = null;
+        if (actorUuid) {
+          try { actor = await api?.pf2e?.adapter?.resolveActor?.(actorUuid); } catch { actor = null; }
+        }
+        let pendingCheckBonus = null;
+        try { pendingCheckBonus = api?.rules?.pendingCheckBonus?.(session, runtimeGroup.id, participantId) ?? null; } catch { pendingCheckBonus = null; }
         for (const approach of card.approaches ?? []) {
           if (!approach.statistic || approach.type !== "check") continue;
           const ready = (approach.dc?.mode ?? "gm") !== "gm" || storedGmDc(session, card.id, approach.id) !== null;
           if (!ready) continue;
+          if (actor && api?.pf2e?.adapter?.meetsMinimumProficiency?.(actor, approach.statistic, approach.minimumProficiency) === false) continue;
           availableActions.push({
             type: "roll",
             runtimeGroupId: runtimeGroup.id,
             participantId,
-            actorUuid: participant.uuid ?? participant.metadata?.actorUuid ?? null,
+            actorUuid,
+            pendingCheckBonus: pendingCheckBonus ? {
+              value: Number(pendingCheckBonus.value ?? 0),
+              type: pendingCheckBonus.type || "circumstance",
+              source: pendingCheckBonus.source || "separatedCriticalSuccess"
+            } : null,
             approach: safeApproach(approach, { ready })
           });
         }

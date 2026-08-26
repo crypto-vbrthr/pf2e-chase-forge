@@ -144,6 +144,7 @@ function normalizeApproach(input = {}) {
     description: asString(approach.description),
     type: pickEnum(approach.type, APPROACH_TYPES, "check"),
     statistic: approach.statistic ? asString(approach.statistic) : null,
+    minimumProficiency: approach.minimumProficiency ? asString(approach.minimumProficiency) : null,
     dc: {
       mode: pickEnum(approach.dc?.mode, DC_MODES, "gm"),
       value: approach.dc?.value === null || approach.dc?.value === undefined ? null : asFiniteNumber(approach.dc.value, 0),
@@ -341,11 +342,31 @@ export function normalizeChaseBlueprint(input = {}) {
 function normalizeGroupState(input = {}) {
   const state = isPlainObject(input) ? input : {};
   const rawRules = isPlainObject(state.rules) ? state.rules : {};
-  const pending = isPlainObject(rawRules.pendingCheckBonus) ? rawRules.pendingCheckBonus : null;
+  const legacyPending = isPlainObject(rawRules.pendingCheckBonus) ? rawRules.pendingCheckBonus : null;
+  const participantIds = uniqueStrings(state.participantIds);
+  const normalizePending = pending => ({
+    participantId: pending?.participantId ? asString(pending.participantId) : (participantIds.length === 1 ? participantIds[0] : null),
+    value: asFiniteNumber(pending?.value, 0),
+    type: asString(pending?.type, "circumstance"),
+    source: asString(pending?.source),
+    grantedAtRound: Math.max(0, asNonNegativeInteger(pending?.grantedAtRound, 0))
+  });
+  let pendingCheckBonuses = Array.isArray(rawRules.pendingCheckBonuses)
+    ? rawRules.pendingCheckBonuses.filter(isPlainObject).map(normalizePending)
+    : [];
+  if (pendingCheckBonuses.length === 0 && legacyPending) pendingCheckBonuses = [normalizePending(legacyPending)];
+  const dedupedPending = [];
+  const seenPending = new Set();
+  for (const pending of pendingCheckBonuses) {
+    const key = pending.participantId ? `participant:${pending.participantId}` : `legacy:${dedupedPending.length}`;
+    if (pending.participantId && seenPending.has(key)) continue;
+    seenPending.add(key);
+    dedupedPending.push(pending);
+  }
   return {
     id: asString(state.id, createId("runtime-group")),
     groupId: asString(state.groupId),
-    participantIds: uniqueStrings(state.participantIds),
+    participantIds,
     parentRuntimeGroupId: state.parentRuntimeGroupId ? asString(state.parentRuntimeGroupId) : null,
     position: {
       nodeId: state.position?.nodeId ? asString(state.position.nodeId) : null,
@@ -358,12 +379,9 @@ function normalizeGroupState(input = {}) {
       paceMode: pickEnum(rawRules.paceMode, GROUP_PACE_MODES, DEFAULTS.groupPaceMode),
       obstaclesPerRound: Math.max(0, asFiniteNumber(rawRules.obstaclesPerRound, DEFAULTS.steadyObstaclesPerRound)),
       steadyProgress: Math.max(0, asFiniteNumber(rawRules.steadyProgress, 0)),
-      pendingCheckBonus: pending ? {
-        value: asFiniteNumber(pending.value, 0),
-        type: asString(pending.type, "circumstance"),
-        source: asString(pending.source),
-        grantedAtRound: Math.max(0, asNonNegativeInteger(pending.grantedAtRound, 0))
-      } : null
+      pendingCheckBonuses: dedupedPending,
+      // Legacy mirror retained for API/data compatibility with pre-rc.3 sessions.
+      pendingCheckBonus: dedupedPending[0] ? cloneData(dedupedPending[0]) : null
     },
     metadata: isPlainObject(state.metadata) ? cloneData(state.metadata) : {}
   };

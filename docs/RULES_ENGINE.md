@@ -1,6 +1,6 @@
 # PF2E Chase Rules Engine - Contract v1
 
-The PF2e-specific rules layer consumes validated Chase Cards and a `ChaseSession`, while the Route Graph Engine remains system-neutral. Dev.18 adds dynamic runtime-group routing and scheduling without changing persisted schemas.
+The PF2e-specific rules layer consumes validated Chase Cards and a `ChaseSession`, while the Route Graph Engine remains system-neutral. RC.3 completes the final PF2e rules-alignment pass on top of dev.18 dynamic runtime-group routing without changing persisted schemas.
 
 ## Responsibilities
 
@@ -17,6 +17,14 @@ The rules engine owns:
 - ChaseResult creation.
 
 It does not own general consequence execution, Actor mutation, or Effect Forge application. In dev.5, those deferred outcomes are handed to the separate Consequence Engine.
+
+### PF2e Chase check authoring (rc.3)
+
+New manual and Core Library approaches default to PF2e **simple DCs**. The selected simple-DC proficiency rank describes task complexity; it is separate from `minimumProficiency`, which is an optional prerequisite for especially significant obstacles. Fixed, level-based, GM-provided, and no-DC modes remain supported.
+
+Builder-authored checks can use skills, Perception, Fortitude, Reflex, Will, or an attack roll. The PF2e adapter resolves these from Actor statistics/strikes and delegates the actual roll to PF2e rather than recreating roll math.
+
+Against-the-Clock Blueprints expose `settings.victory.roundLimit`; Builder defaults follow the configured short/medium/long chase-length guideline and start validation requires a positive limit for that chase type.
 
 ## Chase Points
 
@@ -45,7 +53,7 @@ A Blueprint participant group is a stable side/roster definition. A runtime grou
 
 Splitting is permitted at a fresh obstacle, after a cleared obstacle, or on non-card route nodes. It is rejected while an uncleared card has positive Chase Point progress. This prevents reducing an automatically scaled threshold by splitting mid-attempt. Selected-participant transfers between co-located compatible groups use the same protection. Merging is allowed at a shared node and preserves accumulated progress and global round action state. The effective obstacle threshold is recalculated after the merge.
 
-Singleton runtime groups use the separated-character chase rule: one success or critical success clears the current obstacle regardless of its stored Chase Point target; a critical success grants the existing +2 circumstance bonus to the first check against the next obstacle.
+Singleton runtime groups use the separated-character chase rule: one success or critical success clears the current obstacle regardless of its stored Chase Point target. A critical success grants that **participant** a +2 circumstance bonus to their first check against the next obstacle. The pending bonus follows the participant through split, merge, and transfer operations and is injected into the PF2e roll as a typed circumstance modifier when the system API is available, so normal circumstance-bonus stacking remains authoritative.
 
 ### Pursuit/escape group order
 

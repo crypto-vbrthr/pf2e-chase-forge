@@ -595,5 +595,20 @@
   "PF2E_CHASE_FORGE.Runner.GroupEscaped": "Entkommen",
   "PF2E_CHASE_FORGE.Runner.ManageGroup": "Gruppe verwalten",
   "PF2E_CHASE_FORGE.Runner.MoveSelectedTo": "Ausgewählte zu",
-  "PF2E_CHASE_FORGE.Runner.ParticipantsTransferredDone": "Beteiligte verschoben."
+  "PF2E_CHASE_FORGE.Runner.ParticipantsTransferredDone": "Beteiligte verschoben.",
+  "PF2E_CHASE_FORGE.Builder.RoundLimit": "Rundenlimit",
+  "PF2E_CHASE_FORGE.Builder.RoundLimitPlaceholder": "z. B. 6",
+  "PF2E_CHASE_FORGE.Builder.RoundLimitHint": "Die Jagd endet, wenn dieses Rundenlimit abläuft. Bei „Gegen die Uhr“ entspricht es üblicherweise ungefähr der Zahl der Hindernisse.",
+  "PF2E_CHASE_FORGE.Builder.RoundLimitInactiveHint": "Optionales Rundenlimit. Für „Gegen die Uhr“ ist ein Wert erforderlich.",
+  "PF2E_CHASE_FORGE.Builder.MinimumProficiency": "Mindestkompetenz",
+  "PF2E_CHASE_FORGE.Builder.MinimumProficiencyNone": "Keine",
+  "PF2E_CHASE_FORGE.Builder.SimpleDcProficiency": "Einfacher SG nach",
+  "PF2E_CHASE_FORGE.Statistic.fortitude": "Zähigkeit",
+  "PF2E_CHASE_FORGE.Statistic.reflex": "Reflex",
+  "PF2E_CHASE_FORGE.Statistic.will": "Willen",
+  "PF2E_CHASE_FORGE.Statistic.attack": "Angriff",
+  "PF2E_CHASE_FORGE.Runner.MinimumProficiencyRequired": "Erfordert mindestens",
+  "PF2E_CHASE_FORGE.Runner.MinimumProficiencyShort": "mind.",
+  "PF2E_CHASE_FORGE.Runner.MinimumProficiencyNotMet": "Für diese Vorgehensweise ist mindestens {rank} erforderlich.",
+  "PF2E_CHASE_FORGE.Rules.SeparatedCriticalBonus": "Getrennter SC: Kritischer Erfolg"
 }

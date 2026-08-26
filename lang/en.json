@@ -595,5 +595,20 @@
   "PF2E_CHASE_FORGE.Runner.GroupEscaped": "Escaped",
   "PF2E_CHASE_FORGE.Runner.ManageGroup": "Manage Group",
   "PF2E_CHASE_FORGE.Runner.MoveSelectedTo": "Move selected to",
-  "PF2E_CHASE_FORGE.Runner.ParticipantsTransferredDone": "Participants moved."
+  "PF2E_CHASE_FORGE.Runner.ParticipantsTransferredDone": "Participants moved.",
+  "PF2E_CHASE_FORGE.Builder.RoundLimit": "Round Limit",
+  "PF2E_CHASE_FORGE.Builder.RoundLimitPlaceholder": "e.g. 6",
+  "PF2E_CHASE_FORGE.Builder.RoundLimitHint": "The chase ends when this round limit expires. For Against the Clock it should usually be close to the number of obstacles.",
+  "PF2E_CHASE_FORGE.Builder.RoundLimitInactiveHint": "Optional round limit. Against the Clock requires a value.",
+  "PF2E_CHASE_FORGE.Builder.MinimumProficiency": "Minimum Proficiency",
+  "PF2E_CHASE_FORGE.Builder.MinimumProficiencyNone": "None",
+  "PF2E_CHASE_FORGE.Builder.SimpleDcProficiency": "Simple DC Rank",
+  "PF2E_CHASE_FORGE.Statistic.fortitude": "Fortitude",
+  "PF2E_CHASE_FORGE.Statistic.reflex": "Reflex",
+  "PF2E_CHASE_FORGE.Statistic.will": "Will",
+  "PF2E_CHASE_FORGE.Statistic.attack": "Attack",
+  "PF2E_CHASE_FORGE.Runner.MinimumProficiencyRequired": "Requires at least",
+  "PF2E_CHASE_FORGE.Runner.MinimumProficiencyShort": "min.",
+  "PF2E_CHASE_FORGE.Runner.MinimumProficiencyNotMet": "This approach requires at least {rank}.",
+  "PF2E_CHASE_FORGE.Rules.SeparatedCriticalBonus": "Separated PC: Critical Success"
 }

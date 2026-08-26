@@ -1,4 +1,4 @@
-# PF2E Chase Forge Public API - 0.1.0-rc.2
+# PF2E Chase Forge Public API - 0.1.0-rc.3
 
 ## Access
 

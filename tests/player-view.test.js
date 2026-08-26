@@ -136,3 +136,26 @@ test("Player View resolves and displays the controlled actor's PF2e approach mod
   assert.match(template, /action\.modifierLabel/);
   assert.match(template, /chase-skill-modifier/);
 });
+
+test("Player roll actions expose only the controlled participant's pending separated-PC bonus", async () => {
+  const api = createPublicApi();
+  const raw = playerSession();
+  const session = createChaseSession({
+    ...raw,
+    groups: raw.groups.map(group => ({
+      ...group,
+      rules: {
+        ...group.rules,
+        pendingCheckBonuses: [{ participantId: "hero", value: 2, type: "circumstance", source: "separatedCriticalSuccess", grantedAtRound: 1 }]
+      }
+    }))
+  });
+  const state = await projectChasePublicState(api, session, {
+    user: { id: "player", isGM: false },
+    fromUuid: async () => ({ documentName: "Actor", id: "hero", testUserPermission: candidate => candidate.id === "player" })
+  });
+  const action = state.availableActions.find(item => item.type === "roll");
+  assert.equal(action.pendingCheckBonus.value, 2);
+  assert.equal(action.pendingCheckBonus.type, "circumstance");
+  assert.equal(action.pendingCheckBonus.participantId, undefined, "player projection does not need to expose internal ownership ids inside the bonus payload");
+});
