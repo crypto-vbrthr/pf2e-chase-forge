@@ -1,6 +1,6 @@
 # PF2E Chase Rules Engine - Contract v1
 
-The PF2e-specific rules layer consumes validated Chase Cards and a `ChaseSession`, while the Route Graph Engine remains system-neutral. RC.3 completes the final PF2e rules-alignment pass on top of dev.18 dynamic runtime-group routing without changing persisted schemas.
+The PF2e-specific rules layer consumes validated Chase Cards and a `ChaseSession`, while the Route Graph Engine remains system-neutral. Version 1.0.0 includes the final PF2e rules-alignment pass on top of dev.18 dynamic runtime-group routing without changing persisted schemas.
 
 ## Responsibilities
 
@@ -18,7 +18,7 @@ The rules engine owns:
 
 It does not own general consequence execution, Actor mutation, or Effect Forge application. In dev.5, those deferred outcomes are handed to the separate Consequence Engine.
 
-### PF2e Chase check authoring (rc.3)
+### PF2e Chase check authoring (1.0.0)
 
 New manual and Core Library approaches default to PF2e **simple DCs**. The selected simple-DC proficiency rank describes task complexity; it is separate from `minimumProficiency`, which is an optional prerequisite for especially significant obstacles. Fixed, level-based, GM-provided, and no-DC modes remain supported.
 

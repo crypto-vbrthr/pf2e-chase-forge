@@ -1,4 +1,4 @@
-# PF2E Chase Forge Public API - 0.1.0-rc.3
+# PF2E Chase Forge Public API - 1.0.0
 
 ## Access
 
@@ -11,9 +11,9 @@ Extension Contract version: `1`
 Basic Builder Contract version: `1`  
 Branching Builder Contract version: `1`
 
-The dev.18 Advanced Routing milestone added dynamic runtime-group splitting/merging, participant transfers, pursuit/escape group-order assistance, shortest-route distance helpers, independent split-quarry resolution, and the GM route monitor. RC.2 keeps public API `18`; Campaign Integration Contract v2, Session Lifecycle Hook Contract v1, and persisted schema versions remain unchanged.
+The dev.18 Advanced Routing milestone added dynamic runtime-group splitting/merging, participant transfers, pursuit/escape group-order assistance, shortest-route distance helpers, independent split-quarry resolution, and the GM route monitor. The 1.0.0 stable release keeps public API `18`; Campaign Integration Contract v2, Session Lifecycle Hook Contract v1, and persisted schema versions remain unchanged.
 
-## Current RC.2 capabilities
+## Current 1.0.0 capabilities
 
 ```text
 chaseLibrary
@@ -231,7 +231,7 @@ Public obstacle messages exclude GM notes and exact DCs by contract.
 
 ## Schemas
 
-No core schema versions changed in dev.17, dev.18, or RC.2:
+No core schema versions changed in dev.17, dev.18, the release candidates, or 1.0.0:
 
 ```text
 forge.schemas.blueprint === 2

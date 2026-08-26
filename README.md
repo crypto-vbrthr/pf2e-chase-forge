@@ -1,17 +1,23 @@
 # PF2E Chase Forge
 
-**Version:** 0.1.0-rc.3  
+**Version:** 1.0.1  
 **Foundry VTT:** 14  
 **System:** Pathfinder 2e
 
-PF2E Chase Forge is a modular Pathfinder 2e chase framework for Foundry VTT. `0.1.0-rc.3` is the final PF2e rules-alignment candidate built on the validated Advanced Routing & Party Splitting runtime. It adds explicit Against-the-Clock round limits, PF2e simple-DC authoring with separate minimum-proficiency requirements, save/attack-roll approaches, and character-bound separated-PC critical-success bonuses. The public API remains v18; persisted schemas and Campaign Forge Integration Contract v2 remain unchanged.
+PF2E Chase Forge is a modular Pathfinder 2e chase framework for Foundry VTT. `1.0.1` is a localization hotfix for the first stable release, consolidating the validated Advanced Routing & Party Splitting runtime, final PF2e chase-rules alignment, synchronized GM/Player play, Campaign Forge continuation, branching routes, protected persistence, and extensible Chase libraries. The public API remains v18; persisted schemas and Campaign Forge Integration Contract v2 remain unchanged from the final release candidate.
 
 The underlying architecture remains intact: DAG route graphs, synchronized GM/Player runtime views, add-on registries, template-based generation, the 72-card Core Library, the shared Visual System, PF2e chase rules, consequence orchestration, optional Critical Forge / Effect Forge integration, Weather Forge prefill, and protected restart-safe Blueprint/Session persistence.
 
 
-## rc.3 Final PF2e Rules Alignment
+## 1.0.1 Localization Hotfix
 
-Against-the-Clock chases now expose their round limit directly in the Builder and receive a usable default from the selected chase length. New manual and Core Library approaches default to PF2e **simple DCs**; fixed, level-based, and GM-entered DCs remain available when the fiction calls for them. The simple-DC rank is intentionally separate from **Minimum Proficiency**, because PF2e's simple-DC table rank normally describes task complexity rather than an automatic proficiency prerequisite.
+Saved stock approach labels are now resolved from their statistic slug at display time, so a chase authored or first generated under German no longer keeps German skill names when Foundry is later running in English (and vice versa). Custom approach labels remain untouched. The Builder, GM Runner, and Player View all use the active client language for standard skills/statistics, including legacy labels such as `Athletik`, `Naturkunde`, and `Überlebenskunde`.
+
+Structural merge nodes are localized at presentation time as well, so old Blueprints that persisted `Zusammenführung` display `Merge` on an English client. Newly created merge nodes also carry an explicit localization key. This hotfix additionally removes the duplicate `aborted` entry from the GM Runner's internal fallback-label map. Public API v18, persisted schemas, and Campaign Forge Integration Contract v2 remain unchanged.
+
+## 1.0.0 Stable Release
+
+The stable release includes the final PF2e rules-alignment pass validated in the final release candidate. Against-the-Clock chases expose their round limit directly in the Builder and receive a usable default from the selected chase length. New manual and Core Library approaches default to PF2e **simple DCs**; fixed, level-based, and GM-entered DCs remain available when the fiction calls for them. The simple-DC rank is intentionally separate from **Minimum Proficiency**, because PF2e's simple-DC table rank normally describes task complexity rather than an automatic proficiency prerequisite.
 
 Approaches may now use Fortitude, Reflex, Will, or an attack roll in addition to skills and Perception. Optional minimum proficiency is enforced before a GM or player roll can proceed.
 

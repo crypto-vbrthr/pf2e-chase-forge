@@ -2,7 +2,7 @@
 
 ## Baseline
 
-Version `0.1.0-rc.3` keeps the layered Chase architecture and activates the dynamic runtime-group model that was prepared by the earlier Session design. The route graph remains a static DAG describing where travel is possible; runtime groups now describe only which participants currently move together and where they are. Multiple runtime groups from one Blueprint side may occupy arbitrary mainline or branch nodes simultaneously, split again, or later merge. UI, transport, persistence, route traversal, PF2e rules, consequences, Journal integration, Campaign Forge integration, and optional Forge Suite bridges remain separate layers.
+Version `1.0.0` keeps the layered Chase architecture and activates the dynamic runtime-group model that was prepared by the earlier Session design. The route graph remains a static DAG describing where travel is possible; runtime groups now describe only which participants currently move together and where they are. Multiple runtime groups from one Blueprint side may occupy arbitrary mainline or branch nodes simultaneously, split again, or later merge. UI, transport, persistence, route traversal, PF2e rules, consequences, Journal integration, Campaign Forge integration, and optional Forge Suite bridges remain separate layers.
 
 ```text
 External Chase Add-ons

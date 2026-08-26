@@ -3,6 +3,7 @@ import { cloneData } from "../data/utils.js";
 import { buildGraphIndex, topologicalSort } from "../data/graph.js";
 import { openChaseImage } from "../images/image-popout.js";
 import { createChaseChatPresenter } from "../presentation/chat-presenter.js";
+import { localizeApproachLabel, localizeChaseCard, localizeNodeLabel, localizeStatisticLabel } from "../content/content-localization.js";
 
 export const GM_RUNNER_CONTRACT_VERSION = 1;
 
@@ -51,7 +52,7 @@ function optionLabel(value) {
     criticalSuccess: "Kritischer Erfolg", success: "Erfolg", failure: "Fehlschlag", criticalFailure: "Kritischer Fehlschlag",
     pendingConfirmation: "Bestätigung ausstehend", pendingSelection: "Auswahl ausstehend", manualFallback: "Manuell anwenden",
     blocked: "Blockiert", failed: "Fehlgeschlagen", applied: "Angewendet", skipped: "Übersprungen",
-    quarryEscaped: "Flüchtige entkommen", quarryCaught: "Flüchtige eingeholt", goalReached: "Ziel erreicht", timeExpired: "Zeit abgelaufen", raceWon: "Rennen gewonnen", aborted: "Abgebrochen"
+    quarryEscaped: "Flüchtige entkommen", quarryCaught: "Flüchtige eingeholt", goalReached: "Ziel erreicht", timeExpired: "Zeit abgelaufen", raceWon: "Rennen gewonnen"
   };
   const fallback = map[value] ?? value ?? "";
   return i18n(`PF2E_CHASE_FORGE.Runner.Label.${value}`, fallback);
@@ -71,13 +72,15 @@ function resolveParticipant(session, participantId) {
 
 function resolveCard(api, session, cardRef) {
   const snapshot = session?.blueprintSnapshot?.contentSnapshots?.cards?.find(record => record.ref === cardRef)?.data ?? null;
-  if (session?.blueprintSnapshot?.contentSnapshots?.mode === "snapshot" && snapshot) return cloneData(snapshot);
-  return api?.cards?.get?.(cardRef, { includeDisabled: true }) ?? (snapshot ? cloneData(snapshot) : null);
+  if (session?.blueprintSnapshot?.contentSnapshots?.mode === "snapshot" && snapshot) return localizeChaseCard(snapshot);
+  const resolved = api?.cards?.get?.(cardRef, { includeDisabled: true }) ?? (snapshot ? cloneData(snapshot) : null);
+  return resolved ? localizeChaseCard(resolved) : null;
 }
 
 function resolveCardById(api, session, cardId) {
   const snapshot = session?.blueprintSnapshot?.contentSnapshots?.cards?.find(record => record?.data?.id === cardId || record?.ref === cardId)?.data ?? null;
-  return snapshot ? cloneData(snapshot) : (api?.cards?.get?.(cardId, { includeDisabled: true }) ?? null);
+  const resolved = snapshot ? cloneData(snapshot) : (api?.cards?.get?.(cardId, { includeDisabled: true }) ?? null);
+  return resolved ? localizeChaseCard(resolved) : null;
 }
 
 function reconstructOccurrence(api, session, record) {
@@ -237,7 +240,7 @@ function buildRouteMonitor(api, session, orderState = null) {
   }
   const orderIndex = new Map(order.map((id, index) => [id, index]));
   const nodeViews = graph.nodes.map(node => {
-    let label = node.label || node.description || node.id;
+    let label = localizeNodeLabel(node, node.description || node.id);
     if (node.type === "card" && node.cardRef) {
       const card = resolveCard(api, session, node.cardRef);
       label = card?.name || label;
@@ -322,7 +325,7 @@ function terminalSummary(session, chaseImage = null) {
     const runtime = session?.groups?.find(group => group.id === id);
     return resolveBlueprintGroup(session, runtime)?.name || runtime?.groupId || id;
   });
-  return { outcome, outcomeLabel: optionLabel(outcome), reason: completed?.reason ?? (aborted ? "aborted" : null), winnerNames: names(winnerIds), loserNames: names(loserIds), endingNodeId, endingLabel: endingNode?.label || "", endingDescription: endingNode?.description || "", image };
+  return { outcome, outcomeLabel: optionLabel(outcome), reason: completed?.reason ?? (aborted ? "aborted" : null), winnerNames: names(winnerIds), loserNames: names(loserIds), endingNodeId, endingLabel: localizeNodeLabel(endingNode, endingNode?.label || ""), endingDescription: endingNode?.description || "", image };
 }
 
 async function bringRunnerToFront(app) {
@@ -336,7 +339,7 @@ async function bringRunnerToFront(app) {
 
 function routeLabel(session, edge) {
   const node = session.blueprintSnapshot.graph.nodes.find(item => item.id === edge.to);
-  return edge.label || node?.label || node?.description || edge.to;
+  return edge.label || localizeNodeLabel(node, node?.description || edge.to);
 }
 
 async function maybePersistOutcome(api, session, { phase = "immediate" } = {}) {
@@ -440,6 +443,7 @@ function getAppClass() {
           catch { obstacle = null; }
         }
         if (obstacle?.card) {
+          obstacle = { ...cloneData(obstacle), card: localizeChaseCard(obstacle.card) };
           try {
             const visual = await this.chaseApi.images?.resolveCard?.(obstacle.card, { blueprint: session.blueprintSnapshot, fallbackToBlueprint: true });
             if (visual?.path) {
@@ -466,6 +470,8 @@ function getAppClass() {
           } catch { dc = null; }
           return {
             ...cloneData(approach),
+            label: localizeApproachLabel(approach),
+            statisticLabel: localizeStatisticLabel(approach.statistic),
             dcResolved: dc?.value ?? savedGmDc ?? null,
             dcMode: dc?.mode ?? approach.dc?.mode ?? null,
             storedGmDc: savedGmDc,
@@ -535,7 +541,7 @@ function getAppClass() {
         groups.push({
           runtime: cloneData(runtimeGroup), definition: cloneData(definition ?? { id: runtimeGroup.groupId, name: runtimeGroup.groupId, role: "participant" }),
           displayName: runtimeGroupDisplayName(session, runtimeGroup),
-          roleLabel: optionLabel(definition?.role), node: cloneData(node), obstacle: obstacle ? cloneData(obstacle) : null,
+          roleLabel: optionLabel(definition?.role), node: node ? { ...cloneData(node), label: localizeNodeLabel(node) } : null, obstacle: obstacle ? cloneData(obstacle) : null,
           approaches, participants, transitions, outgoingEdges,
           hasOutgoingEdges: outgoingEdges.length > 0,
           obstacleIndex,

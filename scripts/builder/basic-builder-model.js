@@ -72,7 +72,7 @@ function emptyOutcomes() {
 export function createBasicApproach(input = {}) {
   return {
     id: input.id || createId("approach"),
-    label: input.label ?? "Athletik",
+    label: input.label ?? DEFAULT_SKILL,
     description: input.description ?? "",
     type: input.type ?? "check",
     statistic: input.statistic ?? DEFAULT_SKILL,

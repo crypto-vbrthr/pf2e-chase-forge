@@ -35,7 +35,7 @@ import {
   validateBranchingBuilderBlueprint
 } from "../builder/branching-builder-model.js";
 import { cloneData, createId, nowIso } from "../data/utils.js";
-import { localizeChaseCard, localizeSkillLabel } from "../content/content-localization.js";
+import { localizeApproachLabel, localizeChaseCard, localizeSkillLabel } from "../content/content-localization.js";
 import { openFoundryImagePicker } from "../images/foundry-image-picker.js";
 import { obstaclePointScalingModeForIndex, obstaclePointsForScalingMode, rollingGroupSizeForBlueprint, stampRecommendedPointScaling } from "../rules/chase-guidelines.js";
 
@@ -783,6 +783,7 @@ function getAppClass() {
           pointScalingAutomatic: ["groupMinus1", "groupMinus2"].includes(item.card.metadata?.chasePointScaling?.mode),
           approaches: (item.card.approaches ?? []).map((approach, approachIndex) => ({
             ...approach,
+            label: localizeApproachLabel(approach),
             approachIndex,
             cardRef: item.ref,
             cardIndex: item.index,

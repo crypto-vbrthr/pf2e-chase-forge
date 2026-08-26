@@ -1,5 +1,6 @@
 import { MODULE_ID } from "../core/constants.js";
 import { cloneData } from "../data/utils.js";
+import { localizeApproachLabel, localizeNodeLabel, localizeStatisticLabel } from "../content/content-localization.js";
 import { openChaseImage } from "../images/image-popout.js";
 
 export const PLAYER_CHASE_VIEW_CONTRACT_VERSION = 1;
@@ -61,6 +62,10 @@ async function enrichRollActionsWithModifiers(api, actions = []) {
         } catch { modifier = null; }
         modifierCache.set(cacheKey, modifier);
       }
+    }
+    if (copy.approach) {
+      copy.approach.label = localizeApproachLabel(copy.approach);
+      copy.approach.statisticLabel = localizeStatisticLabel(copy.approach.statistic);
     }
     copy.statisticModifier = Number.isFinite(Number(modifier)) ? Number(modifier) : null;
     copy.modifierLabel = signedModifier(copy.statisticModifier);
@@ -139,6 +144,7 @@ function getAppClass() {
       const currentInitiative = initiative?.order?.find?.(entry => entry.participantId === initiative.currentParticipantId) ?? null;
       const groups = (state.groups ?? []).map(group => ({
         ...cloneData(group),
+        node: group.node ? { ...cloneData(group.node), label: localizeNodeLabel(group.node) } : null,
         hasObstacle: Boolean(group.obstacle),
         waitingForInitiative: group.turnBlockedReason === "initiative",
         waitingForGroupOrder: group.turnBlockedReason === "groupOrder",

@@ -1,3 +1,20 @@
+## 1.0.1 – Localization Hotfix
+
+- Relocalizes standard skill/statistic approach labels from their canonical statistic slug in Builder, GM Runner, and Player View instead of preserving the language in which a saved Blueprint snapshot was first authored.
+- Recognizes legacy German stock labels such as `Athletik`, `Naturkunde`, `Überlebenskunst`, and `Überlebenskunde` while preserving genuinely custom approach labels.
+- Relocalizes structural merge-node labels at presentation time, so legacy `Zusammenführung` nodes display `Merge` on English clients; newly created merge nodes carry an explicit localization key.
+- Shows localized statistic names in the GM Runner approach summary instead of raw slugs.
+- Removes the duplicate `aborted` fallback entry from the GM Runner label map.
+- Keeps Public API v18, persisted schema versions, and Campaign Forge Integration Contract v2 unchanged; no migration is required.
+
+## 1.0.0 – Stable Release
+
+- Promotes the fully validated 0.1.0-rc.3 code line to the first stable release without functional rule or schema changes.
+- Finalizes release metadata, README/documentation version headers, manifest download target, and package version for the v1.0.0 release.
+- Retains Public API v18, all persisted schema versions, Extension Contract v1, Session Lifecycle Contract v1, and Campaign Forge Integration Contract v2 unchanged from rc.3.
+- Requires no migration from rc.3/dev.18; existing Blueprints and Sessions remain compatible.
+- Final release validation is performed against Chase Forge and Campaign Forge integration tests, syntax checks, localization parity, and a clean re-test of the packaged ZIP.
+
 ## 0.1.0-rc.3 – Final PF2e Rules Alignment
 
 - Exposes the existing against-the-clock `roundLimit` in the Chase Builder, gives new Against-the-Clock drafts/templates a rules-appropriate default limit, and blocks start validation when that chase type has no usable limit.

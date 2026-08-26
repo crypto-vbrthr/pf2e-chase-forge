@@ -1,27 +1,9 @@
-PF2E Chase Forge 0.1.0-rc.3 – Verification Summary
+PF2E Chase Forge 1.0.1 validation
 
-Release candidate focus:
-- Final PF2e GM Core chase-rules alignment
-- Against-the-Clock round-limit authoring and validation
-- Simple-DC defaults with separate minimum proficiency
-- Save and attack-roll Chase approaches
-- Participant-bound separated-PC critical-success bonus with PF2e typed modifier stacking
-
-Automated verification:
-- Chase Forge tests: 395/395 passed
-- Campaign Forge 1.0.3.1 compatibility tests: 124/124 passed
-- JavaScript syntax checks: 94/94 files passed
-- Localization parity: DE 612 / EN 612, no missing keys
-- Node test coverage: 82.46% lines, 69.25% branches, 81.46% functions
-- Public API: v18
-- Campaign Forge Integration Contract: v2
-- Persisted schema versions: unchanged from rc.2/dev.18
-- Migration from rc.2/dev.18: not required; legacy pending bonus state is normalized forward
-
-Rules-alignment hardening:
-- Against-the-Clock Builder/template defaults now carry a positive round limit
-- new manual/Core approaches default to PF2e simple DCs; level/fixed/GM modes remain available
-- minimum proficiency is explicit and enforced by GM and player runtime paths
-- Fortitude, Reflex, Will, and attack-roll approaches are authorable
-- separated-character +2 circumstance bonus remains owned by the character through split/merge/transfer
-- PF2e typed modifier injection preserves normal circumstance-bonus stacking when available
+- Automated tests: 400/400 passed
+- JavaScript syntax checks: 95/95 passed
+- DE/EN localization keys: 612/612 synchronized
+- Public API: v18 (unchanged)
+- Campaign Forge Integration Contract: v2 (unchanged)
+- Persistence schemas: unchanged; no migration required
+- Localization hotfix regression coverage: legacy German stock skill/statistic labels -> active client language; merge nodes -> active client language; custom labels preserved

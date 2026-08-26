@@ -217,7 +217,7 @@ export function addBranchAfterCard(input, sourceNodeId, {
   next.graph.nodes.push(
     createChaseNode({ id: leftNodeId, type: "card", label: leftCardName, cardRef: leftRecord.ref, metadata: { branchGroupId, branchLane: "left" } }),
     createChaseNode({ id: rightNodeId, type: "card", label: rightCardName, cardRef: rightRecord.ref, metadata: { branchGroupId, branchLane: "right" } }),
-    createChaseNode({ id: mergeNodeId, type: "merge", label: "Zusammenführung", metadata: { branchGroupId, sourceNodeId, continuationNodeId: continuationId } })
+    createChaseNode({ id: mergeNodeId, type: "merge", label: "Merge", metadata: { branchGroupId, sourceNodeId, continuationNodeId: continuationId, i18n: { label: "PF2E_CHASE_FORGE.Builder.MergeNode" } } })
   );
   next.graph.edges = next.graph.edges.filter(edge => edge.id !== originalEdge.id);
   next.graph.edges.push(
