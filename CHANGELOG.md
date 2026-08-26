@@ -1,3 +1,10 @@
+## 1.0.2 – GM Route Monitor Layout Polish
+
+- Centers card/node titles in the compact GM Runner route monitor so the route reads more cleanly along its visual centerline.
+- Keeps runtime-group markers, group names, and remaining-distance information in their existing left/center/right grid beneath each title.
+- Applies the same centered title treatment to mainline, branch, start, merge, and ending nodes without changing route mechanics or runtime state.
+- Keeps Public API v18, persisted schema versions, and Campaign Forge Integration Contract v2 unchanged; no migration is required.
+
 ## 1.0.1 – Localization Hotfix
 
 - Relocalizes standard skill/statistic approach labels from their canonical statistic slug in Builder, GM Runner, and Player View instead of preserving the language in which a saved Blueprint snapshot was first authored.

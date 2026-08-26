@@ -1,12 +1,17 @@
 # PF2E Chase Forge
 
-**Version:** 1.0.1  
+**Version:** 1.0.2  
 **Foundry VTT:** 14  
 **System:** Pathfinder 2e
 
-PF2E Chase Forge is a modular Pathfinder 2e chase framework for Foundry VTT. `1.0.1` is a localization hotfix for the first stable release, consolidating the validated Advanced Routing & Party Splitting runtime, final PF2e chase-rules alignment, synchronized GM/Player play, Campaign Forge continuation, branching routes, protected persistence, and extensible Chase libraries. The public API remains v18; persisted schemas and Campaign Forge Integration Contract v2 remain unchanged from the final release candidate.
+PF2E Chase Forge is a modular Pathfinder 2e chase framework for Foundry VTT. `1.0.2` is a small GM Runner layout polish release on top of the stable 1.0.x line, consolidating the validated Advanced Routing & Party Splitting runtime, final PF2e chase-rules alignment, synchronized GM/Player play, Campaign Forge continuation, branching routes, protected persistence, and extensible Chase libraries. The public API remains v18; persisted schemas and Campaign Forge Integration Contract v2 remain unchanged.
 
 The underlying architecture remains intact: DAG route graphs, synchronized GM/Player runtime views, add-on registries, template-based generation, the 72-card Core Library, the shared Visual System, PF2e chase rules, consequence orchestration, optional Critical Forge / Effect Forge integration, Weather Forge prefill, and protected restart-safe Blueprint/Session persistence.
+
+
+## 1.0.2 GM Route Monitor Layout Polish
+
+The compact GM Runner route monitor now centers each route-card title within its node. Runtime-group markers and their remaining-distance indicators stay in the existing structured row beneath the title, so the overview is visually calmer without sacrificing scanability. Mainline nodes, branch nodes, start, merge, and ending nodes use the same title alignment. No runtime, rules, API, schema, or Campaign Forge contract changes are involved.
 
 
 ## 1.0.1 Localization Hotfix

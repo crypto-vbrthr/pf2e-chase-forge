@@ -35,6 +35,13 @@ test("GM Runner keeps its toolbar outside the scroll viewport and protects Unico
   assert.equal(de["PF2E_CHASE_FORGE.CoreCards.city-city-gate.Name"], "Schließendes Stadttor");
 });
 
+
+test("GM route monitor centers card titles without changing marker layout", async () => {
+  const css = await readFile(new URL("../styles/chase-forge.css", import.meta.url), "utf8");
+  assert.match(css, /\.chase-runner-route-monitor-node-label\s*\{[\s\S]*?text-align:\s*center;/);
+  assert.match(css, /\.chase-runner-route-marker\s*\{[\s\S]*?grid-template-columns:\s*auto minmax\(0, 1fr\) auto;/);
+});
+
 test("public obstacle Chat presentation excludes hidden GM mechanics", () => {
   const html = obstacleChatHtml({
     session: { round: 2 },

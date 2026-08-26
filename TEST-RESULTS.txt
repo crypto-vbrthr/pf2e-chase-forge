@@ -1,9 +1,10 @@
-PF2E Chase Forge 1.0.1 validation
+PF2E Chase Forge 1.0.2 verification
+Date: 2026-08-26
 
-- Automated tests: 400/400 passed
-- JavaScript syntax checks: 95/95 passed
-- DE/EN localization keys: 612/612 synchronized
-- Public API: v18 (unchanged)
-- Campaign Forge Integration Contract: v2 (unchanged)
-- Persistence schemas: unchanged; no migration required
-- Localization hotfix regression coverage: legacy German stock skill/statistic labels -> active client language; merge nodes -> active client language; custom labels preserved
+Automated tests: 401/401 passed
+JavaScript syntax checks: 95/95 passed
+Localization parity: DE 612/612, EN 612/612; key sets identical
+Public API: v18 (unchanged)
+Campaign Forge Integration Contract: v2 (unchanged)
+Persisted schemas: unchanged; no migration required
+Package focus: GM Runner route-monitor card titles centered; runtime-group marker layout unchanged

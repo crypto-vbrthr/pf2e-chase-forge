@@ -2007,6 +2007,7 @@
   text-overflow: ellipsis;
   white-space: nowrap;
   font-weight: 600;
+  text-align: center;
 }
 
 .chase-runner-route-monitor-markers {
