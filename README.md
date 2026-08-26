@@ -9,6 +9,15 @@ PF2E Chase Forge is a modular Pathfinder 2e chase framework for Foundry VTT. `1.
 The underlying architecture remains intact: DAG route graphs, synchronized GM/Player runtime views, add-on registries, template-based generation, the 72-card Core Library, the shared Visual System, PF2e chase rules, consequence orchestration, optional Critical Forge / Effect Forge integration, Weather Forge prefill, and protected restart-safe Blueprint/Session persistence.
 
 
+## Part of the Forge Suite
+
+**Chase Forge** is part of the **Forge Suite**, a growing collection of Foundry VTT modules and add-ons built for the busy Game Master. The suite is designed to reduce preparation and bookkeeping, make common GM tasks easier, and add useful tools that help make running and playing campaigns smoother and more enjoyable.
+
+An overview of the Forge Suite, its modules, add-ons, and shared documentation is available here:
+
+**Forge Suite:** https://github.com/crypto-vbrthr/pf2e-forge-suite
+
+
 ## 1.0.2 GM Route Monitor Layout Polish
 
 The compact GM Runner route monitor now centers each route-card title within its node. Runtime-group markers and their remaining-distance indicators stay in the existing structured row beneath the title, so the overview is visually calmer without sacrificing scanability. Mainline nodes, branch nodes, start, merge, and ending nodes use the same title alignment. No runtime, rules, API, schema, or Campaign Forge contract changes are involved.
