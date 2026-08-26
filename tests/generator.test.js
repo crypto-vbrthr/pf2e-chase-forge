@@ -170,7 +170,7 @@ test("public API exposes generator contract, registered templates, inspection, g
     cards: [card("street", { tags: ["city"] })]
   });
   const api = createPublicApi({ registries });
-  assert.equal(api.version, 17);
+  assert.equal(api.version, 18);
   assert.equal(api.contracts.generator, 1);
   assert.equal(api.getCapabilities().generatorTemplates, true);
   assert.equal(api.getCapabilities().seededGeneration, true);

@@ -1,6 +1,6 @@
 # Player Chase View & Session Synchronization
 
-The Player Chase View is the player-facing synchronized runtime UI. Dev.17 projects race initiative state without exposing GM-only Chase data.
+The Player Chase View is the player-facing synchronized runtime UI. Dev.18 follows dynamic runtime-group membership and group-order state without exposing the GM-only full-route monitor.
 
 ## Security boundary
 
@@ -43,6 +43,12 @@ A Player View roll button calls the normal PF2e Actor statistic on the player cl
 ## Race initiative (dev.17)
 
 For race Sessions the public projection includes only the public participant names, initiative order, acted state, and current participant id needed to explain turn order. Roll actions are projected only for the participant whose initiative turn is current. The authority GM revalidates that order before accepting the action, so a modified player client cannot act early.
+
+## Split-party projection (dev.18)
+
+The public projection follows runtime-group membership rather than assuming a Blueprint side always moves as one block. A player therefore sees which participants are currently in the same runtime group, their local obstacle, and whether that group is presently allowed to act. When another subgroup is selected first, the Player View reports that it is waiting for the current chase group.
+
+The complete route monitor, hidden future route structure, and GM distance/order diagnostics are not projected to player clients.
 
 ## Route choices
 

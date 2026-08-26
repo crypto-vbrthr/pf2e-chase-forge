@@ -65,7 +65,7 @@
                   <progress max="{{group.obstacle.requiredPoints}}" value="{{group.obstacle.progress}}"></progress>
                 </div>
 
-                {{#if group.turnBlocked}}<div class="chase-player-dc-wait"><i class="fa-solid fa-hourglass-half"></i> {{#if group.waitingForInitiative}}{{localize "PF2E_CHASE_FORGE.Player.WaitingForInitiative"}}{{else}}{{localize "PF2E_CHASE_FORGE.Player.WaitingForQuarry"}}{{/if}}</div>{{/if}}
+                {{#if group.turnBlocked}}<div class="chase-player-dc-wait"><i class="fa-solid fa-hourglass-half"></i> {{#if group.waitingForInitiative}}{{localize "PF2E_CHASE_FORGE.Player.WaitingForInitiative"}}{{else if group.waitingForGroupOrder}}{{localize "PF2E_CHASE_FORGE.Player.WaitingForGroupOrder"}}{{else}}{{localize "PF2E_CHASE_FORGE.Player.WaitingForQuarry"}}{{/if}}</div>{{/if}}
                 {{#if group.hasPendingDc}}<div class="chase-player-dc-wait"><i class="fa-solid fa-hourglass-half"></i> {{localize "PF2E_CHASE_FORGE.Player.WaitingForDc"}}</div>{{/if}}
                 {{#if group.myRollActions.length}}
                   <div class="chase-player-actions">

@@ -15,6 +15,14 @@ function resolveParticipant(session, participantId) {
   return null;
 }
 
+function runtimeGroupName(session, runtimeGroup, definition) {
+  const allIds = definition?.participants?.map?.(item => item.id) ?? [];
+  const split = Boolean(runtimeGroup?.parentRuntimeGroupId) || (allIds.length > 0 && runtimeGroup?.participantIds?.length !== allIds.length);
+  if (!split) return definition?.name || runtimeGroup.groupId;
+  const names = (runtimeGroup?.participantIds ?? []).map(id => resolveParticipant(session, id)?.name || id);
+  return names.join(" + ") || definition?.name || runtimeGroup.groupId;
+}
+
 function currentNode(session, runtimeGroup) {
   return session?.blueprintSnapshot?.graph?.nodes?.find(node => node.id === runtimeGroup?.position?.nodeId) ?? null;
 }
@@ -158,6 +166,8 @@ export async function projectChasePublicState(api, session, {
 } = {}) {
   if (!session?.id) throw new TypeError("Public Chase state projection requires a Chase Session.");
   const activeRound = session.roundState?.phase === "active";
+  const orderState = api?.rules?.getGroupOrderState?.(session) ?? null;
+  const orderCandidates = new Set((orderState?.candidates ?? []).map(item => item.runtimeGroupId));
   const groups = [];
   const availableActions = [];
   const visibleRoutes = [];
@@ -231,12 +241,16 @@ export async function projectChasePublicState(api, session, {
 
     let obstacleIndex = null;
     try { obstacleIndex = api?.rules?.getObstacleIndex?.(session, runtimeGroup.id) ?? null; } catch { obstacleIndex = null; }
+    const runtimeResolution = runtimeGroup.metadata?.runtimeResolution ?? null;
+    const runtimeResolved = runtimeGroup.completed === true || runtimeResolution?.terminal === true;
     groups.push({
       runtimeGroupId: runtimeGroup.id,
       groupId: runtimeGroup.groupId,
-      name: definition?.name || runtimeGroup.groupId,
+      name: runtimeGroupName(session, runtimeGroup, definition),
       role: definition?.role || "participant",
       completed: runtimeGroup.completed === true,
+      resolved: runtimeResolved,
+      resolution: runtimeResolution?.terminal === true ? { outcome: runtimeResolution.outcome, reason: runtimeResolution.reason } : null,
       obstacleIndex,
       position: { nodeId: runtimeGroup.position?.nodeId ?? null, progress: Number(runtimeGroup.position?.progress ?? 0) },
       node: node ? { id: node.id, type: node.type, label: node.label || "", description: node.description || "" } : null,
@@ -251,8 +265,8 @@ export async function projectChasePublicState(api, session, {
       } : null,
       participants,
       routeChoiceAvailable,
-      turnBlocked: activeRound && runtimeGroup.rules?.paceMode === "roll" && !runtimeGroup.completed && !groupTurnAllowed,
-      turnBlockedReason: race ? "initiative" : "quarry",
+      turnBlocked: activeRound && runtimeGroup.rules?.paceMode === "roll" && !runtimeResolved && !groupTurnAllowed,
+      turnBlockedReason: race ? "initiative" : (orderCandidates.has(runtimeGroup.id) ? "groupOrder" : "quarry"),
       routes: groupControlled ? safeTransitions : []
     });
   }

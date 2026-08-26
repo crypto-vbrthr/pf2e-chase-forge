@@ -104,7 +104,7 @@ test("Campaign integration is optional, capability-detected, and exposed as Cont
   const env = installGame({ campaignApi: { apiVersion: 1, stability: "stable", addExternalLink() {}, removeExternalLink() {}, integrations: { getStatus() {} } } });
   try {
     const api = createPublicApi();
-    assert.equal(api.version, 17);
+    assert.equal(api.version, 18);
     assert.equal(api.contracts.campaignForgeIntegration, CHASE_CAMPAIGN_INTEGRATION_CONTRACT_VERSION);
     assert.equal(api.getCapabilities().campaignForgeBridge, true);
     assert.equal(api.getCapabilities().campaignForgeAvailable, true);

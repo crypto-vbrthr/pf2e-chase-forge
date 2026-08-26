@@ -193,7 +193,7 @@ test("dev.13 advertises Player View, synchronization, branching Builder, and Vis
   const ui = { openPlayerView() {}, getOpenPlayerViews() { return []; } };
   const sync = { sendIntent() {}, publishSession() {} };
   const api = createPublicApi({ ui, sync });
-  assert.equal(api.version, 17);
+  assert.equal(api.version, 18);
   assert.equal(api.contracts.playerView, 1);
   assert.equal(api.contracts.playerStateProjector, 1);
   assert.equal(api.contracts.sessionSync, 1);

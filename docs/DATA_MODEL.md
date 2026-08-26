@@ -159,3 +159,7 @@ metadata
 The state lives in an ownership-protected internal JournalEntry flag. World settings hold only the storage schema marker and vault document id.
 
 Every Session stores a normalized Blueprint snapshot, so running a prepared chase never mutates its source Blueprint and multiple sessions from one Blueprint remain independent.
+
+## Dynamic runtime groups (dev.18)
+
+No schema bump is required. `ChaseSession.groups[]` was already modeled as runtime state separate from `blueprintSnapshot.groups[]`. Dev.18 uses that separation fully: several Session groups can share one `groupId`, each with its own `id`, `participantIds[]`, position, progress, route history, and optional `parentRuntimeGroupId`. Split/merge provenance and terminal subgroup resolution are stored in open runtime-group metadata. `roundState.actedParticipantIds[]` remains global to the Session so changing runtime-group membership cannot grant another action.

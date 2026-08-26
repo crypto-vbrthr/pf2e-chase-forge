@@ -1,4 +1,4 @@
-# PF2E Chase Forge Public API - dev.17
+# PF2E Chase Forge Public API - dev.18
 
 ## Access
 
@@ -6,14 +6,14 @@
 const forge = game.modules.get("pf2e-chase-forge")?.api;
 ```
 
-Current public API version: `17`  
+Current public API version: `18`  
 Extension Contract version: `1`  
 Basic Builder Contract version: `1`  
 Branching Builder Contract version: `1`
 
-Dev.17 hardens final PF2e chase rules and runtime behavior and raises the public API to `17`. Race initiative is now participant-level and enforced, automatically scalable obstacles resolve their Chase Point requirement per rolling group, and persistence adds optimistic multi-GM conflict detection/retry. Campaign Integration Contract v2, Session Lifecycle Hook Contract v1, and persisted schema versions remain unchanged.
+Dev.18 adds dynamic runtime-group splitting/merging, participant transfers, pursuit/escape group-order assistance, shortest-route distance helpers, independent split-quarry resolution, and the GM route monitor. The public API is raised to `18`; Campaign Integration Contract v2, Session Lifecycle Hook Contract v1, and persisted schema versions remain unchanged.
 
-## Current dev.17 capabilities
+## Current dev.18 capabilities
 
 ```text
 chaseLibrary
@@ -376,3 +376,24 @@ The bridge is GM-only. `kind` is `blueprint` for editable world Blueprints or `l
 
 Lifecycle hook names are exposed through `forge.hooks` and include `sessionCreated`, `sessionStarted`, `sessionPaused`, `sessionResumed`, `sessionCompleted`, `sessionAborted`, and `sessionDeleted`. Hook payloads use `pf2e-chase-forge/session-lifecycle` v1. Dev.16 adds backward-compatible top-level `outcome` and `terminal` fields; `getLatestRun()` provides the corresponding persisted live Session summary without fabricating an abort result.
 
+
+## Advanced Routing API (dev.18)
+
+The rules service exposes runtime-group operations without changing the persisted Session schema:
+
+```js
+forge.rules.canSplitRuntimeGroup(session, runtimeGroupId);
+forge.rules.splitRuntimeGroup(session, { runtimeGroupId, participantIds });
+forge.rules.canMergeRuntimeGroups(session, runtimeGroupIds);
+forge.rules.mergeRuntimeGroups(session, { runtimeGroupIds, targetRuntimeGroupId });
+forge.rules.canTransferParticipants(session, fromRuntimeGroupId, toRuntimeGroupId);
+forge.rules.transferParticipants(session, { fromRuntimeGroupId, toRuntimeGroupId, participantIds });
+forge.rules.setGroupOrderMode(session, "automatic" | "manual");
+forge.rules.selectActiveGroup(session, runtimeGroupId);
+forge.rules.getGroupOrderState(session);
+forge.rules.getShortestRemainingDistance(session, runtimeGroupId);
+forge.rules.getShortestGroupDistance(session, firstRuntimeGroupId, secondRuntimeGroupId);
+forge.rules.resolveRuntimeOutcomes(session, { phase: "immediate" });
+```
+
+Splits and transfers are rejected once an uncleared obstacle has partial Chase Point progress. Merging is allowed for compatible co-located runtime groups and re-evaluates the effective Chase Point requirement after participant counts change.

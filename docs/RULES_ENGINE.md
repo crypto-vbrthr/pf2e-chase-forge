@@ -1,6 +1,6 @@
 # PF2E Chase Rules Engine - Contract v1
 
-The PF2e-specific rules layer consumes validated Chase Cards and a `ChaseSession`, while the Route Graph Engine remains system-neutral. Dev.17 hardens race initiative and group-aware automatic Chase Point scaling without changing persisted schemas.
+The PF2e-specific rules layer consumes validated Chase Cards and a `ChaseSession`, while the Route Graph Engine remains system-neutral. Dev.18 adds dynamic runtime-group routing and scheduling without changing persisted schemas.
 
 ## Responsibilities
 
@@ -38,6 +38,22 @@ Progress is clamped to zero. When required points are reached, the obstacle is i
 Builder/generator-created scalable obstacles can carry `metadata.chasePointScaling.mode` with either `groupMinus1` or `groupMinus2`. The generator alternates these modes so roughly half the obstacles use each GM Core recommendation, minimum 1 point.
 
 The stored `obstacle.requiredPoints` is a reference value for editing/display. At runtime, `currentObstacle()` and Chase Point resolution calculate the effective requirement from the size of the **rolling runtime group**. This means two differently sized parties can roll against the same card without being forced to share the larger party's threshold. Steady-pace groups do not inflate the Builder/generator reference group size. A GM-entered custom value without scaling metadata remains fixed.
+
+## Dynamic runtime groups (dev.18)
+
+A Blueprint participant group is a stable side/roster definition. A runtime group is only the set of participants currently moving together. Dev.18 allows one Blueprint group to produce multiple runtime groups with independent positions and route histories. A split child records `parentRuntimeGroupId` and split provenance in metadata; no new Session schema version is required because these fields were already supported.
+
+Splitting is permitted at a fresh obstacle, after a cleared obstacle, or on non-card route nodes. It is rejected while an uncleared card has positive Chase Point progress. This prevents reducing an automatically scaled threshold by splitting mid-attempt. Selected-participant transfers between co-located compatible groups use the same protection. Merging is allowed at a shared node and preserves accumulated progress and global round action state. The effective obstacle threshold is recalculated after the merge.
+
+Singleton runtime groups use the separated-character chase rule: one success or critical success clears the current obstacle regardless of its stored Chase Point target; a critical success grants the existing +2 circumstance bonus to the first check against the next obstacle.
+
+### Pursuit/escape group order
+
+Within the existing quarry-first side phases, multiple eligible rolling runtime groups are ordered by the GM. Automatic mode sorts first by the longest shortest legal remaining route to an ending, then by fewer already-acted members, smaller group size, and stable runtime-group id. The active group remains active until its current group turn is finished; then the recommendation is recalculated. Manual mode leaves selection to the GM.
+
+### Independent quarry resolution
+
+A split quarry subgroup that is caught or escapes becomes terminal without ending the whole Session while another quarry subgroup remains unresolved. Once every quarry subgroup is terminal, the ordinary `quarryCaught` or `quarryEscaped` outcome is used if all resolved the same way. Mixed caught/escaped results produce `outcome: "custom"` with per-runtime-group resolution details in the ChaseResult metadata.
 
 ## Rounds
 

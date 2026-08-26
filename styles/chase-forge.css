@@ -1886,3 +1886,247 @@
 .chase-readonly-derived {
   opacity: 0.8;
 }
+
+/* 0.1.0-dev.18: Advanced Routing, party splitting, and GM route monitor */
+.chase-runner-layout {
+  display: grid;
+  grid-template-columns: minmax(245px, 290px) minmax(0, 1fr);
+  flex: 1 1 auto;
+  min-height: 0;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.chase-runner-route-monitor {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  border-right: 1px solid var(--chase-border);
+  background: color-mix(in srgb, var(--chase-panel) 92%, transparent);
+}
+
+.chase-runner-route-monitor-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  padding: 9px 10px;
+  border-bottom: 1px solid var(--chase-border);
+}
+
+.chase-runner-route-monitor-head h3 {
+  margin: 0;
+  font-family: inherit !important;
+  text-transform: none !important;
+  font-size: .95rem;
+}
+
+.chase-runner-order-controls {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 5px;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--chase-border);
+}
+
+.chase-runner-order-controls > span {
+  grid-column: 1 / -1;
+  font-size: .78rem;
+  opacity: .75;
+}
+
+.chase-runner-order-controls button {
+  width: 100%;
+  padding: 4px 6px;
+  font-size: .78rem;
+}
+
+.chase-runner-order-controls button.active {
+  border-color: var(--chase-accent);
+  box-shadow: inset 0 0 0 1px var(--chase-accent);
+}
+
+.chase-runner-route-monitor-scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 8px;
+  scrollbar-gutter: stable;
+}
+
+.chase-runner-route-monitor-row {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 5px;
+  padding: 0 0 13px;
+}
+
+.chase-runner-route-monitor-row.branched {
+  grid-template-columns: repeat(auto-fit, minmax(105px, 1fr));
+  align-items: start;
+}
+
+.chase-runner-route-monitor-row:not(:last-child)::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: 2px;
+  height: 9px;
+  border-left: 1px solid color-mix(in srgb, var(--chase-accent) 55%, var(--chase-border));
+}
+
+.chase-runner-route-monitor-node {
+  min-width: 0;
+  padding: 5px 6px;
+  border: 1px solid var(--chase-border);
+  border-radius: 6px;
+  background: var(--chase-panel-soft);
+  font-size: .75rem;
+}
+
+.chase-runner-route-monitor-node.choice,
+.chase-runner-route-monitor-node.merge {
+  border-style: dashed;
+  opacity: .82;
+}
+
+.chase-runner-route-monitor-node.end {
+  border-color: color-mix(in srgb, var(--chase-success) 60%, var(--chase-border));
+}
+
+.chase-runner-route-monitor-node.occupied {
+  border-color: color-mix(in srgb, var(--chase-accent) 65%, var(--chase-border));
+}
+
+.chase-runner-route-monitor-node-label {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 600;
+}
+
+.chase-runner-route-monitor-markers {
+  display: grid;
+  gap: 3px;
+  margin-top: 4px;
+}
+
+.chase-runner-route-marker {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 4px;
+  width: 100%;
+  min-width: 0;
+  padding: 3px 5px;
+  text-align: left;
+  font-size: .72rem;
+}
+
+.chase-runner-route-marker span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chase-runner-route-marker small {
+  opacity: .72;
+  white-space: nowrap;
+}
+
+.chase-runner-route-marker.active {
+  border-color: var(--chase-accent);
+  box-shadow: inset 0 0 0 1px var(--chase-accent);
+}
+
+.chase-runner-route-marker.recommended:not(.active) {
+  border-color: color-mix(in srgb, var(--chase-accent) 65%, var(--chase-border));
+}
+
+.chase-runner-route-distances {
+  display: grid;
+  gap: 2px;
+  padding: 7px 10px;
+  border-top: 1px solid var(--chase-border);
+  font-size: .72rem;
+}
+
+.chase-runner-route-distances span { opacity: .8; }
+
+.chase-runner-group.active-runtime-group {
+  border-color: var(--chase-accent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--chase-accent) 70%, transparent);
+}
+
+.chase-runner-group.recommended-runtime-group:not(.active-runtime-group) {
+  border-color: color-mix(in srgb, var(--chase-accent) 55%, var(--chase-border));
+}
+
+.chase-runner-group-head-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.chase-runner-pill.recommended { border-color: var(--chase-accent); }
+
+.chase-runner-group-manager,
+.chase-runner-merge-offers {
+  margin: 8px 12px;
+  padding: 8px;
+  border: 1px dashed var(--chase-border);
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--chase-panel) 70%, transparent);
+}
+
+.chase-runner-group-manager p {
+  margin: 5px 0;
+  font-size: .82rem;
+  opacity: .78;
+}
+
+.chase-runner-split-participants {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+  margin: 6px 0;
+}
+
+.chase-runner-split-participants label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.chase-runner-group-manager button,
+.chase-runner-merge-offers button { width: auto; }
+
+.chase-runner-merge-offers {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+@media (max-width: 900px) {
+  .chase-runner-layout { grid-template-columns: 220px minmax(0, 1fr); }
+}
+
+@media (max-width: 720px) {
+  .chase-runner-layout { grid-template-columns: 1fr; grid-template-rows: minmax(160px, 32vh) minmax(0, 1fr); }
+  .chase-runner-route-monitor { border-right: 0; border-bottom: 1px solid var(--chase-border); }
+}
+.chase-runner-route-marker.static { cursor: default; }
+
+.chase-runner-group-manager-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-top: 0.45rem;
+}

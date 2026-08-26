@@ -1,1028 +1,1088 @@
 
-> pf2e-chase-forge@0.1.0-rc.1 test
+> pf2e-chase-forge@0.1.0-dev.18 test
 > node --test --test-concurrency=1
 
 TAP version 13
-# Subtest: dev.12 public API advertises builder, persistence, route, rules, consequence, branching, and library capabilities
-ok 1 - dev.12 public API advertises builder, persistence, route, rules, consequence, branching, and library capabilities
+# Subtest: runtime groups can split at a fresh obstacle and preserve participant turn state
+ok 1 - runtime groups can split at a fresh obstacle and preserve participant turn state
   ---
-  duration_ms: 3.200019
+  duration_ms: 12.581414
+  type: 'test'
+  ...
+# Subtest: runtime groups cannot split after Chase Points were already accumulated on the current obstacle
+ok 2 - runtime groups cannot split after Chase Points were already accumulated on the current obstacle
+  ---
+  duration_ms: 2.352815
+  type: 'test'
+  ...
+# Subtest: split subgroups can take different branch routes
+ok 3 - split subgroups can take different branch routes
+  ---
+  duration_ms: 13.156982
+  type: 'test'
+  ...
+# Subtest: co-located subgroups merge without restoring actions already spent this round
+ok 4 - co-located subgroups merge without restoring actions already spent this round
+  ---
+  duration_ms: 3.623258
+  type: 'test'
+  ...
+# Subtest: automatic group order recommends the subgroup with the longest shortest remaining route
+ok 5 - automatic group order recommends the subgroup with the longest shortest remaining route
+  ---
+  duration_ms: 4.312848
+  type: 'test'
+  ...
+# Subtest: group-distance helper reports zero for co-located groups
+ok 6 - group-distance helper reports zero for co-located groups
+  ---
+  duration_ms: 1.925161
+  type: 'test'
+  ...
+# Subtest: catching one split quarry subgroup does not end the whole chase while another quarry subgroup remains active
+ok 7 - catching one split quarry subgroup does not end the whole chase while another quarry subgroup remains active
+  ---
+  duration_ms: 3.633114
+  type: 'test'
+  ...
+# Subtest: manual group order can override the automatic recommendation without restoring spent actions
+ok 8 - manual group order can override the automatic recommendation without restoring spent actions
+  ---
+  duration_ms: 3.899185
+  type: 'test'
+  ...
+# Subtest: ending a round can auto-skip unacted participants even when automatic group order prefers a later-stored subgroup
+ok 9 - ending a round can auto-skip unacted participants even when automatic group order prefers a later-stored subgroup
+  ---
+  duration_ms: 5.587007
+  type: 'test'
+  ...
+# Subtest: participants can transfer between compatible co-located subgroups only before obstacle progress is accumulated
+ok 10 - participants can transfer between compatible co-located subgroups only before obstacle progress is accumulated
+  ---
+  duration_ms: 4.174229
+  type: 'test'
+  ...
+# Subtest: dev.12 public API advertises builder, persistence, route, rules, consequence, branching, and library capabilities
+ok 11 - dev.12 public API advertises builder, persistence, route, rules, consequence, branching, and library capabilities
+  ---
+  duration_ms: 2.899528
   type: 'test'
   ...
 # Subtest: public API exposes schema versions
-ok 2 - public API exposes schema versions
+ok 12 - public API exposes schema versions
   ---
-  duration_ms: 0.306944
+  duration_ms: 0.291138
   type: 'test'
   ...
 # Subtest: public API factory plus validator round trip
-ok 3 - public API factory plus validator round trip
+ok 13 - public API factory plus validator round trip
   ---
-  duration_ms: 7.402962
+  duration_ms: 3.94944
   type: 'test'
   ...
 # Subtest: public API graph helpers can topologically order a blueprint
-ok 4 - public API graph helpers can topologically order a blueprint
+ok 14 - public API graph helpers can topologically order a blueprint
   ---
-  duration_ms: 2.081257
+  duration_ms: 1.169703
   type: 'test'
   ...
 # Subtest: public API containers are frozen
-ok 5 - public API containers are frozen
+ok 15 - public API containers are frozen
   ---
-  duration_ms: 0.385493
+  duration_ms: 0.327003
   type: 'test'
   ...
 # Subtest: registry stats are exposed without leaking mutable registry instances
-ok 6 - registry stats are exposed without leaking mutable registry instances
+ok 16 - registry stats are exposed without leaking mutable registry instances
   ---
-  duration_ms: 0.354787
+  duration_ms: 0.428115
   type: 'test'
   ...
 # Subtest: public route API can initialize and traverse a simple chase
-ok 7 - public route API can initialize and traverse a simple chase
+ok 17 - public route API can initialize and traverse a simple chase
   ---
-  duration_ms: 5.439044
+  duration_ms: 4.71967
   type: 'test'
   ...
 # Subtest: Effect Forge availability capability is detected dynamically from Critical Forge public API
-ok 8 - Effect Forge availability capability is detected dynamically from Critical Forge public API
+ok 18 - Effect Forge availability capability is detected dynamically from Critical Forge public API
   ---
-  duration_ms: 0.425814
+  duration_ms: 0.407514
   type: 'test'
   ...
 # Subtest: Weather Forge availability capability is detected dynamically from its public API
-ok 9 - Weather Forge availability capability is detected dynamically from its public API
+ok 19 - Weather Forge availability capability is detected dynamically from its public API
   ---
-  duration_ms: 0.790706
+  duration_ms: 0.876331
   type: 'test'
   ...
 # Subtest: dev.13 advertises Player View, synchronization, branching Builder, and Visual System support
-ok 10 - dev.13 advertises Player View, synchronization, branching Builder, and Visual System support
+ok 20 - dev.13 advertises Player View, synchronization, branching Builder, and Visual System support
   ---
-  duration_ms: 1.035565
+  duration_ms: 0.777642
   type: 'test'
   ...
 # Subtest: every Builder data-action is wired to an ApplicationV2 action callback
-ok 11 - every Builder data-action is wired to an ApplicationV2 action callback
+ok 21 - every Builder data-action is wired to an ApplicationV2 action callback
   ---
-  duration_ms: 8.187779
+  duration_ms: 10.630195
   type: 'test'
   ...
 # Subtest: every GM Runner data-action is wired to an ApplicationV2 action callback
-ok 12 - every GM Runner data-action is wired to an ApplicationV2 action callback
+ok 22 - every GM Runner data-action is wired to an ApplicationV2 action callback
   ---
-  duration_ms: 4.251038
+  duration_ms: 4.192867
   type: 'test'
   ...
 # Subtest: every Player View data-action is wired to an ApplicationV2 action callback
-ok 13 - every Player View data-action is wired to an ApplicationV2 action callback
+ok 23 - every Player View data-action is wired to an ApplicationV2 action callback
   ---
-  duration_ms: 1.930979
+  duration_ms: 2.181476
   type: 'test'
   ...
 # Subtest: Basic Builder creates a valid empty linear Blueprint
-ok 14 - Basic Builder creates a valid empty linear Blueprint
+ok 24 - Basic Builder creates a valid empty linear Blueprint
   ---
-  duration_ms: 5.473746
+  duration_ms: 6.051377
   type: 'test'
   ...
 # Subtest: manual cards become local snapshots and route nodes
-ok 15 - manual cards become local snapshots and route nodes
+ok 25 - manual cards become local snapshots and route nodes
   ---
-  duration_ms: 3.565581
+  duration_ms: 4.150853
   type: 'test'
   ...
 # Subtest: registered cards are cloned per occurrence and keep origin metadata
-ok 16 - registered cards are cloned per occurrence and keep origin metadata
+ok 26 - registered cards are cloned per occurrence and keep origin metadata
   ---
-  duration_ms: 1.99119
+  duration_ms: 2.358894
   type: 'test'
   ...
 # Subtest: card order can be changed without losing snapshots
-ok 17 - card order can be changed without losing snapshots
+ok 27 - card order can be changed without losing snapshots
   ---
-  duration_ms: 7.212475
+  duration_ms: 6.726624
   type: 'test'
   ...
 # Subtest: card overrides and approach editing remain valid
-ok 18 - card overrides and approach editing remain valid
+ok 28 - card overrides and approach editing remain valid
   ---
-  duration_ms: 4.093139
+  duration_ms: 5.108526
   type: 'test'
   ...
 # Subtest: cards can be removed and the graph is rebuilt cleanly
-ok 19 - cards can be removed and the graph is rebuilt cleanly
+ok 29 - cards can be removed and the graph is rebuilt cleanly
   ---
-  duration_ms: 2.44713
+  duration_ms: 2.714118
   type: 'test'
   ...
 # Subtest: participants can be added without duplicate UUIDs inside a group
-ok 20 - participants can be added without duplicate UUIDs inside a group
+ok 30 - participants can be added without duplicate UUIDs inside a group
   ---
-  duration_ms: 0.591504
+  duration_ms: 0.664271
   type: 'test'
   ...
 # Subtest: group defaults can be reset for race and against-clock chases
-ok 21 - group defaults can be reset for race and against-clock chases
+ok 31 - group defaults can be reset for race and against-clock chases
   ---
-  duration_ms: 1.523865
+  duration_ms: 1.454051
   type: 'test'
   ...
 # Subtest: start validation requires at least one card
-ok 22 - start validation requires at least one card
+ok 32 - start validation requires at least one card
   ---
-  duration_ms: 0.580167
+  duration_ms: 0.652232
   type: 'test'
   ...
 # Subtest: Basic Builder refuses to edit a branched graph
-ok 23 - Basic Builder refuses to edit a branched graph
+ok 33 - Basic Builder refuses to edit a branched graph
   ---
-  duration_ms: 1.18405
+  duration_ms: 1.449524
   type: 'test'
   ...
 # Subtest: Branching Builder converts a linear route into a valid split and merge graph
-ok 24 - Branching Builder converts a linear route into a valid split and merge graph
+ok 34 - Branching Builder converts a linear route into a valid split and merge graph
   ---
-  duration_ms: 15.591062
+  duration_ms: 16.667035
   type: 'test'
   ...
 # Subtest: Branch routes can be extended with additional obstacles
-ok 25 - Branch routes can be extended with additional obstacles
+ok 35 - Branch routes can be extended with additional obstacles
   ---
-  duration_ms: 9.701698
+  duration_ms: 12.20023
   type: 'test'
   ...
 # Subtest: Branching Builder can append new mainline obstacles after a branch block
-ok 26 - Branching Builder can append new mainline obstacles after a branch block
+ok 36 - Branching Builder can append new mainline obstacles after a branch block
   ---
-  duration_ms: 9.422426
+  duration_ms: 9.69825
   type: 'test'
   ...
 # Subtest: Branching Builder supports multiple sequential branch blocks on the mainline
-ok 27 - Branching Builder supports multiple sequential branch blocks on the mainline
+ok 37 - Branching Builder supports multiple sequential branch blocks on the mainline
   ---
-  duration_ms: 11.033722
+  duration_ms: 10.811237
   type: 'test'
   ...
 # Subtest: Branch entry labels and visibility are editable without exposing hidden routes by default
-ok 28 - Branch entry labels and visibility are editable without exposing hidden routes by default
+ok 38 - Branch entry labels and visibility are editable without exposing hidden routes by default
   ---
-  duration_ms: 4.58968
+  duration_ms: 5.251352
   type: 'test'
   ...
 # Subtest: Removing the last branch restores the basic linear Builder
-ok 29 - Removing the last branch restores the basic linear Builder
+ok 39 - Removing the last branch restores the basic linear Builder
   ---
-  duration_ms: 4.291318
+  duration_ms: 4.416233
   type: 'test'
   ...
 # Subtest: Rules Engine pauses after a cleared obstacle when a player route decision is required
-ok 30 - Rules Engine pauses after a cleared obstacle when a player route decision is required
+ok 40 - Rules Engine pauses after a cleared obstacle when a player route decision is required
   ---
-  duration_ms: 9.853378
+  duration_ms: 10.544696
   type: 'test'
   ...
 # Subtest: adding a participant to an existing branch keeps the Builder editable
-ok 31 - adding a participant to an existing branch keeps the Builder editable
+ok 41 - adding a participant to an existing branch keeps the Builder editable
   ---
-  duration_ms: 4.663801
+  duration_ms: 4.536574
   type: 'test'
   ...
 # Subtest: group resets on an existing branch keep the Builder mode intact
-ok 32 - group resets on an existing branch keep the Builder mode intact
+ok 42 - group resets on an existing branch keep the Builder mode intact
   ---
-  duration_ms: 4.660547
+  duration_ms: 5.308247
   type: 'test'
   ...
 # Subtest: Branch-lane cards can be removed without breaking the branch graph
-ok 33 - Branch-lane cards can be removed without breaking the branch graph
+ok 43 - Branch-lane cards can be removed without breaking the branch graph
   ---
-  duration_ms: 8.898333
+  duration_ms: 6.539026
   type: 'test'
   ...
 # Subtest: A middle branch-lane card can be removed and its route reconnects
-ok 34 - A middle branch-lane card can be removed and its route reconnects
+ok 44 - A middle branch-lane card can be removed and its route reconnects
   ---
-  duration_ms: 9.605834
+  duration_ms: 9.594024
   type: 'test'
   ...
 # Subtest: Ordinary mainline cards remain deletable after branching is enabled
-ok 35 - Ordinary mainline cards remain deletable after branching is enabled
+ok 45 - Ordinary mainline cards remain deletable after branching is enabled
   ---
-  duration_ms: 7.129079
+  duration_ms: 6.943181
   type: 'test'
   ...
 # Subtest: A card that owns a branch is protected until the branch block is removed
-ok 36 - A card that owns a branch is protected until the branch block is removed
+ok 46 - A card that owns a branch is protected until the branch block is removed
   ---
-  duration_ms: 4.415977
+  duration_ms: 4.27462
   type: 'test'
   ...
 # Subtest: relative insertion preserves branch-entry semantics before the first lane card
-ok 37 - relative insertion preserves branch-entry semantics before the first lane card
+ok 47 - relative insertion preserves branch-entry semantics before the first lane card
   ---
-  duration_ms: 5.78099
+  duration_ms: 6.524549
   type: 'test'
   ...
 # Subtest: relative insertion after a lane card stays inside that branch lane
-ok 38 - relative insertion after a lane card stays inside that branch lane
+ok 48 - relative insertion after a lane card stays inside that branch lane
   ---
-  duration_ms: 6.463242
+  duration_ms: 6.786424
   type: 'test'
   ...
 # Subtest: inserting after a branch source places the new obstacle after the merge and keeps the branch on its source
-ok 39 - inserting after a branch source places the new obstacle after the merge and keeps the branch on its source
+ok 49 - inserting after a branch source places the new obstacle after the merge and keeps the branch on its source
   ---
-  duration_ms: 9.011515
+  duration_ms: 23.140952
   type: 'test'
   ...
 # Subtest: relative insertion before the mainline continuation after a branch keeps the merge connection valid
-ok 40 - relative insertion before the mainline continuation after a branch keeps the merge connection valid
+ok 50 - relative insertion before the mainline continuation after a branch keeps the merge connection valid
   ---
-  duration_ms: 7.994226
+  duration_ms: 8.678815
   type: 'test'
   ...
 # Subtest: relative insertion before the first left-lane card does not swap branch lane positions
-ok 41 - relative insertion before the first left-lane card does not swap branch lane positions
+ok 51 - relative insertion before the first left-lane card does not swap branch lane positions
   ---
-  duration_ms: 9.260672
+  duration_ms: 7.269041
   type: 'test'
   ...
 # Subtest: an empty branch route can be populated again from its branch entry
-ok 42 - an empty branch route can be populated again from its branch entry
+ok 52 - an empty branch route can be populated again from its branch entry
   ---
-  duration_ms: 7.450594
+  duration_ms: 6.43906
   type: 'test'
   ...
 # Subtest: dev.12 public API exposes Basic and Branching Builder helpers
-ok 43 - dev.12 public API exposes Basic and Branching Builder helpers
+ok 53 - dev.12 public API exposes Basic and Branching Builder helpers
   ---
-  duration_ms: 10.117367
+  duration_ms: 11.862972
   type: 'test'
   ...
 # Subtest: UI capability is advertised when a Builder UI service is supplied
-ok 44 - UI capability is advertised when a Builder UI service is supplied
+ok 54 - UI capability is advertised when a Builder UI service is supplied
   ---
-  duration_ms: 0.458263
+  duration_ms: 0.481726
   type: 'test'
   ...
 # Subtest: GM scene controls receive a Chase Forge Builder button on object-style controls
-ok 45 - GM scene controls receive a Chase Forge Builder button on object-style controls
+ok 55 - GM scene controls receive a Chase Forge Builder button on object-style controls
   ---
-  duration_ms: 23.490506
+  duration_ms: 2.47536
   type: 'test'
   ...
 # Subtest: non-GM scene controls do not expose the Builder button
-ok 46 - non-GM scene controls do not expose the Builder button
+ok 56 - non-GM scene controls do not expose the Builder button
   ---
-  duration_ms: 0.452624
+  duration_ms: 0.160512
   type: 'test'
   ...
 # Subtest: Builder template and localization resources are packaged
-ok 47 - Builder template and localization resources are packaged
+ok 57 - Builder template and localization resources are packaged
   ---
-  duration_ms: 13.874026
+  duration_ms: 8.837064
   type: 'test'
   ...
 # Subtest: Builder UI service lazily creates a GM ApplicationV2 window and reuses it
-ok 48 - Builder UI service lazily creates a GM ApplicationV2 window and reuses it
+ok 58 - Builder UI service lazily creates a GM ApplicationV2 window and reuses it
   ---
-  duration_ms: 4.02142
+  duration_ms: 5.443221
   type: 'test'
   ...
 # Subtest: Builder layout diagnostics do not structured-clone Foundry application position objects
-ok 49 - Builder layout diagnostics do not structured-clone Foundry application position objects
+ok 59 - Builder layout diagnostics do not structured-clone Foundry application position objects
   ---
-  duration_ms: 2.516344
+  duration_ms: 2.569131
   type: 'test'
   ...
 # Subtest: builder applies runtime layout enforcement for Foundry ApplicationV2
-ok 50 - builder applies runtime layout enforcement for Foundry ApplicationV2
+ok 60 - builder applies runtime layout enforcement for Foundry ApplicationV2
   ---
-  duration_ms: 1.840823
+  duration_ms: 0.948729
   type: 'test'
   ...
 # Subtest: Builder integrates optional Weather Forge prefill without overwriting loaded Blueprints implicitly
-ok 51 - Builder integrates optional Weather Forge prefill without overwriting loaded Blueprints implicitly
+ok 61 - Builder integrates optional Weather Forge prefill without overwriting loaded Blueprints implicitly
   ---
-  duration_ms: 1.640179
+  duration_ms: 1.773191
   type: 'test'
   ...
 # Subtest: new Builder window prefills current Weather Forge values when integration is available
-ok 52 - new Builder window prefills current Weather Forge values when integration is available
+ok 62 - new Builder window prefills current Weather Forge values when integration is available
   ---
-  duration_ms: 1.671307
+  duration_ms: 1.143843
   type: 'test'
   ...
 # Subtest: Builder participant drag-and-drop uses capture-phase handlers and robust drag payload parsing
-ok 53 - Builder participant drag-and-drop uses capture-phase handlers and robust drag payload parsing
+ok 63 - Builder participant drag-and-drop uses capture-phase handlers and robust drag payload parsing
   ---
-  duration_ms: 8.093567
+  duration_ms: 2.081216
   type: 'test'
   ...
 # Subtest: participant drop UUID resolver supports Actor and Scene Token payloads
-ok 54 - participant drop UUID resolver supports Actor and Scene Token payloads
+ok 64 - participant drop UUID resolver supports Actor and Scene Token payloads
   ---
-  duration_ms: 0.748031
+  duration_ms: 0.53768
   type: 'test'
   ...
 # Subtest: manual card action keeps the Builder draft as a ChaseBlueprint in linear and branching modes
-ok 55 - manual card action keeps the Builder draft as a ChaseBlueprint in linear and branching modes
+ok 65 - manual card action keeps the Builder draft as a ChaseBlueprint in linear and branching modes
   ---
-  duration_ms: 2.382162
+  duration_ms: 2.405824
   type: 'test'
   ...
 # Subtest: visual route selection preserves both Builder pane scroll positions while opening the inspector
-ok 56 - visual route selection preserves both Builder pane scroll positions while opening the inspector
+ok 66 - visual route selection preserves both Builder pane scroll positions while opening the inspector
   ---
-  duration_ms: 2.101708
+  duration_ms: 0.999846
   type: 'test'
   ...
 # Subtest: Builder form synchronization keeps branching drafts editable through the visual inspector
-ok 57 - Builder form synchronization keeps branching drafts editable through the visual inspector
+ok 67 - Builder form synchronization keeps branching drafts editable through the visual inspector
   ---
-  duration_ms: 1.497714
+  duration_ms: 0.865885
   type: 'test'
   ...
 # Subtest: Builder save derives editability locally before validation
-ok 58 - Builder save derives editability locally before validation
+ok 68 - Builder save derives editability locally before validation
   ---
-  duration_ms: 2.022698
+  duration_ms: 2.448909
   type: 'test'
   ...
 # Subtest: Builder exposes a permanent New Chase action and separates world Chases from read-only library Chases
-ok 59 - Builder exposes a permanent New Chase action and separates world Chases from read-only library Chases
+ok 69 - Builder exposes a permanent New Chase action and separates world Chases from read-only library Chases
   ---
-  duration_ms: 3.270124
+  duration_ms: 1.770878
   type: 'test'
   ...
 # Subtest: Builder groups registered Chase Cards by source/category for the Core Card Library
-ok 60 - Builder groups registered Chase Cards by source/category for the Core Card Library
+ok 70 - Builder groups registered Chase Cards by source/category for the Core Card Library
   ---
-  duration_ms: 1.876146
+  duration_ms: 1.180688
   type: 'test'
   ...
 # Subtest: Builder exposes template generation and seeded reroll controls
-ok 61 - Builder exposes template generation and seeded reroll controls
+ok 71 - Builder exposes template generation and seeded reroll controls
   ---
-  duration_ms: 2.065783
+  duration_ms: 1.243143
   type: 'test'
   ...
 # Subtest: Builder skill labels use PF2e/local module localization instead of English slug fallbacks
-ok 62 - Builder skill labels use PF2e/local module localization instead of English slug fallbacks
+ok 72 - Builder skill labels use PF2e/local module localization instead of English slug fallbacks
   ---
-  duration_ms: 0.353435
+  duration_ms: 0.277298
   type: 'test'
   ...
 # Subtest: Runner and player sync pass branch route selection using the rules-engine object contract
-ok 63 - Runner and player sync pass branch route selection using the rules-engine object contract
+ok 73 - Runner and player sync pass branch route selection using the rules-engine object contract
   ---
-  duration_ms: 4.710602
+  duration_ms: 2.576401
   type: 'test'
   ...
 # Subtest: Runner and Player View expose full-resolution obstacle image popouts
-ok 64 - Runner and Player View expose full-resolution obstacle image popouts
+ok 74 - Runner and Player View expose full-resolution obstacle image popouts
   ---
-  duration_ms: 6.189824
+  duration_ms: 16.790915
   type: 'test'
   ...
 # Subtest: GM Runner presents the acting participant's current-round outcome
-ok 65 - GM Runner presents the acting participant's current-round outcome
+ok 75 - GM Runner presents the acting participant's current-round outcome
   ---
-  duration_ms: 1.280026
+  duration_ms: 1.835746
   type: 'test'
   ...
 # Subtest: Builder exposes branch-aware before/after insertion controls and preserves scroll for route mutations
-ok 66 - Builder exposes branch-aware before/after insertion controls and preserves scroll for route mutations
+ok 76 - Builder exposes branch-aware before/after insertion controls and preserves scroll for route mutations
   ---
-  duration_ms: 1.939392
+  duration_ms: 1.141119
   type: 'test'
   ...
 # Subtest: relative insertion helper is an instance method and destructive route edits require confirmation
-ok 67 - relative insertion helper is an instance method and destructive route edits require confirmation
+ok 77 - relative insertion helper is an instance method and destructive route edits require confirmation
   ---
-  duration_ms: 4.270497
+  duration_ms: 2.049207
   type: 'test'
   ...
 # Subtest: empty branch lanes expose an inline add-obstacle action
-ok 68 - empty branch lanes expose an inline add-obstacle action
+ok 78 - empty branch lanes expose an inline add-obstacle action
   ---
-  duration_ms: 5.176927
+  duration_ms: 2.978326
   type: 'test'
   ...
 # Subtest: participant mutations preserve Builder scroll position before re-render
-ok 69 - participant mutations preserve Builder scroll position before re-render
+ok 79 - participant mutations preserve Builder scroll position before re-render
   ---
-  duration_ms: 0.854832
+  duration_ms: 1.141019
   type: 'test'
   ...
 # Subtest: Builder re-enables editable controls after a forced ApplicationV2 refresh
-ok 70 - Builder re-enables editable controls after a forced ApplicationV2 refresh
+ok 80 - Builder re-enables editable controls after a forced ApplicationV2 refresh
   ---
-  duration_ms: 1.637145
+  duration_ms: 1.834434
   type: 'test'
   ...
-# pf2e-chase-forge | Campaign-started Chase 'session-861e677f-7b30-407a-8afe-c4cefd3bddfb' is active, but the GM Runner could not be opened. Error: runner render failed
-#     at Object.openRunner (file:///mnt/data/chase_rc1_work/tests/campaign-forge-integration.test.js:170:40)
-#     at Object.openRunner (file:///mnt/data/chase_rc1_work/scripts/api/public-api.js:415:46)
-#     at Object.start (file:///mnt/data/chase_rc1_work/scripts/integrations/campaign-forge-bridge.js:311:39)
-#     at async TestContext.<anonymous> (file:///mnt/data/chase_rc1_work/tests/campaign-forge-integration.test.js:174:21)
+# pf2e-chase-forge | Campaign-started Chase 'session-c52c4645-5aec-4ac7-a4e0-0c8855557724' is active, but the GM Runner could not be opened. Error: runner render failed
+#     at Object.openRunner (file:///mnt/data/chase_dev18/tests/campaign-forge-integration.test.js:170:40)
+#     at Object.openRunner (file:///mnt/data/chase_dev18/scripts/api/public-api.js:419:46)
+#     at Object.start (file:///mnt/data/chase_dev18/scripts/integrations/campaign-forge-bridge.js:311:39)
+#     at async TestContext.<anonymous> (file:///mnt/data/chase_dev18/tests/campaign-forge-integration.test.js:174:21)
 #     at async Test.run (node:internal/test_runner/test:1054:7)
 #     at async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
 # Subtest: Campaign Forge bridge lists world and read-only Library chases without copying domain data
-ok 71 - Campaign Forge bridge lists world and read-only Library chases without copying domain data
+ok 81 - Campaign Forge bridge lists world and read-only Library chases without copying domain data
   ---
-  duration_ms: 16.447648
+  duration_ms: 15.586111
   type: 'test'
   ...
 # Subtest: Campaign Forge bridge opens, creates, and directly starts prepared chases with campaign provenance
-ok 72 - Campaign Forge bridge opens, creates, and directly starts prepared chases with campaign provenance
+ok 82 - Campaign Forge bridge opens, creates, and directly starts prepared chases with campaign provenance
   ---
-  duration_ms: 8.542896
+  duration_ms: 8.68912
   type: 'test'
   ...
 # Subtest: completed Campaign-started Chase returns a ChaseResult carrying Campaign provenance and emits lifecycle hooks
-ok 73 - completed Campaign-started Chase returns a ChaseResult carrying Campaign provenance and emits lifecycle hooks
+ok 83 - completed Campaign-started Chase returns a ChaseResult carrying Campaign provenance and emits lifecycle hooks
   ---
-  duration_ms: 7.455322
+  duration_ms: 8.320636
   type: 'test'
   ...
 # Subtest: Campaign integration is optional, capability-detected, and exposed as Contract v2
-ok 74 - Campaign integration is optional, capability-detected, and exposed as Contract v2
+ok 84 - Campaign integration is optional, capability-detected, and exposed as Contract v2
   ---
-  duration_ms: 0.75386
+  duration_ms: 0.884252
   type: 'test'
   ...
 # Subtest: Campaign starts reuse the current link run while forceNew remains independent and source-safe
-ok 75 - Campaign starts reuse the current link run while forceNew remains independent and source-safe
+ok 85 - Campaign starts reuse the current link run while forceNew remains independent and source-safe
   ---
-  duration_ms: 19.999438
+  duration_ms: 20.916601
   type: 'test'
   ...
 # Subtest: Campaign runtime target loss is explicit and Runner-open failures do not roll back an active Chase
-ok 76 - Campaign runtime target loss is explicit and Runner-open failures do not roll back an active Chase
+ok 86 - Campaign runtime target loss is explicit and Runner-open failures do not roll back an active Chase
   ---
-  duration_ms: 5.33803
+  duration_ms: 6.337778
   type: 'test'
   ...
 # Subtest: Campaign result lookup is isolated by current external-link provenance and latest run reports aborts
-ok 77 - Campaign result lookup is isolated by current external-link provenance and latest run reports aborts
+ok 87 - Campaign result lookup is isolated by current external-link provenance and latest run reports aborts
   ---
-  duration_ms: 12.786483
+  duration_ms: 15.513251
   type: 'test'
   ...
 # Subtest: Campaign latest-run status prefers an existing non-terminal link Session over newer terminal history
-ok 78 - Campaign latest-run status prefers an existing non-terminal link Session over newer terminal history
+ok 88 - Campaign latest-run status prefers an existing non-terminal link Session over newer terminal history
   ---
-  duration_ms: 7.693702
+  duration_ms: 9.210866
   type: 'test'
   ...
 # Subtest: Campaign result lookup excludes non-Campaign results even when they share the same Blueprint
-ok 79 - Campaign result lookup excludes non-Campaign results even when they share the same Blueprint
+ok 89 - Campaign result lookup excludes non-Campaign results even when they share the same Blueprint
   ---
-  duration_ms: 4.331048
+  duration_ms: 5.29059
   type: 'test'
   ...
 # Subtest: GM Core Chase Point recommendations alternate group minus one and group minus two
-ok 80 - GM Core Chase Point recommendations alternate group minus one and group minus two
+ok 90 - GM Core Chase Point recommendations alternate group minus one and group minus two
   ---
-  duration_ms: 1.189879
+  duration_ms: 1.096692
   type: 'test'
   ...
 # Subtest: automatic Chase Point reference size prefers groups that actually roll
-ok 81 - automatic Chase Point reference size prefers groups that actually roll
+ok 91 - automatic Chase Point reference size prefers groups that actually roll
   ---
-  duration_ms: 0.171089
+  duration_ms: 0.163727
   type: 'test'
   ...
 # Subtest: scalable obstacles resolve Chase Points independently for differently sized rolling groups
-ok 82 - scalable obstacles resolve Chase Points independently for differently sized rolling groups
+ok 92 - scalable obstacles resolve Chase Points independently for differently sized rolling groups
   ---
-  duration_ms: 1.675513
+  duration_ms: 1.827924
   type: 'test'
   ...
 # Subtest: custom or explicitly non-scalable obstacles retain their fixed Chase Point value
-ok 83 - custom or explicitly non-scalable obstacles retain their fixed Chase Point value
+ok 93 - custom or explicitly non-scalable obstacles retain their fixed Chase Point value
   ---
-  duration_ms: 0.164859
+  duration_ms: 0.170157
   type: 'test'
   ...
 # Subtest: rules session resolves a technical start node onto the first obstacle
-ok 84 - rules session resolves a technical start node onto the first obstacle
+ok 94 - rules session resolves a technical start node onto the first obstacle
   ---
-  duration_ms: 6.042976
+  duration_ms: 5.446345
   type: 'test'
   ...
 # Subtest: critical success gives 2 Chase Points by default
-ok 85 - critical success gives 2 Chase Points by default
+ok 95 - critical success gives 2 Chase Points by default
   ---
-  duration_ms: 4.077435
+  duration_ms: 4.595373
   type: 'test'
   ...
 # Subtest: success gives 1 Chase Point and failure gives none
-ok 86 - success gives 1 Chase Point and failure gives none
+ok 96 - success gives 1 Chase Point and failure gives none
   ---
-  duration_ms: 2.574733
+  duration_ms: 2.890735
   type: 'test'
   ...
 # Subtest: critical failure loses 1 Chase Point but progress never drops below zero
-ok 87 - critical failure loses 1 Chase Point but progress never drops below zero
+ok 97 - critical failure loses 1 Chase Point but progress never drops below zero
   ---
-  duration_ms: 1.976869
+  duration_ms: 2.622761
   type: 'test'
   ...
 # Subtest: enough Chase Points immediately clear the obstacle and do not carry over
-ok 88 - enough Chase Points immediately clear the obstacle and do not carry over
+ok 98 - enough Chase Points immediately clear the obstacle and do not carry over
   ---
-  duration_ms: 4.004544
+  duration_ms: 5.41676
   type: 'test'
   ...
 # Subtest: a participant who has not acted can act on the next obstacle in the same round
-ok 89 - a participant who has not acted can act on the next obstacle in the same round
+ok 99 - a participant who has not acted can act on the next obstacle in the same round
   ---
-  duration_ms: 3.408263
+  duration_ms: 4.735654
   type: 'test'
   ...
 # Subtest: the same participant cannot act twice in one round
-ok 90 - the same participant cannot act twice in one round
+ok 100 - the same participant cannot act twice in one round
   ---
-  duration_ms: 1.910658
+  duration_ms: 2.440086
   type: 'test'
   ...
 # Subtest: a skipped turn loses one Chase Point
-ok 91 - a skipped turn loses one Chase Point
+ok 101 - a skipped turn loses one Chase Point
   ---
-  duration_ms: 1.413317
+  duration_ms: 2.029508
   type: 'test'
   ...
 # Subtest: endRound automatically penalizes rolled participants who did not act
-ok 92 - endRound automatically penalizes rolled participants who did not act
+ok 102 - endRound automatically penalizes rolled participants who did not act
   ---
-  duration_ms: 2.633432
+  duration_ms: 3.826825
   type: 'test'
   ...
 # Subtest: automatic non-check contribution normally adds one point
-ok 93 - automatic non-check contribution normally adds one point
+ok 103 - automatic non-check contribution normally adds one point
   ---
-  duration_ms: 1.54805
+  duration_ms: 1.763507
   type: 'test'
   ...
 # Subtest: a particularly helpful automatic contribution can add two points
-ok 94 - a particularly helpful automatic contribution can add two points
+ok 104 - a particularly helpful automatic contribution can add two points
   ---
-  duration_ms: 1.491865
+  duration_ms: 1.816636
   type: 'test'
   ...
 # Subtest: a separated participant advances on one success regardless of card point requirement
-ok 95 - a separated participant advances on one success regardless of card point requirement
+ok 105 - a separated participant advances on one success regardless of card point requirement
   ---
-  duration_ms: 1.724407
+  duration_ms: 2.007564
   type: 'test'
   ...
 # Subtest: a separated critical success grants +2 circumstance bonus to the next check
-ok 96 - a separated critical success grants +2 circumstance bonus to the next check
+ok 106 - a separated critical success grants +2 circumstance bonus to the next check
   ---
-  duration_ms: 5.024407
+  duration_ms: 5.855892
   type: 'test'
   ...
 # Subtest: resolveCheck uses natural 20/1 degree adjustment
-ok 97 - resolveCheck uses natural 20/1 degree adjustment
+ok 107 - resolveCheck uses natural 20/1 degree adjustment
   ---
-  duration_ms: 1.394488
+  duration_ms: 1.382072
   type: 'test'
   ...
 # Subtest: cleared obstacle with multiple outgoing routes waits for an explicit branch choice
-ok 98 - cleared obstacle with multiple outgoing routes waits for an explicit branch choice
+ok 108 - cleared obstacle with multiple outgoing routes waits for an explicit branch choice
   ---
-  duration_ms: 2.413619
+  duration_ms: 3.037657
   type: 'test'
   ...
 # Subtest: steady quarry pace advances at the start of the round before pursuers act
-ok 99 - steady quarry pace advances at the start of the round before pursuers act
+ok 109 - steady quarry pace advances at the start of the round before pursuers act
   ---
-  duration_ms: 3.276293
+  duration_ms: 3.827527
   type: 'test'
   ...
 # Subtest: fractional steady quarry pace accumulates once per round at round start
-ok 100 - fractional steady quarry pace accumulates once per round at round start
+ok 110 - fractional steady quarry pace accumulates once per round at round start
   ---
-  duration_ms: 3.556958
+  duration_ms: 4.607521
   type: 'test'
   ...
 # Subtest: rolled pursuers must wait until all quarry participants have acted
-ok 101 - rolled pursuers must wait until all quarry participants have acted
+ok 111 - rolled pursuers must wait until all quarry participants have acted
   ---
-  duration_ms: 1.326516
+  duration_ms: 2.389801
   type: 'test'
   ...
 # Subtest: steady quarry movement is resolved automatically before rolled pursuers are enabled
-ok 102 - steady quarry movement is resolved automatically before rolled pursuers are enabled
+ok 112 - steady quarry movement is resolved automatically before rolled pursuers are enabled
   ---
-  duration_ms: 2.597116
+  duration_ms: 3.165348
   type: 'test'
   ...
 # Subtest: pursuit start-distance helper places quarry one obstacle ahead on an initial linear route
-ok 103 - pursuit start-distance helper places quarry one obstacle ahead on an initial linear route
+ok 113 - pursuit start-distance helper places quarry one obstacle ahead on an initial linear route
   ---
-  duration_ms: 0.583212
+  duration_ms: 0.41175
   type: 'test'
   ...
 # Subtest: startDistance zero supports a deliberately short same-position pursuit
-ok 104 - startDistance zero supports a deliberately short same-position pursuit
+ok 114 - startDistance zero supports a deliberately short same-position pursuit
   ---
-  duration_ms: 0.158049
+  duration_ms: 0.186631
   type: 'test'
   ...
 # Subtest: pursuit ends when pursuer and quarry occupy the same chase position
-ok 105 - pursuit ends when pursuer and quarry occupy the same chase position
+ok 115 - pursuit ends when pursuer and quarry occupy the same chase position
   ---
-  duration_ms: 0.477382
+  duration_ms: 0.843892
   type: 'test'
   ...
 # Subtest: pursuit ends in escape when quarry reaches an ending
-ok 106 - pursuit ends in escape when quarry reaches an ending
+ok 116 - pursuit ends in escape when quarry reaches an ending
   ---
-  duration_ms: 0.91297
+  duration_ms: 0.515106
   type: 'test'
   ...
 # Subtest: escape chase can end at the start of a round with a three-obstacle lead
-ok 107 - escape chase can end at the start of a round with a three-obstacle lead
+ok 117 - escape chase can end at the start of a round with a three-obstacle lead
   ---
-  duration_ms: 1.389381
+  duration_ms: 1.303233
   type: 'test'
   ...
 # Subtest: against-the-clock chase expires at the configured round limit
-ok 108 - against-the-clock chase expires at the configured round limit
+ok 118 - against-the-clock chase expires at the configured round limit
   ---
-  duration_ms: 0.836184
+  duration_ms: 0.860236
   type: 'test'
   ...
 # Subtest: against-the-clock goal reached wins before expiry
-ok 109 - against-the-clock goal reached wins before expiry
+ok 119 - against-the-clock goal reached wins before expiry
   ---
-  duration_ms: 0.405122
+  duration_ms: 0.793365
   type: 'test'
   ...
 # Subtest: race chase declares the group that reaches an ending
-ok 110 - race chase declares the group that reaches an ending
+ok 120 - race chase declares the group that reaches an ending
   ---
-  duration_ms: 0.475088
+  duration_ms: 0.598041
   type: 'test'
   ...
 # Subtest: quarry acts before pursuers in pursuit and escape policy
-ok 111 - quarry acts before pursuers in pursuit and escape policy
+ok 121 - quarry acts before pursuers in pursuit and escape policy
   ---
-  duration_ms: 0.922074
+  duration_ms: 0.653665
   type: 'test'
   ...
 # Subtest: race policy requires initiative for rolling participants
-ok 112 - race policy requires initiative for rolling participants
+ok 122 - race policy requires initiative for rolling participants
   ---
-  duration_ms: 0.657073
+  duration_ms: 0.677581
   type: 'test'
   ...
 # Subtest: race round requires a complete participant initiative order and enforces it
-ok 113 - race round requires a complete participant initiative order and enforces it
+ok 123 - race round requires a complete participant initiative order and enforces it
   ---
-  duration_ms: 2.511718
+  duration_ms: 1.925461
   type: 'test'
   ...
 # Subtest: race end-round auto-skip follows initiative order and steady competitors move without initiative
-ok 114 - race end-round auto-skip follows initiative order and steady competitors move without initiative
+ok 124 - race end-round auto-skip follows initiative order and steady competitors move without initiative
   ---
-  duration_ms: 5.047422
+  duration_ms: 4.728133
   type: 'test'
   ...
 # Subtest: GM Core obstacle-point guideline uses group size minus one or two with minimum one
-ok 115 - GM Core obstacle-point guideline uses group size minus one or two with minimum one
+ok 125 - GM Core obstacle-point guideline uses group size minus one or two with minimum one
   ---
-  duration_ms: 0.271991
+  duration_ms: 0.174253
   type: 'test'
   ...
 # Subtest: GM Core chase-length guidelines are 6, 8, and 10 obstacles
-ok 116 - GM Core chase-length guidelines are 6, 8, and 10 obstacles
+ok 126 - GM Core chase-length guidelines are 6, 8, and 10 obstacles
   ---
-  duration_ms: 0.097217
+  duration_ms: 0.091538
   type: 'test'
   ...
 # Subtest: completeSession produces a persisted result summary
-ok 117 - completeSession produces a persisted result summary
+ok 127 - completeSession produces a persisted result summary
   ---
-  duration_ms: 0.900091
+  duration_ms: 0.854227
   type: 'test'
   ...
 # Subtest: consequence occurrence gets a stable id from the rules event
-ok 118 - consequence occurrence gets a stable id from the rules event
+ok 128 - consequence occurrence gets a stable id from the rules event
   ---
-  duration_ms: 2.659441
+  duration_ms: 2.972107
   type: 'test'
   ...
 # Subtest: GM-confirmed consequences remain pending until explicitly confirmed
-ok 119 - GM-confirmed consequences remain pending until explicitly confirmed
+ok 129 - GM-confirmed consequences remain pending until explicitly confirmed
   ---
-  duration_ms: 4.376046
+  duration_ms: 3.789109
   type: 'test'
   ...
 # Subtest: route unlock and lock consequences mutate the session through the Route Graph Engine
-ok 120 - route unlock and lock consequences mutate the session through the Route Graph Engine
+ok 130 - route unlock and lock consequences mutate the session through the Route Graph Engine
   ---
-  duration_ms: 4.035352
+  duration_ms: 3.758432
   type: 'test'
   ...
 # Subtest: routeSelect waits for GM/player route selection when multiple consequence edges are allowed
-ok 121 - routeSelect waits for GM/player route selection when multiple consequence edges are allowed
+ok 131 - routeSelect waits for GM/player route selection when multiple consequence edges are allowed
   ---
-  duration_ms: 2.205354
+  duration_ms: 2.401367
   type: 'test'
   ...
 # Subtest: Effect Forge consequence targets the acting participant and stores only serializable application evidence
-ok 122 - Effect Forge consequence targets the acting participant and stores only serializable application evidence
+ok 132 - Effect Forge consequence targets the acting participant and stores only serializable application evidence
   ---
-  duration_ms: 1.06515
+  duration_ms: 1.074489
   type: 'test'
   ...
 # Subtest: runtime-group Effect Forge targeting resolves every participant with a UUID
-ok 123 - runtime-group Effect Forge targeting resolves every participant with a UUID
+ok 133 - runtime-group Effect Forge targeting resolves every participant with a UUID
   ---
-  duration_ms: 0.62192
+  duration_ms: 0.639263
   type: 'test'
   ...
 # Subtest: missing optional Effect Forge becomes a manual fallback instead of breaking the chase
-ok 124 - missing optional Effect Forge becomes a manual fallback instead of breaking the chase
+ok 134 - missing optional Effect Forge becomes a manual fallback instead of breaking the chase
   ---
-  duration_ms: 0.664294
+  duration_ms: 0.672673
   type: 'test'
   ...
 # Subtest: missing required Effect Forge blocks only that consequence and preserves a valid Chase Session
-ok 125 - missing required Effect Forge blocks only that consequence and preserves a valid Chase Session
+ok 135 - missing required Effect Forge blocks only that consequence and preserves a valid Chase Session
   ---
-  duration_ms: 0.665727
+  duration_ms: 0.811412
   type: 'test'
   ...
 # Subtest: consequence execution is idempotent for the same occurrence
-ok 126 - consequence execution is idempotent for the same occurrence
+ok 136 - consequence execution is idempotent for the same occurrence
   ---
-  duration_ms: 1.726541
+  duration_ms: 1.219097
   type: 'test'
   ...
 # Subtest: PF2E Chase Rules Engine emits stable consequence occurrences for deferred effects
-ok 127 - PF2E Chase Rules Engine emits stable consequence occurrences for deferred effects
+ok 137 - PF2E Chase Rules Engine emits stable consequence occurrences for deferred effects
   ---
-  duration_ms: 3.400872
+  duration_ms: 4.870618
   type: 'test'
   ...
 # Subtest: route consequences are resolved before automatic post-obstacle advancement
-ok 128 - route consequences are resolved before automatic post-obstacle advancement
+ok 138 - route consequences are resolved before automatic post-obstacle advancement
   ---
-  duration_ms: 2.607183
+  duration_ms: 4.233247
   type: 'test'
   ...
 # Subtest: core factories stamp schema versions
-ok 129 - core factories stamp schema versions
+ok 139 - core factories stamp schema versions
   ---
-  duration_ms: 4.430989
+  duration_ms: 4.324535
   type: 'test'
   ...
 # Subtest: card normalization supplies every PF2e degree of success
-ok 130 - card normalization supplies every PF2e degree of success
+ok 140 - card normalization supplies every PF2e degree of success
   ---
-  duration_ms: 0.924467
+  duration_ms: 0.77663
   type: 'test'
   ...
 # Subtest: card required points are clamped to at least one
-ok 131 - card required points are clamped to at least one
+ok 141 - card required points are clamped to at least one
   ---
-  duration_ms: 0.159191
+  duration_ms: 0.293072
   type: 'test'
   ...
 # Subtest: tags normalize to unique strings
-ok 132 - tags normalize to unique strings
+ok 142 - tags normalize to unique strings
   ---
-  duration_ms: 0.134273
+  duration_ms: 0.138178
   type: 'test'
   ...
 # Subtest: image contract reserves external providers and candidates
-ok 133 - image contract reserves external providers and candidates
+ok 143 - image contract reserves external providers and candidates
   ---
-  duration_ms: 0.163447
+  duration_ms: 0.234563
   type: 'test'
   ...
 # Subtest: template is a preset and contains no session state
-ok 134 - template is a preset and contains no session state
+ok 144 - template is a preset and contains no session state
   ---
-  duration_ms: 0.121915
+  duration_ms: 0.135323
   type: 'test'
   ...
 # Subtest: blueprint stores a route graph rather than a flat card list
-ok 135 - blueprint stores a route graph rather than a flat card list
+ok 145 - blueprint stores a route graph rather than a flat card list
   ---
-  duration_ms: 0.96558
+  duration_ms: 0.604811
   type: 'test'
   ...
 # Subtest: blueprint supports multiple endings
-ok 136 - blueprint supports multiple endings
+ok 146 - blueprint supports multiple endings
   ---
-  duration_ms: 0.381517
+  duration_ms: 0.370018
   type: 'test'
   ...
 # Subtest: participant group supports placeholders
-ok 137 - participant group supports placeholders
+ok 147 - participant group supports placeholders
   ---
-  duration_ms: 0.461398
+  duration_ms: 0.331209
   type: 'test'
   ...
 # Subtest: participant group supports abstract opposition
-ok 138 - participant group supports abstract opposition
+ok 148 - participant group supports abstract opposition
   ---
-  duration_ms: 0.429719
+  duration_ms: 0.326031
   type: 'test'
   ...
 # Subtest: session position is node plus progress, not a single track number
-ok 139 - session position is node plus progress, not a single track number
+ok 149 - session position is node plus progress, not a single track number
   ---
-  duration_ms: 0.473316
+  duration_ms: 0.458571
   type: 'test'
   ...
 # Subtest: session can carry two runtime subgroups from one blueprint group
-ok 140 - session can carry two runtime subgroups from one blueprint group
+ok 150 - session can carry two runtime subgroups from one blueprint group
   ---
-  duration_ms: 0.672197
+  duration_ms: 0.340353
   type: 'test'
   ...
 # Subtest: session can embed a blueprint snapshot
-ok 141 - session can embed a blueprint snapshot
+ok 151 - session can embed a blueprint snapshot
   ---
-  duration_ms: 0.415619
+  duration_ms: 0.411039
   type: 'test'
   ...
 # Subtest: result records routes per runtime group
-ok 142 - result records routes per runtime group
+ok 152 - result records routes per runtime group
   ---
-  duration_ms: 0.209236
+  duration_ms: 0.127262
   type: 'test'
   ...
 # Subtest: public state is structurally separate from session state
-ok 143 - public state is structurally separate from session state
+ok 153 - public state is structurally separate from session state
   ---
-  duration_ms: 0.151529
+  duration_ms: 0.119149
   type: 'test'
   ...
 # Subtest: chase point consequence preserves negative values
-ok 144 - chase point consequence preserves negative values
+ok 154 - chase point consequence preserves negative values
   ---
-  duration_ms: 0.099821
+  duration_ms: 0.080591
   type: 'test'
   ...
 # Subtest: Effect Forge embedded consequence stores a definition snapshot
-ok 145 - Effect Forge embedded consequence stores a definition snapshot
+ok 155 - Effect Forge embedded consequence stores a definition snapshot
   ---
-  duration_ms: 0.735492
+  duration_ms: 0.133852
   type: 'test'
   ...
 # Subtest: Effect Forge item consequence stores an item UUID
-ok 146 - Effect Forge item consequence stores an item UUID
+ok 156 - Effect Forge item consequence stores an item UUID
   ---
-  duration_ms: 0.286163
+  duration_ms: 0.083316
   type: 'test'
   ...
 # Subtest: route consequence stores target edge ids
-ok 147 - route consequence stores target edge ids
+ok 157 - route consequence stores target edge ids
   ---
-  duration_ms: 0.171169
+  duration_ms: 0.082194
   type: 'test'
   ...
 # Subtest: dev.5 session runtime groups reserve route, rules, and consequence state
-ok 148 - dev.5 session runtime groups reserve route, rules, and consequence state
+ok 158 - dev.5 session runtime groups reserve route, rules, and consequence state
   ---
-  duration_ms: 0.484513
+  duration_ms: 0.27222
   type: 'test'
   ...
 # Subtest: dev.5 Effect Forge consequence normalizes severity and participant targeting
-ok 149 - dev.5 Effect Forge consequence normalizes severity and participant targeting
+ok 159 - dev.5 Effect Forge consequence normalizes severity and participant targeting
   ---
-  duration_ms: 0.146642
+  duration_ms: 0.180021
   type: 'test'
   ...
 # Subtest: explicit Effect Forge targets normalize duplicate participant ids and UUIDs
-ok 150 - explicit Effect Forge targets normalize duplicate participant ids and UUIDs
+ok 160 - explicit Effect Forge targets normalize duplicate participant ids and UUIDs
   ---
-  duration_ms: 0.336729
+  duration_ms: 0.123466
   type: 'test'
   ...
 # Subtest: Effect Forge bridge reports unavailable Critical Forge without throwing
-ok 151 - Effect Forge bridge reports unavailable Critical Forge without throwing
+ok 161 - Effect Forge bridge reports unavailable Critical Forge without throwing
   ---
-  duration_ms: 0.768582
+  duration_ms: 0.646043
   type: 'test'
   ...
 # Subtest: Effect Forge bridge validates the required public API surface
-ok 152 - Effect Forge bridge validates the required public API surface
+ok 162 - Effect Forge bridge validates the required public API surface
   ---
-  duration_ms: 0.226783
+  duration_ms: 0.389637
   type: 'test'
   ...
 # Subtest: embedded Effect Forge definitions are migrated, analyzed, and applied through the public API
-ok 153 - embedded Effect Forge definitions are migrated, analyzed, and applied through the public API
+ok 163 - embedded Effect Forge definitions are migrated, analyzed, and applied through the public API
   ---
-  duration_ms: 1.148847
+  duration_ms: 1.352117
   type: 'test'
   ...
 # Subtest: item-backed Effect Forge consequences resolve the Item through UUID and preserve unmanaged rules
-ok 154 - item-backed Effect Forge consequences resolve the Item through UUID and preserve unmanaged rules
+ok 164 - item-backed Effect Forge consequences resolve the Item through UUID and preserve unmanaged rules
   ---
-  duration_ms: 0.43668
+  duration_ms: 0.343708
   type: 'test'
   ...
 # Subtest: Effect Forge bridge can open the shared Effect Forge editor
-ok 155 - Effect Forge bridge can open the shared Effect Forge editor
+ok 165 - Effect Forge bridge can open the shared Effect Forge editor
   ---
-  duration_ms: 0.292943
+  duration_ms: 0.365561
   type: 'test'
   ...
 # Subtest: extension compatibility reports supported API, contract, schemas, and capabilities
-ok 156 - extension compatibility reports supported API, contract, schemas, and capabilities
+ok 166 - extension compatibility reports supported API, contract, schemas, and capabilities
   ---
-  duration_ms: 5.864317
+  duration_ms: 5.201207
   type: 'test'
   ...
 # Subtest: extension compatibility rejects unavailable requirements before registration
-ok 157 - extension compatibility rejects unavailable requirements before registration
+ok 167 - extension compatibility rejects unavailable requirements before registration
   ---
-  duration_ms: 3.288682
+  duration_ms: 3.063616
   type: 'test'
   ...
 # Subtest: bound extension controller registers content without allowing ownership spoofing
-ok 158 - bound extension controller registers content without allowing ownership spoofing
+ok 168 - bound extension controller registers content without allowing ownership spoofing
   ---
-  duration_ms: 3.155641
+  duration_ms: 3.759413
   type: 'test'
   ...
 # Subtest: unregisterAll removes only resources owned by the bound module
-ok 159 - unregisterAll removes only resources owned by the bound module
+ok 169 - unregisterAll removes only resources owned by the bound module
   ---
-  duration_ms: 1.943538
+  duration_ms: 1.672921
   type: 'test'
   ...
 # Subtest: extension diagnostics record successful and failed registrations
-ok 160 - extension diagnostics record successful and failed registrations
+ok 170 - extension diagnostics record successful and failed registrations
   ---
-  duration_ms: 1.211842
+  duration_ms: 1.216933
   type: 'test'
   ...
 # Subtest: synthetic add-on can register after receiving the public API
-ok 161 - synthetic add-on can register after receiving the public API
+ok 171 - synthetic add-on can register after receiving the public API
   ---
-  duration_ms: 1.397873
+  duration_ms: 1.247299
   type: 'test'
   ...
 # Subtest: add-ons can publish prepared read-only Chases through the public library API
-ok 162 - add-ons can publish prepared read-only Chases through the public library API
+ok 172 - add-ons can publish prepared read-only Chases through the public library API
   ---
-  duration_ms: 2.942399
+  duration_ms: 3.761697
   type: 'test'
   ...
 # Subtest: extension version is inherited by packs that omit their own version
-ok 163 - extension version is inherited by packs that omit their own version
+ok 173 - extension version is inherited by packs that omit their own version
   ---
-  duration_ms: 0.602191
+  duration_ms: 0.755218
   type: 'test'
   ...
 # Subtest: dev.5 exposes route, rules, and consequence capabilities to compatibility checks
-ok 164 - dev.5 exposes route, rules, and consequence capabilities to compatibility checks
+ok 174 - dev.5 exposes route, rules, and consequence capabilities to compatibility checks
   ---
-  duration_ms: 0.827
+  duration_ms: 0.853256
   type: 'test'
   ...
 # Subtest: starting from a Library Blueprint creates an independent Session snapshot
-ok 165 - starting from a Library Blueprint creates an independent Session snapshot
+ok 175 - starting from a Library Blueprint creates an independent Session snapshot
   ---
-  duration_ms: 6.662674
+  duration_ms: 7.623585
   type: 'test'
   ...
 # Subtest: FilePicker selection normalization accepts current and replacement-picker shapes
-ok 166 - FilePicker selection normalization accepts current and replacement-picker shapes
+ok 176 - FilePicker selection normalization accepts current and replacement-picker shapes
   ---
-  duration_ms: 0.645576
+  duration_ms: 0.572482
   type: 'test'
   ...
 # Subtest: FilePicker binds the actual input field and forwards callback selections
-ok 167 - FilePicker binds the actual input field and forwards callback selections
+ok 177 - FilePicker binds the actual input field and forwards callback selections
   ---
-  duration_ms: 0.299533
+  duration_ms: 0.321805
   type: 'test'
   ...
 # Subtest: FilePicker recovers a field-only selection on close when a picker omits its callback
-ok 168 - FilePicker recovers a field-only selection on close when a picker omits its callback
+ok 178 - FilePicker recovers a field-only selection on close when a picker omits its callback
   ---
-  duration_ms: 0.257619
+  duration_ms: 0.25254
   type: 'test'
   ...
-# pf2e-chase-forge | 0.1.0-rc.1 Campaign Forge integration, Journal integration, Visual System, Core Card Library, Generator/Templates, visual Builder, GM/Player Chase views, session sync, Chat workflow, and protected persistence initialized.
+# pf2e-chase-forge | 0.1.0-dev.18 Campaign Forge integration, Journal integration, Visual System, Core Card Library, Generator/Templates, visual Builder, GM/Player Chase views, session sync, Chat workflow, and protected persistence initialized.
 # Subtest: Foundry init registers Core generator templates, protected persistence, and the Builder API before ready
-ok 169 - Foundry init registers Core generator templates, protected persistence, and the Builder API before ready
+ok 179 - Foundry init registers Core generator templates, protected persistence, and the Builder API before ready
   ---
-  duration_ms: 82.572425
+  duration_ms: 76.428762
   type: 'test'
   ...
 # pf2e-chase-forge | Chase session synchronization could not start. {
@@ -1036,7 +1096,7 @@ ok 169 - Foundry init registers Core generator templates, protected persistence,
 #   users: [],
 #   startAttempts: 5,
 #   startedAt: null,
-#   lastStartFailureAt: '2026-08-25T18:02:52.248Z',
+#   lastStartFailureAt: '2026-08-26T06:56:57.520Z',
 #   sentStates: 0,
 #   receivedStates: 0,
 #   receivedAcks: 0,
@@ -1046,771 +1106,771 @@ ok 169 - Foundry init registers Core generator templates, protected persistence,
 #   lastError: 'Foundry game.socket is unavailable.'
 # }
 # Subtest: Core content registers five generator templates and the 72-card Core library
-ok 170 - Core content registers five generator templates and the 72-card Core library
+ok 180 - Core content registers five generator templates and the 72-card Core library
   ---
-  duration_ms: 24.396053
+  duration_ms: 24.658656
   type: 'test'
   ...
 # Subtest: Core Card library covers every supported initial environment with enough unique cards for a branching medium chase
-ok 171 - Core Card library covers every supported initial environment with enough unique cards for a branching medium chase
+ok 181 - Core Card library covers every supported initial environment with enough unique cards for a branching medium chase
   ---
-  duration_ms: 1.410803
+  duration_ms: 1.843727
   type: 'test'
   ...
 # Subtest: Core Card generation localizes card text, recognizes German environment aliases, scales obstacle points, and applies difficulty
-ok 172 - Core Card generation localizes card text, recognizes German environment aliases, scales obstacle points, and applies difficulty
+ok 182 - Core Card generation localizes card text, recognizes German environment aliases, scales obstacle points, and applies difficulty
   ---
-  duration_ms: 57.530476
+  duration_ms: 54.165897
   type: 'test'
   ...
 # Subtest: candidate inspection respects level, required/excluded tags, and environmental preference scoring
-ok 173 - candidate inspection respects level, required/excluded tags, and environmental preference scoring
+ok 183 - candidate inspection respects level, required/excluded tags, and environmental preference scoring
   ---
-  duration_ms: 0.696453
+  duration_ms: 0.643799
   type: 'test'
   ...
 # Subtest: seeded card selection is deterministic
-ok 174 - seeded card selection is deterministic
+ok 184 - seeded card selection is deterministic
   ---
-  duration_ms: 0.647508
+  duration_ms: 0.608086
   type: 'test'
   ...
 # Subtest: generator creates editable placeholder cards when no registered card pool is available
-ok 175 - generator creates editable placeholder cards when no registered card pool is available
+ok 185 - generator creates editable placeholder cards when no registered card pool is available
   ---
-  duration_ms: 11.968925
+  duration_ms: 11.381906
   type: 'test'
   ...
 # Subtest: branching generator keeps the requested path length while visually creating split/merge alternatives
-ok 176 - branching generator keeps the requested path length while visually creating split/merge alternatives
+ok 186 - branching generator keeps the requested path length while visually creating split/merge alternatives
   ---
-  duration_ms: 21.163686
+  duration_ms: 24.305114
   type: 'test'
   ...
 # Subtest: generation preserves the world Blueprint identity and participants while applying a template chase type
-ok 177 - generation preserves the world Blueprint identity and participants while applying a template chase type
+ok 187 - generation preserves the world Blueprint identity and participants while applying a template chase type
   ---
-  duration_ms: 16.351952
+  duration_ms: 18.180096
   type: 'test'
   ...
 # Subtest: public API exposes generator contract, registered templates, inspection, generation, and reroll
-ok 178 - public API exposes generator contract, registered templates, inspection, generation, and reroll
+ok 188 - public API exposes generator contract, registered templates, inspection, generation, and reroll
   ---
-  duration_ms: 22.549981
+  duration_ms: 23.685761
   type: 'test'
   ...
 # Subtest: core generator templates localize lazily after Foundry i18n becomes available
-ok 179 - core generator templates localize lazily after Foundry i18n becomes available
+ok 189 - core generator templates localize lazily after Foundry i18n becomes available
   ---
-  duration_ms: 9.86236
+  duration_ms: 10.229961
   type: 'test'
   ...
 # Subtest: GM Runner template and styles are packaged with core runner actions
-ok 180 - GM Runner template and styles are packaged with core runner actions
+ok 190 - GM Runner template and styles are packaged with core runner actions
   ---
-  duration_ms: 4.814308
+  duration_ms: 5.272393
   type: 'test'
   ...
 # Subtest: GM Runner keeps its toolbar outside the scroll viewport and protects Unicode headings
-ok 181 - GM Runner keeps its toolbar outside the scroll viewport and protects Unicode headings
+ok 191 - GM Runner keeps its toolbar outside the scroll viewport and protects Unicode headings
   ---
-  duration_ms: 2.106715
+  duration_ms: 2.141927
   type: 'test'
   ...
 # Subtest: public obstacle Chat presentation excludes hidden GM mechanics
-ok 182 - public obstacle Chat presentation excludes hidden GM mechanics
+ok 192 - public obstacle Chat presentation excludes hidden GM mechanics
   ---
-  duration_ms: 0.395478
+  duration_ms: 0.546453
   type: 'test'
   ...
 # Subtest: roll result Chat presentation summarizes degree and Chase Point delta
-ok 183 - roll result Chat presentation summarizes degree and Chase Point delta
+ok 193 - roll result Chat presentation summarizes degree and Chase Point delta
   ---
-  duration_ms: 0.186702
+  duration_ms: 0.201885
   type: 'test'
   ...
 # Subtest: Chat presenter writes module-scoped flags
-ok 184 - Chat presenter writes module-scoped flags
+ok 194 - Chat presenter writes module-scoped flags
   ---
-  duration_ms: 0.408518
+  duration_ms: 0.370999
   type: 'test'
   ...
 # Subtest: Runner UI service is GM-only and reuses one ApplicationV2 per session
-ok 185 - Runner UI service is GM-only and reuses one ApplicationV2 per session
+ok 195 - Runner UI service is GM-only and reuses one ApplicationV2 per session
   ---
-  duration_ms: 3.775288
+  duration_ms: 3.061742
   type: 'test'
   ...
 # Subtest: public API advertises GM Runner only when a runner UI is supplied
-ok 186 - public API advertises GM Runner only when a runner UI is supplied
+ok 196 - public API advertises GM Runner only when a runner UI is supplied
   ---
-  duration_ms: 2.628663
+  duration_ms: 2.889973
   type: 'test'
   ...
 # Subtest: Builder start action hands newly started sessions to the GM Runner
-ok 187 - Builder start action hands newly started sessions to the GM Runner
+ok 197 - Builder start action hands newly started sessions to the GM Runner
   ---
-  duration_ms: 1.437353
+  duration_ms: 1.959963
   type: 'test'
   ...
 # Subtest: Runner lifecycle refreshes the open Builder session list after abort/finish changes
-ok 188 - Runner lifecycle refreshes the open Builder session list after abort/finish changes
+ok 198 - Runner lifecycle refreshes the open Builder session list after abort/finish changes
   ---
-  duration_ms: 1.761764
+  duration_ms: 0.94936
   type: 'test'
   ...
 # Subtest: completion dialog escapes imported or user-authored HTML before interpolation
-ok 189 - completion dialog escapes imported or user-authored HTML before interpolation
+ok 199 - completion dialog escapes imported or user-authored HTML before interpolation
   ---
-  duration_ms: 1.72622
+  duration_ms: 1.388812
   type: 'test'
   ...
 # Subtest: race Runner captures participant initiative values before beginning the round
-ok 190 - race Runner captures participant initiative values before beginning the round
+ok 200 - race Runner captures participant initiative values before beginning the round
   ---
-  duration_ms: 1.021094
+  duration_ms: 1.522092
   type: 'test'
   ...
 # Subtest: Runner abort uses Foundry DialogV2 confirmation to avoid native-modal keyboard focus loss
-ok 191 - Runner abort uses Foundry DialogV2 confirmation to avoid native-modal keyboard focus loss
+ok 201 - Runner abort uses Foundry DialogV2 confirmation to avoid native-modal keyboard focus loss
   ---
-  duration_ms: 0.899801
+  duration_ms: 1.084223
   type: 'test'
   ...
 # Subtest: GM Runner shows each participant's PF2e approach modifier beside the skill button
-ok 192 - GM Runner shows each participant's PF2e approach modifier beside the skill button
+ok 202 - GM Runner shows each participant's PF2e approach modifier beside the skill button
   ---
-  duration_ms: 0.988455
+  duration_ms: 1.800413
   type: 'test'
   ...
 # Subtest: linear route graph validates
-ok 193 - linear route graph validates
+ok 203 - linear route graph validates
   ---
-  duration_ms: 5.353604
+  duration_ms: 4.26836
   type: 'test'
   ...
 # Subtest: branched route with merge and multiple endings validates
-ok 194 - branched route with merge and multiple endings validates
+ok 204 - branched route with merge and multiple endings validates
   ---
-  duration_ms: 0.794541
+  duration_ms: 0.817021
   type: 'test'
   ...
 # Subtest: graph index reports branch and merge arity
-ok 195 - graph index reports branch and merge arity
+ok 205 - graph index reports branch and merge arity
   ---
-  duration_ms: 0.169056
+  duration_ms: 0.260152
   type: 'test'
   ...
 # Subtest: reachable analysis covers every valid branch
-ok 196 - reachable analysis covers every valid branch
+ok 206 - reachable analysis covers every valid branch
   ---
-  duration_ms: 0.137368
+  duration_ms: 0.148113
   type: 'test'
   ...
 # Subtest: topological sort returns every node for a DAG
-ok 197 - topological sort returns every node for a DAG
+ok 207 - topological sort returns every node for a DAG
   ---
-  duration_ms: 0.327535
+  duration_ms: 0.747606
   type: 'test'
   ...
 # Subtest: cycle detection rejects cyclic routes
-ok 198 - cycle detection rejects cyclic routes
+ok 208 - cycle detection rejects cyclic routes
   ---
-  duration_ms: 0.23163
+  duration_ms: 0.782979
   type: 'test'
   ...
 # Subtest: self edges are rejected
-ok 199 - self edges are rejected
+ok 209 - self edges are rejected
   ---
-  duration_ms: 0.208175
+  duration_ms: 0.992756
   type: 'test'
   ...
 # Subtest: unknown edge source is rejected
-ok 200 - unknown edge source is rejected
+ok 210 - unknown edge source is rejected
   ---
-  duration_ms: 0.15214
+  duration_ms: 0.283767
   type: 'test'
   ...
 # Subtest: unknown edge target is rejected
-ok 201 - unknown edge target is rejected
+ok 211 - unknown edge target is rejected
   ---
-  duration_ms: 0.423791
+  duration_ms: 0.589808
   type: 'test'
   ...
 # Subtest: unreachable nodes are rejected
-ok 202 - unreachable nodes are rejected
+ok 212 - unreachable nodes are rejected
   ---
-  duration_ms: 0.451273
+  duration_ms: 2.517983
   type: 'test'
   ...
 # Subtest: graph requires exactly one typed start node
-ok 203 - graph requires exactly one typed start node
+ok 213 - graph requires exactly one typed start node
   ---
-  duration_ms: 0.224159
+  duration_ms: 0.261434
   type: 'test'
   ...
 # Subtest: graph requires at least one declared ending
-ok 204 - graph requires at least one declared ending
+ok 214 - graph requires at least one declared ending
   ---
-  duration_ms: 0.162335
+  duration_ms: 0.175003
   type: 'test'
   ...
 # Subtest: declared endings must be end nodes
-ok 205 - declared endings must be end nodes
+ok 215 - declared endings must be end nodes
   ---
-  duration_ms: 0.150597
+  duration_ms: 0.193521
   type: 'test'
   ...
 # Subtest: start node may not have incoming edges
-ok 206 - start node may not have incoming edges
+ok 216 - start node may not have incoming edges
   ---
-  duration_ms: 0.790666
+  duration_ms: 0.904143
   type: 'test'
   ...
 # Subtest: end nodes may not have outgoing edges
-ok 207 - end nodes may not have outgoing edges
+ok 217 - end nodes may not have outgoing edges
   ---
-  duration_ms: 0.203948
+  duration_ms: 0.224228
   type: 'test'
   ...
 # Subtest: choice arity is an authoring warning instead of a hard error
-ok 208 - choice arity is an authoring warning instead of a hard error
+ok 218 - choice arity is an authoring warning instead of a hard error
   ---
-  duration_ms: 0.127743
+  duration_ms: 0.139961
   type: 'test'
   ...
 # Subtest: merge arity is an authoring warning instead of a hard error
-ok 209 - merge arity is an authoring warning instead of a hard error
+ok 219 - merge arity is an authoring warning instead of a hard error
   ---
-  duration_ms: 0.110677
+  duration_ms: 0.150537
   type: 'test'
   ...
 # Subtest: card nodes without a card reference remain structurally inspectable
-ok 210 - card nodes without a card reference remain structurally inspectable
+ok 220 - card nodes without a card reference remain structurally inspectable
   ---
-  duration_ms: 0.103496
+  duration_ms: 0.122184
   type: 'test'
   ...
 # Subtest: non-end dead ends are rejected
-ok 211 - non-end dead ends are rejected
+ok 221 - non-end dead ends are rejected
   ---
-  duration_ms: 0.116536
+  duration_ms: 0.118268
   type: 'test'
   ...
 # Subtest: route conditions require a supported source, operator, and path
-ok 212 - route conditions require a supported source, operator, and path
+ok 222 - route conditions require a supported source, operator, and path
   ---
-  duration_ms: 0.181975
+  duration_ms: 0.200983
   type: 'test'
   ...
 # Subtest: openChaseImage uses Foundry V14 ImagePopout with source and title
-ok 213 - openChaseImage uses Foundry V14 ImagePopout with source and title
+ok 223 - openChaseImage uses Foundry V14 ImagePopout with source and title
   ---
-  duration_ms: 1.488079
+  duration_ms: 1.800993
   type: 'test'
   ...
 # Subtest: openChaseImage falls back to legacy ImagePopout when needed
-ok 214 - openChaseImage falls back to legacy ImagePopout when needed
+ok 224 - openChaseImage falls back to legacy ImagePopout when needed
   ---
-  duration_ms: 0.239412
+  duration_ms: 0.286622
   type: 'test'
   ...
 # Subtest: image providers are ordered by priority and return normalized candidates
-ok 215 - image providers are ordered by priority and return normalized candidates
+ok 225 - image providers are ordered by priority and return normalized candidates
   ---
-  duration_ms: 7.985402
+  duration_ms: 5.940389
   type: 'test'
   ...
 # Subtest: image provider support predicate can suppress a provider
-ok 216 - image provider support predicate can suppress a provider
+ok 226 - image provider support predicate can suppress a provider
   ---
-  duration_ms: 1.188747
+  duration_ms: 0.618742
   type: 'test'
   ...
 # Subtest: a failing image provider is isolated and reported without blocking other providers
-ok 217 - a failing image provider is isolated and reported without blocking other providers
+ok 227 - a failing image provider is isolated and reported without blocking other providers
   ---
-  duration_ms: 0.718015
+  duration_ms: 0.651912
   type: 'test'
   ...
 # Subtest: disabled visual packs do not contribute image candidates
-ok 218 - disabled visual packs do not contribute image candidates
+ok 228 - disabled visual packs do not contribute image candidates
   ---
-  duration_ms: 0.458263
+  duration_ms: 0.451941
   type: 'test'
   ...
 # Subtest: candidate collection can target explicit provider ids
-ok 219 - candidate collection can target explicit provider ids
+ok 229 - candidate collection can target explicit provider ids
   ---
-  duration_ms: 7.187456
+  duration_ms: 6.37889
   type: 'test'
   ...
 # Subtest: Journal reference syntax round-trips world and library chases
-ok 220 - Journal reference syntax round-trips world and library chases
+ok 230 - Journal reference syntax round-trips world and library chases
   ---
-  duration_ms: 1.288658
+  duration_ms: 1.562804
   type: 'test'
   ...
 # Subtest: Journal link HTML exposes open/start controls only to the GM
-ok 221 - Journal link HTML exposes open/start controls only to the GM
+ok 231 - Journal link HTML exposes open/start controls only to the GM
   ---
-  duration_ms: 0.382649
+  duration_ms: 0.333241
   type: 'test'
   ...
 # Subtest: Journal enrichers cover both world Blueprints and read-only Library chases
-ok 222 - Journal enrichers cover both world Blueprints and read-only Library chases
+ok 232 - Journal enrichers cover both world Blueprints and read-only Library chases
   ---
-  duration_ms: 0.21804
+  duration_ms: 0.213422
   type: 'test'
   ...
 # Subtest: Journal bridge creates a normal Foundry JournalEntry containing an executable Chase link
-ok 223 - Journal bridge creates a normal Foundry JournalEntry containing an executable Chase link
+ok 233 - Journal bridge creates a normal Foundry JournalEntry containing an executable Chase link
   ---
-  duration_ms: 8.45945
+  duration_ms: 8.493114
   type: 'test'
   ...
 # Subtest: Journal bridge opens world and Library chases in the correct Builder mode
-ok 224 - Journal bridge opens world and Library chases in the correct Builder mode
+ok 234 - Journal bridge opens world and Library chases in the correct Builder mode
   ---
-  duration_ms: 3.680484
+  duration_ms: 4.791268
   type: 'test'
   ...
 # Subtest: starting a world Chase from Journal creates an active independent Session and opens the Runner
-ok 225 - starting a world Chase from Journal creates an active independent Session and opens the Runner
+ok 235 - starting a world Chase from Journal creates an active independent Session and opens the Runner
   ---
-  duration_ms: 6.302849
+  duration_ms: 6.942189
   type: 'test'
   ...
 # Subtest: starting a Library Chase from Journal snapshots the source and records Library provenance
-ok 226 - starting a Library Chase from Journal snapshots the source and records Library provenance
+ok 236 - starting a Library Chase from Journal snapshots the source and records Library provenance
   ---
-  duration_ms: 2.590767
+  duration_ms: 2.465754
   type: 'test'
   ...
 # Subtest: public API exposes Journal Integration Contract v1
-ok 227 - public API exposes Journal Integration Contract v1
+ok 237 - public API exposes Journal Integration Contract v1
   ---
-  duration_ms: 0.606116
+  duration_ms: 0.610079
   type: 'test'
   ...
 # Subtest: manifest identity matches constants
-ok 228 - manifest identity matches constants
+ok 238 - manifest identity matches constants
   ---
-  duration_ms: 0.547578
+  duration_ms: 0.541936
   type: 'test'
   ...
 # Subtest: manifest targets Foundry 14 and PF2e
-ok 229 - manifest targets Foundry 14 and PF2e
+ok 239 - manifest targets Foundry 14 and PF2e
   ---
-  duration_ms: 0.140713
+  duration_ms: 0.144998
   type: 'test'
   ...
 # Subtest: public contract and schema versions are explicit
-ok 230 - public contract and schema versions are explicit
+ok 240 - public contract and schema versions are explicit
   ---
-  duration_ms: 0.631916
+  duration_ms: 0.608076
   type: 'test'
   ...
 # Subtest: localization files keep the PF2E_CHASE_FORGE namespace flat and in parity
-ok 231 - localization files keep the PF2E_CHASE_FORGE namespace flat and in parity
+ok 241 - localization files keep the PF2E_CHASE_FORGE namespace flat and in parity
   ---
-  duration_ms: 6.611114
+  duration_ms: 5.563532
   type: 'test'
   ...
 # Subtest: persistence state normalizes and validates
-ok 232 - persistence state normalizes and validates
+ok 242 - persistence state normalizes and validates
   ---
-  duration_ms: 1.070578
+  duration_ms: 2.592185
   type: 'test'
   ...
 # Subtest: BlueprintRepository supports create, save, duplicate, list, and delete
-ok 233 - BlueprintRepository supports create, save, duplicate, list, and delete
+ok 243 - BlueprintRepository supports create, save, duplicate, list, and delete
   ---
-  duration_ms: 12.086112
+  duration_ms: 12.762736
   type: 'test'
   ...
 # Subtest: stable Chase references round-trip
-ok 234 - stable Chase references round-trip
+ok 244 - stable Chase references round-trip
   ---
-  duration_ms: 1.883557
+  duration_ms: 2.036317
   type: 'test'
   ...
 # Subtest: Blueprint JSON export and import migrates older blueprint schema and defaults to a fresh id
-ok 235 - Blueprint JSON export and import migrates older blueprint schema and defaults to a fresh id
+ok 245 - Blueprint JSON export and import migrates older blueprint schema and defaults to a fresh id
   ---
-  duration_ms: 2.781456
+  duration_ms: 2.760608
   type: 'test'
   ...
 # Subtest: snapshot content freezes referenced Chase Cards and supports later missing add-ons
-ok 236 - snapshot content freezes referenced Chase Cards and supports later missing add-ons
+ok 246 - snapshot content freezes referenced Chase Cards and supports later missing add-ons
   ---
-  duration_ms: 6.338974
+  duration_ms: 6.347783
   type: 'test'
   ...
 # Subtest: multiple sessions created from one blueprint remain independent snapshots
-ok 237 - multiple sessions created from one blueprint remain independent snapshots
+ok 247 - multiple sessions created from one blueprint remain independent snapshots
   ---
-  duration_ms: 11.179952
+  duration_ms: 8.399093
   type: 'test'
   ...
 # Subtest: session lifecycle persists start, pause, resume, and abort transitions
-ok 238 - session lifecycle persists start, pause, resume, and abort transitions
+ok 248 - session lifecycle persists start, pause, resume, and abort transitions
   ---
-  duration_ms: 6.426285
+  duration_ms: 7.201969
   type: 'test'
   ...
 # Subtest: persistence survives service recreation against the same store
-ok 239 - persistence survives service recreation against the same store
+ok 249 - persistence survives service recreation against the same store
   ---
-  duration_ms: 3.620213
+  duration_ms: 3.899885
   type: 'test'
   ...
 # Subtest: finish stores both completed session and ChaseResult
-ok 240 - finish stores both completed session and ChaseResult
+ok 250 - finish stores both completed session and ChaseResult
   ---
-  duration_ms: 4.887819
+  duration_ms: 4.97921
   type: 'test'
   ...
 # Subtest: snapshot mode prefers frozen card data over later live registry changes
-ok 241 - snapshot mode prefers frozen card data over later live registry changes
+ok 251 - snapshot mode prefers frozen card data over later live registry changes
   ---
-  duration_ms: 3.612661
+  duration_ms: 3.209415
   type: 'test'
   ...
 # Subtest: future Blueprint schemas are rejected on JSON import
-ok 242 - future Blueprint schemas are rejected on JSON import
+ok 252 - future Blueprint schemas are rejected on JSON import
   ---
-  duration_ms: 0.962074
+  duration_ms: 0.987467
   type: 'test'
   ...
 # Subtest: reference diagnostics fail clearly when a card has neither live content nor a snapshot
-ok 243 - reference diagnostics fail clearly when a card has neither live content nor a snapshot
+ok 253 - reference diagnostics fail clearly when a card has neither live content nor a snapshot
   ---
-  duration_ms: 1.107675
+  duration_ms: 1.471306
   type: 'test'
   ...
 # Subtest: persistence retries a transaction after an optimistic revision conflict
-ok 244 - persistence retries a transaction after an optimistic revision conflict
+ok 254 - persistence retries a transaction after an optimistic revision conflict
   ---
-  duration_ms: 1.122647
+  duration_ms: 1.793051
   type: 'test'
   ...
 # Subtest: PF2e adapter resolves Actor documents and Token actor wrappers
-ok 245 - PF2e adapter resolves Actor documents and Token actor wrappers
+ok 255 - PF2e adapter resolves Actor documents and Token actor wrappers
   ---
-  duration_ms: 1.531165
+  duration_ms: 1.452568
   type: 'test'
   ...
 # Subtest: PF2e adapter uses actor.getStatistic first
-ok 246 - PF2e adapter uses actor.getStatistic first
+ok 256 - PF2e adapter uses actor.getStatistic first
   ---
-  duration_ms: 0.194344
+  duration_ms: 0.201594
   type: 'test'
   ...
 # Subtest: PF2e adapter delegates a check roll without recreating PF2e math
-ok 247 - PF2e adapter delegates a check roll without recreating PF2e math
+ok 257 - PF2e adapter delegates a check roll without recreating PF2e math
   ---
-  duration_ms: 0.723223
+  duration_ms: 0.618662
   type: 'test'
   ...
 # Subtest: PF2e adapter fails explicitly when no statistic exists
-ok 248 - PF2e adapter fails explicitly when no statistic exists
+ok 258 - PF2e adapter fails explicitly when no statistic exists
   ---
-  duration_ms: 0.387046
+  duration_ms: 0.519522
   type: 'test'
   ...
 # Subtest: PF2e adapter exposes the numeric statistic modifier for Chase approach previews
-ok 249 - PF2e adapter exposes the numeric statistic modifier for Chase approach previews
+ok 259 - PF2e adapter exposes the numeric statistic modifier for Chase approach previews
   ---
-  duration_ms: 0.180042
+  duration_ms: 0.195265
   type: 'test'
   ...
 # Subtest: simple PF2e DC for untrained is 10
-ok 250 - simple PF2e DC for untrained is 10
+ok 260 - simple PF2e DC for untrained is 10
   ---
-  duration_ms: 1.219915
+  duration_ms: 0.979135
   type: 'test'
   ...
 # Subtest: simple PF2e DC for trained is 15
-ok 251 - simple PF2e DC for trained is 15
+ok 261 - simple PF2e DC for trained is 15
   ---
-  duration_ms: 0.082154
+  duration_ms: 0.286171
   type: 'test'
   ...
 # Subtest: simple PF2e DC for expert is 20
-ok 252 - simple PF2e DC for expert is 20
+ok 262 - simple PF2e DC for expert is 20
   ---
-  duration_ms: 0.101013
+  duration_ms: 0.176296
   type: 'test'
   ...
 # Subtest: simple PF2e DC for master is 30
-ok 253 - simple PF2e DC for master is 30
+ok 263 - simple PF2e DC for master is 30
   ---
-  duration_ms: 0.062304
+  duration_ms: 0.075363
   type: 'test'
   ...
 # Subtest: simple PF2e DC for legendary is 40
-ok 254 - simple PF2e DC for legendary is 40
+ok 264 - simple PF2e DC for legendary is 40
   ---
-  duration_ms: 0.057968
+  duration_ms: 0.06667
   type: 'test'
   ...
 # Subtest: level PF2e DC for level 0 is 14
-ok 255 - level PF2e DC for level 0 is 14
+ok 265 - level PF2e DC for level 0 is 14
   ---
-  duration_ms: 0.098359
+  duration_ms: 0.155023
   type: 'test'
   ...
 # Subtest: level PF2e DC for level 1 is 15
-ok 256 - level PF2e DC for level 1 is 15
+ok 266 - level PF2e DC for level 1 is 15
   ---
-  duration_ms: 0.104278
+  duration_ms: 0.118899
   type: 'test'
   ...
 # Subtest: level PF2e DC for level 2 is 16
-ok 257 - level PF2e DC for level 2 is 16
+ok 267 - level PF2e DC for level 2 is 16
   ---
-  duration_ms: 0.049154
+  duration_ms: 0.083866
   type: 'test'
   ...
 # Subtest: level PF2e DC for level 3 is 18
-ok 258 - level PF2e DC for level 3 is 18
+ok 268 - level PF2e DC for level 3 is 18
   ---
-  duration_ms: 0.185461
+  duration_ms: 0.346743
   type: 'test'
   ...
 # Subtest: level PF2e DC for level 4 is 19
-ok 259 - level PF2e DC for level 4 is 19
+ok 269 - level PF2e DC for level 4 is 19
   ---
-  duration_ms: 0.273253
+  duration_ms: 0.261544
   type: 'test'
   ...
 # Subtest: level PF2e DC for level 5 is 20
-ok 260 - level PF2e DC for level 5 is 20
+ok 270 - level PF2e DC for level 5 is 20
   ---
-  duration_ms: 0.153893
+  duration_ms: 0.162795
   type: 'test'
   ...
 # Subtest: level PF2e DC for level 6 is 22
-ok 261 - level PF2e DC for level 6 is 22
+ok 271 - level PF2e DC for level 6 is 22
   ---
-  duration_ms: 0.047662
+  duration_ms: 0.049515
   type: 'test'
   ...
 # Subtest: level PF2e DC for level 7 is 23
-ok 262 - level PF2e DC for level 7 is 23
+ok 272 - level PF2e DC for level 7 is 23
   ---
-  duration_ms: 0.034993
+  duration_ms: 0.035424
   type: 'test'
   ...
 # Subtest: level PF2e DC for level 8 is 24
-ok 263 - level PF2e DC for level 8 is 24
+ok 273 - level PF2e DC for level 8 is 24
   ---
-  duration_ms: 0.030957
+  duration_ms: 0.032329
   type: 'test'
   ...
 # Subtest: level PF2e DC for level 9 is 26
-ok 264 - level PF2e DC for level 9 is 26
+ok 274 - level PF2e DC for level 9 is 26
   ---
-  duration_ms: 0.03313
+  duration_ms: 0.034572
   type: 'test'
   ...
 # Subtest: level PF2e DC for level 10 is 27
-ok 265 - level PF2e DC for level 10 is 27
+ok 275 - level PF2e DC for level 10 is 27
   ---
-  duration_ms: 0.028253
+  duration_ms: 0.036034
   type: 'test'
   ...
 # Subtest: level PF2e DC for level 11 is 28
-ok 266 - level PF2e DC for level 11 is 28
+ok 276 - level PF2e DC for level 11 is 28
   ---
-  duration_ms: 0.027591
+  duration_ms: 0.028202
   type: 'test'
   ...
 # Subtest: level PF2e DC for level 12 is 30
-ok 267 - level PF2e DC for level 12 is 30
+ok 277 - level PF2e DC for level 12 is 30
   ---
-  duration_ms: 0.028072
+  duration_ms: 0.028533
   type: 'test'
   ...
 # Subtest: level PF2e DC for level 13 is 31
-ok 268 - level PF2e DC for level 13 is 31
+ok 278 - level PF2e DC for level 13 is 31
   ---
-  duration_ms: 0.025168
+  duration_ms: 0.027251
   type: 'test'
   ...
 # Subtest: level PF2e DC for level 14 is 32
-ok 269 - level PF2e DC for level 14 is 32
+ok 279 - level PF2e DC for level 14 is 32
   ---
-  duration_ms: 0.025228
+  duration_ms: 0.028232
   type: 'test'
   ...
 # Subtest: level PF2e DC for level 15 is 34
-ok 270 - level PF2e DC for level 15 is 34
+ok 280 - level PF2e DC for level 15 is 34
   ---
-  duration_ms: 0.029084
+  duration_ms: 0.030546
   type: 'test'
   ...
 # Subtest: level PF2e DC for level 16 is 35
-ok 271 - level PF2e DC for level 16 is 35
+ok 281 - level PF2e DC for level 16 is 35
   ---
-  duration_ms: 0.033321
+  duration_ms: 0.036846
   type: 'test'
   ...
 # Subtest: level PF2e DC for level 17 is 36
-ok 272 - level PF2e DC for level 17 is 36
+ok 282 - level PF2e DC for level 17 is 36
   ---
-  duration_ms: 0.030296
+  duration_ms: 0.032099
   type: 'test'
   ...
 # Subtest: level PF2e DC for level 18 is 38
-ok 273 - level PF2e DC for level 18 is 38
+ok 283 - level PF2e DC for level 18 is 38
   ---
-  duration_ms: 0.031367
+  duration_ms: 0.030546
   type: 'test'
   ...
 # Subtest: level PF2e DC for level 19 is 39
-ok 274 - level PF2e DC for level 19 is 39
+ok 284 - level PF2e DC for level 19 is 39
   ---
-  duration_ms: 0.030487
+  duration_ms: 0.03323
   type: 'test'
   ...
 # Subtest: level PF2e DC for level 20 is 40
-ok 275 - level PF2e DC for level 20 is 40
+ok 285 - level PF2e DC for level 20 is 40
   ---
-  duration_ms: 0.030035
+  duration_ms: 0.030647
   type: 'test'
   ...
 # Subtest: level PF2e DC for level 21 is 42
-ok 276 - level PF2e DC for level 21 is 42
+ok 286 - level PF2e DC for level 21 is 42
   ---
-  duration_ms: 0.031398
+  duration_ms: 0.030777
   type: 'test'
   ...
 # Subtest: level PF2e DC for level 22 is 44
-ok 277 - level PF2e DC for level 22 is 44
+ok 287 - level PF2e DC for level 22 is 44
   ---
-  duration_ms: 0.031187
+  duration_ms: 0.031036
   type: 'test'
   ...
 # Subtest: level PF2e DC for level 23 is 46
-ok 278 - level PF2e DC for level 23 is 46
+ok 288 - level PF2e DC for level 23 is 46
   ---
-  duration_ms: 0.031788
+  duration_ms: 0.653825
   type: 'test'
   ...
 # Subtest: level PF2e DC for level 24 is 48
-ok 279 - level PF2e DC for level 24 is 48
+ok 289 - level PF2e DC for level 24 is 48
   ---
-  duration_ms: 0.105439
+  duration_ms: 0.090406
   type: 'test'
   ...
 # Subtest: level PF2e DC for level 25 is 50
-ok 280 - level PF2e DC for level 25 is 50
+ok 290 - level PF2e DC for level 25 is 50
   ---
-  duration_ms: 0.044858
+  duration_ms: 0.044367
   type: 'test'
   ...
 # Subtest: level DC rejects values outside the GM Core table
-ok 281 - level DC rejects values outside the GM Core table
+ok 291 - level DC rejects values outside the GM Core table
   ---
-  duration_ms: 0.413745
+  duration_ms: 0.496027
   type: 'test'
   ...
 # Subtest: named difficulty adjustments reproduce the GM Core values
-ok 282 - named difficulty adjustments reproduce the GM Core values
+ok 292 - named difficulty adjustments reproduce the GM Core values
   ---
-  duration_ms: 0.135104
+  duration_ms: 0.138488
   type: 'test'
   ...
 # Subtest: DC table snapshot is detached from constants
-ok 283 - DC table snapshot is detached from constants
+ok 293 - DC table snapshot is detached from constants
   ---
-  duration_ms: 0.090957
+  duration_ms: 0.092199
   type: 'test'
   ...
 # Subtest: fixed chase approach resolves its DC
-ok 284 - fixed chase approach resolves its DC
+ok 294 - fixed chase approach resolves its DC
   ---
-  duration_ms: 2.804941
+  duration_ms: 2.420396
   type: 'test'
   ...
 # Subtest: simple chase approach combines proficiency DC and adjustment
-ok 285 - simple chase approach combines proficiency DC and adjustment
+ok 295 - simple chase approach combines proficiency DC and adjustment
   ---
-  duration_ms: 0.152951
+  duration_ms: 0.192019
   type: 'test'
   ...
 # Subtest: level chase approach combines party level, offset and difficulty
-ok 286 - level chase approach combines party level, offset and difficulty
+ok 296 - level chase approach combines party level, offset and difficulty
   ---
-  duration_ms: 0.186121
+  duration_ms: 0.196867
   type: 'test'
   ...
 # Subtest: GM DC mode requires an authoritative provided value
-ok 287 - GM DC mode requires an authoritative provided value
+ok 297 - GM DC mode requires an authoritative provided value
   ---
-  duration_ms: 0.168334
+  duration_ms: 0.171829
   type: 'test'
   ...
 # Subtest: no-DC approach resolves without inventing a number
-ok 288 - no-DC approach resolves without inventing a number
+ok 298 - no-DC approach resolves without inventing a number
   ---
-  duration_ms: 0.433045
+  duration_ms: 0.231779
   type: 'test'
   ...
 # Subtest: degree of success uses PF2e +/-10 thresholds
-ok 289 - degree of success uses PF2e +/-10 thresholds
+ok 299 - degree of success uses PF2e +/-10 thresholds
   ---
-  duration_ms: 0.136086
+  duration_ms: 0.128874
   type: 'test'
   ...
 # Subtest: natural 20 improves and natural 1 worsens by one degree
-ok 290 - natural 20 improves and natural 1 worsens by one degree
+ok 300 - natural 20 improves and natural 1 worsens by one degree
   ---
-  duration_ms: 0.110417
+  duration_ms: 0.203156
   type: 'test'
   ...
 # Subtest: degree stepping clamps at critical endpoints
-ok 291 - degree stepping clamps at critical endpoints
+ok 301 - degree stepping clamps at critical endpoints
   ---
-  duration_ms: 0.168435
+  duration_ms: 0.067782
   type: 'test'
   ...
 # Subtest: Player state projection exposes images, approaches and public routes without GM DCs or notes
-ok 292 - Player state projection exposes images, approaches and public routes without GM DCs or notes
+ok 302 - Player state projection exposes images, approaches and public routes without GM DCs or notes
   ---
-  duration_ms: 9.972187
+  duration_ms: 11.780657
   type: 'test'
   ...
 # Subtest: Player state projection reveals only discovered/public route choices after an obstacle is cleared
-ok 293 - Player state projection reveals only discovered/public route choices after an obstacle is cleared
+ok 303 - Player state projection reveals only discovered/public route choices after an obstacle is cleared
   ---
-  duration_ms: 1.899061
+  duration_ms: 2.165272
   type: 'test'
   ...
 # Subtest: Player state projection does not grant roll actions for unowned participants
-ok 294 - Player state projection does not grant roll actions for unowned participants
+ok 304 - Player state projection does not grant roll actions for unowned participants
   ---
-  duration_ms: 1.604987
+  duration_ms: 2.038191
   type: 'test'
   ...
 # Subtest: Player Chase template and styles package roll, proposal, route and image UI
-ok 295 - Player Chase template and styles package roll, proposal, route and image UI
+ok 305 - Player Chase template and styles package roll, proposal, route and image UI
   ---
-  duration_ms: 5.682721
+  duration_ms: 32.219057
   type: 'test'
   ...
 # Subtest: Player UI service reuses one ApplicationV2 per session
-ok 296 - Player UI service reuses one ApplicationV2 per session
+ok 306 - Player UI service reuses one ApplicationV2 per session
   ---
-  duration_ms: 0.605726
+  duration_ms: 0.778573
   type: 'test'
   ...
 # Subtest: Player View resolves and displays the controlled actor's PF2e approach modifier
-ok 297 - Player View resolves and displays the controlled actor's PF2e approach modifier
+ok 307 - Player View resolves and displays the controlled actor's PF2e approach modifier
   ---
-  duration_ms: 1.459246
+  duration_ms: 1.578428
   type: 'test'
   ...
 # pf2e-chase-forge | Protected persistence vault was missing and no recovery backup existed. A new empty vault was created.
@@ -1818,461 +1878,461 @@ ok 297 - Player View resolves and displays the controlled actor's PF2e approach 
 # pf2e-chase-forge | Protected persistence vault was missing and has been restored from the recovery backup.
 # pf2e-chase-forge | Blocked deletion of the protected persistence vault 'vault-1'.
 # Subtest: Foundry canonical persistence is stored in an ownership-protected JournalEntry flag
-ok 298 - Foundry canonical persistence is stored in an ownership-protected JournalEntry flag
+ok 308 - Foundry canonical persistence is stored in an ownership-protected JournalEntry flag
   ---
-  duration_ms: 1.855345
+  duration_ms: 2.301487
   type: 'test'
   ...
 # Subtest: protected Journal vault survives a simulated Foundry restart
-ok 299 - protected Journal vault survives a simulated Foundry restart
+ok 309 - protected Journal vault survives a simulated Foundry restart
   ---
-  duration_ms: 14.609296
+  duration_ms: 14.526463
   type: 'test'
   ...
 # Subtest: non-GM clients cannot load canonical persistence
-ok 300 - non-GM clients cannot load canonical persistence
+ok 310 - non-GM clients cannot load canonical persistence
   ---
-  duration_ms: 0.516581
+  duration_ms: 0.489187
   type: 'test'
   ...
 # Subtest: protected store recreates an already-missing vault gracefully when no backup exists
-ok 301 - protected store recreates an already-missing vault gracefully when no backup exists
+ok 311 - protected store recreates an already-missing vault gracefully when no backup exists
   ---
-  duration_ms: 1.478515
+  duration_ms: 1.522884
   type: 'test'
   ...
 # Subtest: protected store restores a missing vault from the recovery backup
-ok 302 - protected store restores a missing vault from the recovery backup
+ok 312 - protected store restores a missing vault from the recovery backup
   ---
-  duration_ms: 2.755806
+  duration_ms: 2.58925
   type: 'test'
   ...
 # Subtest: protected store notices deletion after initialization and restores before the next read
-ok 303 - protected store notices deletion after initialization and restores before the next read
+ok 313 - protected store notices deletion after initialization and restores before the next read
   ---
-  duration_ms: 1.982518
+  duration_ms: 2.131471
   type: 'test'
   ...
 # Subtest: vault protection hook vetoes deletion of the internal persistence Journal
-ok 304 - vault protection hook vetoes deletion of the internal persistence Journal
+ok 314 - vault protection hook vetoes deletion of the internal persistence Journal
   ---
-  duration_ms: 0.532345
+  duration_ms: 0.588166
   type: 'test'
   ...
 # Subtest: registering a pack namespaces all external resources and binds source metadata
-ok 305 - registering a pack namespaces all external resources and binds source metadata
+ok 315 - registering a pack namespaces all external resources and binds source metadata
   ---
-  duration_ms: 5.376248
+  duration_ms: 5.568289
   type: 'test'
   ...
 # Subtest: disabled-by-default packs stay registered but are hidden from normal content reads
-ok 306 - disabled-by-default packs stay registered but are hidden from normal content reads
+ok 316 - disabled-by-default packs stay registered but are hidden from normal content reads
   ---
-  duration_ms: 0.82637
+  duration_ms: 1.071093
   type: 'test'
   ...
 # Subtest: pack activation immediately changes card, template, and provider visibility
-ok 307 - pack activation immediately changes card, template, and provider visibility
+ok 317 - pack activation immediately changes card, template, and provider visibility
   ---
-  duration_ms: 1.600209
+  duration_ms: 1.592349
   type: 'test'
   ...
 # Subtest: external modules cannot register resources into a foreign namespace
-ok 308 - external modules cannot register resources into a foreign namespace
+ok 318 - external modules cannot register resources into a foreign namespace
   ---
-  duration_ms: 0.748712
+  duration_ms: 0.793305
   type: 'test'
   ...
 # Subtest: failed pack registration is atomic
-ok 309 - failed pack registration is atomic
+ok 319 - failed pack registration is atomic
   ---
-  duration_ms: 0.562761
+  duration_ms: 0.426713
   type: 'test'
   ...
 # Subtest: failed multi-pack registration rolls the entire batch back
-ok 310 - failed multi-pack registration rolls the entire batch back
+ok 320 - failed multi-pack registration rolls the entire batch back
   ---
-  duration_ms: 0.80709
+  duration_ms: 0.813315
   type: 'test'
   ...
 # Subtest: same owner may replace a pack transactionally
-ok 311 - same owner may replace a pack transactionally
+ok 321 - same owner may replace a pack transactionally
   ---
-  duration_ms: 1.994655
+  duration_ms: 1.01568
   type: 'test'
   ...
 # Subtest: foreign owner cannot replace an existing pack
-ok 312 - foreign owner cannot replace an existing pack
+ok 322 - foreign owner cannot replace an existing pack
   ---
-  duration_ms: 1.478265
+  duration_ms: 1.470325
   type: 'test'
   ...
 # Subtest: unregistering a pack removes only that pack's resources
-ok 313 - unregistering a pack removes only that pack's resources
+ok 323 - unregistering a pack removes only that pack's resources
   ---
-  duration_ms: 1.257762
+  duration_ms: 1.057363
   type: 'test'
   ...
 # Subtest: core owner may use the reserved core namespace while extensions may not
-ok 314 - core owner may use the reserved core namespace while extensions may not
+ok 324 - core owner may use the reserved core namespace while extensions may not
   ---
-  duration_ms: 0.696073
+  duration_ms: 0.662418
   type: 'test'
   ...
 # Subtest: packs can register read-only prepared Chase Blueprints into the library
-ok 315 - packs can register read-only prepared Chase Blueprints into the library
+ok 325 - packs can register read-only prepared Chase Blueprints into the library
   ---
-  duration_ms: 2.471847
+  duration_ms: 2.748461
   type: 'test'
   ...
 # Subtest: library Blueprints follow pack activation and are removed with their pack
-ok 316 - library Blueprints follow pack activation and are removed with their pack
+ok 326 - library Blueprints follow pack activation and are removed with their pack
   ---
-  duration_ms: 1.598046
+  duration_ms: 1.639269
   type: 'test'
   ...
 # Subtest: unregisterAll reports removed resource counts
-ok 317 - unregisterAll reports removed resource counts
+ok 327 - unregisterAll reports removed resource counts
   ---
-  duration_ms: 0.569321
+  duration_ms: 0.661847
   type: 'test'
   ...
 # Subtest: route session initialization places every group at the graph start
-ok 318 - route session initialization places every group at the graph start
+ok 328 - route session initialization places every group at the graph start
   ---
-  duration_ms: 6.100553
+  duration_ms: 6.078667
   type: 'test'
   ...
 # Subtest: deterministic routing advances start nodes but stops at a real choice
-ok 319 - deterministic routing advances start nodes but stops at a real choice
+ok 329 - deterministic routing advances start nodes but stops at a real choice
   ---
-  duration_ms: 3.122191
+  duration_ms: 3.070435
   type: 'test'
   ...
 # Subtest: branch choice moves one runtime group without moving another
-ok 320 - branch choice moves one runtime group without moving another
+ok 330 - branch choice moves one runtime group without moving another
   ---
-  duration_ms: 4.266421
+  duration_ms: 3.672543
   type: 'test'
   ...
 # Subtest: different branches can merge at the same node
-ok 321 - different branches can merge at the same node
+ok 331 - different branches can merge at the same node
   ---
-  duration_ms: 5.567156
+  duration_ms: 4.69306
   type: 'test'
   ...
 # Subtest: discoverable shortcuts are unavailable until explicitly unlocked
-ok 322 - discoverable shortcuts are unavailable until explicitly unlocked
+ok 332 - discoverable shortcuts are unavailable until explicitly unlocked
   ---
-  duration_ms: 1.205172
+  duration_ms: 1.203002
   type: 'test'
   ...
 # Subtest: route locking overrides prior unlocking
-ok 323 - route locking overrides prior unlocking
+ok 333 - route locking overrides prior unlocking
   ---
-  duration_ms: 1.477343
+  duration_ms: 1.916326
   type: 'test'
   ...
 # Subtest: conditional edges evaluate against explicit context
-ok 324 - conditional edges evaluate against explicit context
+ok 334 - conditional edges evaluate against explicit context
   ---
-  duration_ms: 1.945381
+  duration_ms: 2.091902
   type: 'test'
   ...
 # Subtest: advanceGroup requires an explicit branch selection when multiple routes are available
-ok 325 - advanceGroup requires an explicit branch selection when multiple routes are available
+ok 335 - advanceGroup requires an explicit branch selection when multiple routes are available
   ---
-  duration_ms: 1.595222
+  duration_ms: 1.483325
   type: 'test'
   ...
 # Subtest: moving through a route records node and edge histories
-ok 326 - moving through a route records node and edge histories
+ok 336 - moving through a route records node and edge histories
   ---
-  duration_ms: 2.531507
+  duration_ms: 2.24346
   type: 'test'
   ...
 # Subtest: reaching an end marks only that runtime group complete
-ok 327 - reaching an end marks only that runtime group complete
+ok 337 - reaching an end marks only that runtime group complete
   ---
-  duration_ms: 1.345104
+  duration_ms: 1.134339
   type: 'test'
   ...
 # Subtest: completion detects when all runtime groups reached endings
-ok 328 - completion detects when all runtime groups reached endings
+ok 338 - completion detects when all runtime groups reached endings
   ---
-  duration_ms: 1.727361
+  duration_ms: 1.365578
   type: 'test'
   ...
 # Subtest: invalid runtime node state is rejected before traversal
-ok 329 - invalid runtime node state is rejected before traversal
+ok 339 - invalid runtime node state is rejected before traversal
   ---
-  duration_ms: 0.597433
+  duration_ms: 0.620726
   type: 'test'
   ...
 # Subtest: moving along an edge that does not leave the current node fails safely
-ok 330 - moving along an edge that does not leave the current node fails safely
+ok 340 - moving along an edge that does not leave the current node fails safely
   ---
-  duration_ms: 0.645626
+  duration_ms: 0.606824
   type: 'test'
   ...
 # Subtest: runtime groups can intentionally start on different valid route nodes
-ok 331 - runtime groups can intentionally start on different valid route nodes
+ok 341 - runtime groups can intentionally start on different valid route nodes
   ---
-  duration_ms: 0.384731
+  duration_ms: 0.384339
   type: 'test'
   ...
 # Subtest: invalid start position is rejected
-ok 332 - invalid start position is rejected
+ok 342 - invalid start position is rejected
   ---
-  duration_ms: 0.316458
+  duration_ms: 0.312161
   type: 'test'
   ...
 # Subtest: a deliberately longer branch traverses independently from a shorter branch
-ok 333 - a deliberately longer branch traverses independently from a shorter branch
+ok 343 - a deliberately longer branch traverses independently from a shorter branch
   ---
-  duration_ms: 3.405779
+  duration_ms: 3.133721
   type: 'test'
   ...
 # Subtest: GM session synchronization sends only projected player state to active players
-ok 334 - GM session synchronization sends only projected player state to active players
+ok 344 - GM session synchronization sends only projected player state to active players
   ---
-  duration_ms: 3.768988
+  duration_ms: 2.855382
   type: 'test'
   ...
 # Subtest: player intents are addressed to one deterministic active GM
-ok 335 - player intents are addressed to one deterministic active GM
+ok 345 - player intents are addressed to one deterministic active GM
   ---
-  duration_ms: 9.285889
+  duration_ms: 6.897201
   type: 'test'
   ...
 # Subtest: socket state messages are accepted only by their addressed player client
-ok 336 - socket state messages are accepted only by their addressed player client
+ok 346 - socket state messages are accepted only by their addressed player client
   ---
-  duration_ms: 4.79594
+  duration_ms: 3.974147
   type: 'test'
   ...
 # Subtest: player client acknowledges state delivery after opening the Player View
-ok 337 - player client acknowledges state delivery after opening the Player View
+ok 347 - player client acknowledges state delivery after opening the Player View
   ---
-  duration_ms: 0.924998
+  duration_ms: 1.992131
   type: 'test'
   ...
 # Subtest: player readiness handshake is addressed to the deterministic GM
-ok 338 - player readiness handshake is addressed to the deterministic GM
+ok 348 - player readiness handshake is addressed to the deterministic GM
   ---
-  duration_ms: 0.269828
+  duration_ms: 0.254523
   type: 'test'
   ...
 # Subtest: sample obstacle card validates
-ok 339 - sample obstacle card validates
+ok 349 - sample obstacle card validates
   ---
-  duration_ms: 3.739313
+  duration_ms: 3.622888
   type: 'test'
   ...
 # Subtest: duplicate approach ids are rejected
-ok 340 - duplicate approach ids are rejected
+ok 350 - duplicate approach ids are rejected
   ---
-  duration_ms: 0.552645
+  duration_ms: 0.583649
   type: 'test'
   ...
 # Subtest: invalid card schema is rejected
-ok 341 - invalid card schema is rejected
+ok 351 - invalid card schema is rejected
   ---
-  duration_ms: 0.217479
+  duration_ms: 0.211839
   type: 'test'
   ...
 # Subtest: template settings validate
-ok 342 - template settings validate
+ok 352 - template settings validate
   ---
-  duration_ms: 0.293013
+  duration_ms: 0.290988
   type: 'test'
   ...
 # Subtest: invalid template setting is rejected if raw data bypasses normalizer
-ok 343 - invalid template setting is rejected if raw data bypasses normalizer
+ok 353 - invalid template setting is rejected if raw data bypasses normalizer
   ---
-  duration_ms: 0.143407
+  duration_ms: 0.136787
   type: 'test'
   ...
 # Subtest: blueprint with branched graph validates
-ok 344 - blueprint with branched graph validates
+ok 354 - blueprint with branched graph validates
   ---
-  duration_ms: 1.861264
+  duration_ms: 1.939282
   type: 'test'
   ...
 # Subtest: duplicate blueprint group ids are rejected
-ok 345 - duplicate blueprint group ids are rejected
+ok 355 - duplicate blueprint group ids are rejected
   ---
-  duration_ms: 0.46277
+  duration_ms: 0.445201
   type: 'test'
   ...
 # Subtest: actor participants without UUID generate a warning
-ok 346 - actor participants without UUID generate a warning
+ok 356 - actor participants without UUID generate a warning
   ---
-  duration_ms: 0.1849
+  duration_ms: 0.148013
   type: 'test'
   ...
 # Subtest: sample active session validates
-ok 347 - sample active session validates
+ok 357 - sample active session validates
   ---
-  duration_ms: 0.907622
+  duration_ms: 0.940557
   type: 'test'
   ...
 # Subtest: session progress cannot be negative
-ok 348 - session progress cannot be negative
+ok 358 - session progress cannot be negative
   ---
-  duration_ms: 0.699488
+  duration_ms: 0.688437
   type: 'test'
   ...
 # Subtest: invalid embedded blueprint snapshot invalidates session
-ok 349 - invalid embedded blueprint snapshot invalidates session
+ok 359 - invalid embedded blueprint snapshot invalidates session
   ---
-  duration_ms: 0.450391
+  duration_ms: 0.968418
   type: 'test'
   ...
 # Subtest: result requires a session id
-ok 350 - result requires a session id
+ok 360 - result requires a session id
   ---
-  duration_ms: 0.243167
+  duration_ms: 0.244459
   type: 'test'
   ...
 # Subtest: valid result passes
-ok 351 - valid result passes
+ok 361 - valid result passes
   ---
-  duration_ms: 0.096736
+  duration_ms: 0.138078
   type: 'test'
   ...
 # Subtest: public state contract validates
-ok 352 - public state contract validates
+ok 362 - public state contract validates
   ---
-  duration_ms: 0.167704
+  duration_ms: 0.222745
   type: 'test'
   ...
 # Subtest: embedded Effect Forge consequence requires definition
-ok 353 - embedded Effect Forge consequence requires definition
+ok 363 - embedded Effect Forge consequence requires definition
   ---
-  duration_ms: 0.124419
+  duration_ms: 0.140732
   type: 'test'
   ...
 # Subtest: Effect Forge item consequence requires UUID
-ok 354 - Effect Forge item consequence requires UUID
+ok 364 - Effect Forge item consequence requires UUID
   ---
-  duration_ms: 0.086852
+  duration_ms: 0.085169
   type: 'test'
   ...
 # Subtest: route unlock consequence requires at least one edge id
-ok 355 - route unlock consequence requires at least one edge id
+ok 365 - route unlock consequence requires at least one edge id
   ---
-  duration_ms: 0.096185
+  duration_ms: 0.121883
   type: 'test'
   ...
 # Subtest: valid embedded Effect Forge consequence passes structural validation
-ok 356 - valid embedded Effect Forge consequence passes structural validation
+ok 366 - valid embedded Effect Forge consequence passes structural validation
   ---
-  duration_ms: 0.159581
+  duration_ms: 0.110907
   type: 'test'
   ...
 # Subtest: raw blueprint with invalid settings is caught even if factories were bypassed
-ok 357 - raw blueprint with invalid settings is caught even if factories were bypassed
+ok 367 - raw blueprint with invalid settings is caught even if factories were bypassed
   ---
-  duration_ms: 0.396169
+  duration_ms: 0.401465
   type: 'test'
   ...
 # Subtest: visual route diagram keeps linear cards in compact mainline order
-ok 358 - visual route diagram keeps linear cards in compact mainline order
+ok 368 - visual route diagram keeps linear cards in compact mainline order
   ---
-  duration_ms: 12.127675
+  duration_ms: 7.907673
   type: 'test'
   ...
 # Subtest: visual route diagram inserts a split immediately after its source obstacle and merges before continuation
-ok 359 - visual route diagram inserts a split immediately after its source obstacle and merges before continuation
+ok 369 - visual route diagram inserts a split immediately after its source obstacle and merges before continuation
   ---
-  duration_ms: 7.92369
+  duration_ms: 7.809886
   type: 'test'
   ...
 # Subtest: visual route lanes include every card on unequal branch paths without duplicating them on the mainline
-ok 360 - visual route lanes include every card on unequal branch paths without duplicating them on the mainline
+ok 370 - visual route lanes include every card on unequal branch paths without duplicating them on the mainline
   ---
-  duration_ms: 9.814648
+  duration_ms: 7.853141
   type: 'test'
   ...
 # Subtest: Visual System resolves manual and predefined card images
-ok 361 - Visual System resolves manual and predefined card images
+ok 371 - Visual System resolves manual and predefined card images
   ---
-  duration_ms: 5.559645
+  duration_ms: 5.795492
   type: 'test'
   ...
 # Subtest: automatic providers receive combined Blueprint and card visual context
-ok 362 - automatic providers receive combined Blueprint and card visual context
+ok 372 - automatic providers receive combined Blueprint and card visual context
   ---
-  duration_ms: 13.490156
+  duration_ms: 2.868701
   type: 'test'
   ...
 # Subtest: Visual System candidate discovery combines predefined and provider images and can pin a candidate
-ok 363 - Visual System candidate discovery combines predefined and provider images and can pin a candidate
+ok 373 - Visual System candidate discovery combines predefined and provider images and can pin a candidate
   ---
-  duration_ms: 1.151451
+  duration_ms: 1.105526
   type: 'test'
   ...
 # Subtest: Visual System caches automatic provider resolution until explicitly refreshed
-ok 364 - Visual System caches automatic provider resolution until explicitly refreshed
+ok 374 - Visual System caches automatic provider resolution until explicitly refreshed
   ---
-  duration_ms: 1.781112
+  duration_ms: 1.258767
   type: 'test'
   ...
 # Subtest: card visuals can intentionally fall back to Blueprint art
-ok 365 - card visuals can intentionally fall back to Blueprint art
+ok 375 - card visuals can intentionally fall back to Blueprint art
   ---
-  duration_ms: 0.424452
+  duration_ms: 0.473734
   type: 'test'
   ...
 # Subtest: Builder and Runner wire the visual system into image browsing, candidate selection and runtime rendering
-ok 366 - Builder and Runner wire the visual system into image browsing, candidate selection and runtime rendering
+ok 376 - Builder and Runner wire the visual system into image browsing, candidate selection and runtime rendering
   ---
-  duration_ms: 6.39566
+  duration_ms: 7.112536
   type: 'test'
   ...
 # Subtest: Weather Forge dayparts map directly to Chase Forge canonical time-of-day values
-ok 367 - Weather Forge dayparts map directly to Chase Forge canonical time-of-day values
+ok 377 - Weather Forge dayparts map directly to Chase Forge canonical time-of-day values
   ---
-  duration_ms: 0.709994
+  duration_ms: 0.802128
   type: 'test'
   ...
 # Subtest: Weather Forge inspection accepts current-context or legacy getWeather API
-ok 368 - Weather Forge inspection accepts current-context or legacy getWeather API
+ok 378 - Weather Forge inspection accepts current-context or legacy getWeather API
   ---
-  duration_ms: 0.250228
+  duration_ms: 0.30546
   type: 'test'
   ...
 # Subtest: Weather Forge label uses its localized precipitation and wind terminology
-ok 369 - Weather Forge label uses its localized precipitation and wind terminology
+ok 379 - Weather Forge label uses its localized precipitation and wind terminology
   ---
-  duration_ms: 0.233193
+  duration_ms: 0.233312
   type: 'test'
   ...
 # Subtest: Weather Forge bridge reads current context and preserves structured weather metadata
-ok 370 - Weather Forge bridge reads current context and preserves structured weather metadata
+ok 380 - Weather Forge bridge reads current context and preserves structured weather metadata
   ---
-  duration_ms: 0.706248
+  duration_ms: 0.906877
   type: 'test'
   ...
 # Subtest: Weather Forge bridge degrades cleanly when optional module API is absent
-ok 371 - Weather Forge bridge degrades cleanly when optional module API is absent
+ok 381 - Weather Forge bridge degrades cleanly when optional module API is absent
   ---
-  duration_ms: 0.177839
+  duration_ms: 0.226732
   type: 'test'
   ...
 # Subtest: Weather Forge bridge contains provider read failures instead of throwing
-ok 372 - Weather Forge bridge contains provider read failures instead of throwing
+ok 382 - Weather Forge bridge contains provider read failures instead of throwing
   ---
-  duration_ms: 0.222917
+  duration_ms: 0.223326
   type: 'test'
   ...
-1..372
-# tests 372
+1..382
+# tests 382
 # suites 0
-# pass 372
+# pass 382
 # fail 0
 # cancelled 0
 # skipped 0
 # todo 0
-# duration_ms 8350.74091
+# duration_ms 8369.22887

@@ -20,7 +20,58 @@
     </div>
   </header>
 
-  <div class="chase-runner-scroll">
+  <div class="chase-runner-layout">
+    <aside class="chase-runner-route-monitor">
+      <div class="chase-runner-route-monitor-head">
+        <h3><i class="fa-solid fa-map"></i> {{localize "PF2E_CHASE_FORGE.Runner.RouteOverview"}}</h3>
+        <span class="chase-runner-pill">{{routeMonitor.groupCount}} {{localize "PF2E_CHASE_FORGE.Runner.RuntimeGroups"}}</span>
+      </div>
+      {{#if usesGroupOrder}}
+        <div class="chase-runner-order-controls">
+          <span>{{localize "PF2E_CHASE_FORGE.Runner.GroupOrder"}}</span>
+          <button type="button" data-action="setGroupOrderAutomatic" class="{{#if groupOrderAutomatic}}active{{/if}}"><i class="fa-solid fa-wand-magic-sparkles"></i> {{localize "PF2E_CHASE_FORGE.Runner.GroupOrderAutomatic"}}</button>
+          <button type="button" data-action="setGroupOrderManual" class="{{#if groupOrderManual}}active{{/if}}"><i class="fa-solid fa-hand-pointer"></i> {{localize "PF2E_CHASE_FORGE.Runner.GroupOrderManual"}}</button>
+        </div>
+      {{/if}}
+      <div class="chase-runner-route-monitor-scroll">
+        {{#each routeMonitor.rows as |row|}}
+          <div class="chase-runner-route-monitor-row {{#if row.branched}}branched{{/if}}">
+            {{#each row.nodes as |node|}}
+              <div class="chase-runner-route-monitor-node {{node.type}} {{#if node.hasGroups}}occupied{{/if}}">
+                <span class="chase-runner-route-monitor-node-label">{{node.label}}</span>
+                {{#if node.markers.length}}
+                  <div class="chase-runner-route-monitor-markers">
+                    {{#each node.markers as |marker|}}
+                      {{#if marker.canActivate}}
+                        <button type="button" class="chase-runner-route-marker {{marker.role}} {{#if marker.active}}active{{/if}} {{#if marker.recommended}}recommended{{/if}}" data-action="activateGroup" data-runtime-group-id="{{marker.runtimeGroupId}}" title="{{marker.name}}">
+                          {{#if marker.recommended}}<i class="fa-solid fa-star"></i>{{else}}<i class="fa-solid fa-location-dot"></i>{{/if}}
+                          <span>{{marker.name}}</span>
+                          {{#if marker.remaining}}<small>{{marker.remaining}} {{localize "PF2E_CHASE_FORGE.Runner.FieldsToGoalShort"}}</small>{{/if}}
+                        </button>
+                      {{else}}
+                        <div class="chase-runner-route-marker static {{marker.role}} {{#if marker.active}}active{{/if}} {{#if marker.recommended}}recommended{{/if}}" title="{{marker.name}}">
+                          {{#if marker.recommended}}<i class="fa-solid fa-star"></i>{{else}}<i class="fa-solid fa-location-dot"></i>{{/if}}
+                          <span>{{marker.name}}</span>
+                          {{#if marker.remaining}}<small>{{marker.remaining}} {{localize "PF2E_CHASE_FORGE.Runner.FieldsToGoalShort"}}</small>{{/if}}
+                        </div>
+                      {{/if}}
+                    {{/each}}
+                  </div>
+                {{/if}}
+              </div>
+            {{/each}}
+          </div>
+        {{/each}}
+      </div>
+      {{#if routeMonitor.distances.length}}
+        <div class="chase-runner-route-distances">
+          <strong>{{routeMonitor.selectedGroupName}}</strong>
+          {{#each routeMonitor.distances as |item|}}<span>↔ {{item.name}}: {{item.distance}} {{localize "PF2E_CHASE_FORGE.Runner.FieldsShort"}}</span>{{/each}}
+        </div>
+      {{/if}}
+    </aside>
+
+    <div class="chase-runner-scroll">
     {{#if completion}}
       <section class="chase-runner-completion">
         {{#if completion.image.path}}
@@ -98,17 +149,49 @@
 
     <div class="chase-runner-groups">
       {{#each groups as |group|}}
-        <section class="chase-runner-group">
+        <section class="chase-runner-group {{#if group.isActiveGroup}}active-runtime-group{{/if}} {{#if group.isRecommendedGroup}}recommended-runtime-group{{/if}}">
           <header class="chase-runner-group-head">
             <div>
-              <h3>{{group.definition.name}}</h3>
+              <h3>{{group.displayName}}</h3>
               <div class="chase-runner-meta"><span>{{group.roleLabel}}</span><span>{{group.paceLabel}}</span><span>{{group.statusLabel}}</span>{{#if group.obstacleIndex}}<span>{{localize "PF2E_CHASE_FORGE.Runner.Position"}} {{group.obstacleIndex}}</span>{{/if}}</div>
             </div>
-            {{#if group.turnBlocked}}<span class="chase-runner-pill turn-wait"><i class="fa-solid fa-hourglass-half"></i> {{#if group.waitingForInitiative}}{{localize "PF2E_CHASE_FORGE.Runner.WaitingForInitiative"}}{{else}}{{localize "PF2E_CHASE_FORGE.Runner.WaitingForQuarry"}}{{/if}}</span>{{/if}}
-            {{#if group.obstacle}}
-              <button type="button" data-action="postObstacle" data-runtime-group-id="{{group.runtime.id}}"><i class="fa-solid fa-message"></i> {{localize "PF2E_CHASE_FORGE.Runner.PostChat"}}</button>
-            {{/if}}
+            <div class="chase-runner-group-head-actions">
+              {{#if group.isRecommendedGroup}}<span class="chase-runner-pill recommended"><i class="fa-solid fa-star"></i> {{localize "PF2E_CHASE_FORGE.Runner.RecommendedNext"}}{{#if group.distanceToEnd}} · {{group.distanceToEnd}} {{localize "PF2E_CHASE_FORGE.Runner.FieldsToGoalShort"}}{{/if}}</span>{{/if}}
+              {{#if group.canActivateGroup}}<button type="button" data-action="activateGroup" data-runtime-group-id="{{group.runtime.id}}"><i class="fa-solid fa-hand-pointer"></i> {{localize "PF2E_CHASE_FORGE.Runner.ActivateGroup"}}</button>{{/if}}
+              {{#if group.turnBlocked}}<span class="chase-runner-pill turn-wait"><i class="fa-solid fa-hourglass-half"></i> {{#if group.waitingForInitiative}}{{localize "PF2E_CHASE_FORGE.Runner.WaitingForInitiative"}}{{else if group.waitingForGroupOrder}}{{localize "PF2E_CHASE_FORGE.Runner.WaitingForGroupOrder"}}{{else}}{{localize "PF2E_CHASE_FORGE.Runner.WaitingForQuarry"}}{{/if}}</span>{{/if}}
+              {{#if group.obstacle}}
+                <button type="button" data-action="postObstacle" data-runtime-group-id="{{group.runtime.id}}"><i class="fa-solid fa-message"></i> {{localize "PF2E_CHASE_FORGE.Runner.PostChat"}}</button>
+              {{/if}}
+            </div>
           </header>
+
+          {{#if group.canManageGroup}}
+            <details class="chase-runner-group-manager">
+              <summary><i class="fa-solid fa-people-arrows-left-right"></i> {{localize "PF2E_CHASE_FORGE.Runner.ManageGroup"}}</summary>
+              <p>{{localize "PF2E_CHASE_FORGE.Runner.SplitGroupHint"}}</p>
+              <div class="chase-runner-split-participants">
+                {{#each group.splitParticipants as |participant|}}
+                  <label><input type="checkbox" value="{{participant.id}}" data-split-participant> <span>{{participant.name}}{{#if participant.acted}} ✓{{/if}}</span></label>
+                {{/each}}
+              </div>
+              <div class="chase-runner-group-manager-actions">
+                {{#if group.splitAllowed}}<button type="button" data-action="splitGroup" data-runtime-group-id="{{group.runtime.id}}"><i class="fa-solid fa-code-branch"></i> {{localize "PF2E_CHASE_FORGE.Runner.SplitSelected"}}</button>{{/if}}
+                {{#if group.hasTransferCandidates}}
+                  {{#each group.transferCandidates as |other|}}
+                    <button type="button" data-action="transferParticipants" data-runtime-group-id="{{../runtime.id}}" data-other-runtime-group-id="{{other.runtimeGroupId}}"><i class="fa-solid fa-right-left"></i> {{localize "PF2E_CHASE_FORGE.Runner.MoveSelectedTo"}} {{other.name}}</button>
+                  {{/each}}
+                {{/if}}
+              </div>
+            </details>
+          {{/if}}
+          {{#if group.hasMergeCandidates}}
+            <div class="chase-runner-merge-offers">
+              <strong><i class="fa-solid fa-people-group"></i> {{localize "PF2E_CHASE_FORGE.Runner.MergeGroups"}}</strong>
+              {{#each group.mergeCandidates as |other|}}
+                <button type="button" data-action="mergeGroups" data-runtime-group-id="{{../runtime.id}}" data-other-runtime-group-id="{{other.runtimeGroupId}}"><i class="fa-solid fa-link"></i> {{other.name}}</button>
+              {{/each}}
+            </div>
+          {{/if}}
 
           {{#if group.obstacle}}
             <div class="chase-runner-obstacle">
@@ -205,6 +288,7 @@
           {{/if}}
         </section>
       {{/each}}
+    </div>
     </div>
   </div>
 </div>

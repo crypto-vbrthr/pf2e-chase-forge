@@ -1,5 +1,6 @@
 import { MODULE_ID } from "../core/constants.js";
 import { cloneData } from "../data/utils.js";
+import { buildGraphIndex, topologicalSort } from "../data/graph.js";
 import { openChaseImage } from "../images/image-popout.js";
 import { createChaseChatPresenter } from "../presentation/chat-presenter.js";
 
@@ -172,7 +173,6 @@ function lastParticipantResult(session, runtimeGroupId, participantId) {
   const currentRound = Number(session?.round ?? 0);
   const record = [...(session?.events ?? [])].reverse().find(item =>
     item?.round === currentRound
-    && item?.runtimeGroupId === runtimeGroupId
     && item?.participantId === participantId
     && ["checkResolved", "automaticContribution", "participantSkipped"].includes(item?.type)
   );
@@ -210,6 +210,89 @@ function lastParticipantResult(session, runtimeGroupId, participantId) {
 
 function groupCurrentNode(session, runtimeGroup) {
   return session?.blueprintSnapshot?.graph?.nodes?.find(node => node.id === runtimeGroup?.position?.nodeId) ?? null;
+}
+
+function runtimeGroupDisplayName(session, runtimeGroup) {
+  const definition = resolveBlueprintGroup(session, runtimeGroup);
+  const allIds = definition?.participants?.map?.(item => item.id) ?? [];
+  const split = Boolean(runtimeGroup?.parentRuntimeGroupId) || (allIds.length > 0 && runtimeGroup?.participantIds?.length !== allIds.length);
+  if (!split) return definition?.name || runtimeGroup?.groupId || runtimeGroup?.id || "Gruppe";
+  const names = (runtimeGroup?.participantIds ?? []).map(id => resolveParticipant(session, id)?.name || id);
+  return names.join(" + ") || definition?.name || runtimeGroup?.groupId || runtimeGroup?.id || "Gruppe";
+}
+
+function buildRouteMonitor(api, session, orderState = null) {
+  const graph = session?.blueprintSnapshot?.graph;
+  if (!graph?.nodes?.length) return { rows: [], distances: [], groupCount: 0 };
+  let order = [];
+  try { order = topologicalSort(graph); } catch { order = graph.nodes.map(node => node.id); }
+  const { incoming } = buildGraphIndex(graph);
+  const depth = new Map();
+  for (const nodeId of order) {
+    const predecessors = incoming.get(nodeId) ?? [];
+    const base = predecessors.length ? Math.max(...predecessors.map(edge => depth.get(edge.from) ?? 0)) + 1 : 0;
+    depth.set(nodeId, base);
+  }
+  const orderIndex = new Map(order.map((id, index) => [id, index]));
+  const nodeViews = graph.nodes.map(node => {
+    let label = node.label || node.description || node.id;
+    if (node.type === "card" && node.cardRef) {
+      const card = resolveCard(api, session, node.cardRef);
+      label = card?.name || label;
+    }
+    const markers = (session.groups ?? []).filter(group => group.position?.nodeId === node.id).map(group => {
+      let remaining = null;
+      try { remaining = api?.rules?.getShortestRemainingDistance?.(session, group.id); } catch { remaining = null; }
+      return {
+        runtimeGroupId: group.id,
+        name: runtimeGroupDisplayName(session, group),
+        role: resolveBlueprintGroup(session, group)?.role || "participant",
+        active: orderState?.activeRuntimeGroupId === group.id,
+        recommended: orderState?.recommendedRuntimeGroupId === group.id,
+        canActivate: (orderState?.candidates ?? []).some(item => item.runtimeGroupId === group.id),
+        remaining: Number.isFinite(Number(remaining)) ? Number(remaining) : null,
+        actedCount: (group.participantIds ?? []).filter(id => session.roundState?.actedParticipantIds?.includes?.(id)).length,
+        participantCount: group.participantIds?.length ?? 0
+      };
+    });
+    return {
+      id: node.id,
+      type: node.type,
+      label,
+      depth: depth.get(node.id) ?? 0,
+      orderIndex: orderIndex.get(node.id) ?? 0,
+      markers,
+      hasGroups: markers.length > 0
+    };
+  });
+  const rowsByDepth = new Map();
+  for (const node of nodeViews) {
+    const list = rowsByDepth.get(node.depth) ?? [];
+    list.push(node);
+    rowsByDepth.set(node.depth, list);
+  }
+  const rows = [...rowsByDepth.entries()].sort((a, b) => a[0] - b[0]).map(([row, nodes]) => ({
+    row,
+    nodes: nodes.sort((a, b) => a.orderIndex - b.orderIndex),
+    branched: nodes.length > 1
+  }));
+  const selectedId = orderState?.activeRuntimeGroupId ?? orderState?.recommendedRuntimeGroupId ?? session.groups?.[0]?.id ?? null;
+  const selected = session.groups?.find(group => group.id === selectedId) ?? null;
+  const distances = selected ? (session.groups ?? []).filter(group => group.id !== selected.id).map(group => {
+    let distance = null;
+    try { distance = api?.rules?.getShortestGroupDistance?.(session, selected.id, group.id); } catch { distance = null; }
+    return {
+      runtimeGroupId: group.id,
+      name: runtimeGroupDisplayName(session, group),
+      distance: Number.isFinite(Number(distance)) ? Number(distance) : null
+    };
+  }).filter(item => item.distance !== null) : [];
+  return {
+    rows,
+    distances,
+    groupCount: session.groups?.length ?? 0,
+    selectedGroupName: selected ? runtimeGroupDisplayName(session, selected) : null
+  };
 }
 
 async function resolveBlueprintImage(api, session) {
@@ -255,7 +338,9 @@ function routeLabel(session, edge) {
 }
 
 async function maybePersistOutcome(api, session, { phase = "immediate" } = {}) {
-  const evaluation = api.rules.evaluateOutcome(session, { phase });
+  const resolution = api.rules.resolveRuntimeOutcomes?.(session, { phase }) ?? { session, evaluation: api.rules.evaluateOutcome(session, { phase }) };
+  session = resolution.session;
+  const evaluation = resolution.evaluation;
   if (!evaluation.ended) {
     const saved = await api.sessionManager.saveSession(session);
     return { session: saved, outcome: evaluation, completed: null };
@@ -298,6 +383,12 @@ function getAppClass() {
         automaticContribution: this._actionAutomaticContribution,
         skipParticipant: this._actionSkipParticipant,
         chooseRoute: this._actionChooseRoute,
+        activateGroup: this._actionActivateGroup,
+        setGroupOrderAutomatic: this._actionSetGroupOrderAutomatic,
+        setGroupOrderManual: this._actionSetGroupOrderManual,
+        splitGroup: this._actionSplitGroup,
+        transferParticipants: this._actionTransferParticipants,
+        mergeGroups: this._actionMergeGroups,
         unlockEdge: this._actionUnlockEdge,
         lockEdge: this._actionLockEdge,
         confirmConsequence: this._actionConfirmConsequence,
@@ -332,6 +423,11 @@ function getAppClass() {
       const activeRound = session.roundState?.phase === "active";
       const turnPolicy = this.chaseApi.rules.getTurnPolicy?.(session) ?? { mode: "free", initiativeRequired: false, suggestedOrder: [] };
       const race = session.blueprintSnapshot?.settings?.chaseType === "race";
+      const usesGroupOrder = ["pursuit", "escape"].includes(session.blueprintSnapshot?.settings?.chaseType);
+      const groupOrderState = usesGroupOrder && this.chaseApi.rules.getGroupOrderState
+        ? this.chaseApi.rules.getGroupOrderState(session)
+        : { mode: "automatic", phaseRole: null, activeRuntimeGroupId: null, recommendedRuntimeGroupId: null, candidates: [] };
+      const groupOrderCandidates = new Map((groupOrderState.candidates ?? []).map(item => [item.runtimeGroupId, item]));
       const groups = [];
       for (const runtimeGroup of session.groups) {
         const definition = resolveBlueprintGroup(session, runtimeGroup);
@@ -412,18 +508,50 @@ function getAppClass() {
         }));
         let obstacleIndex = null;
         try { obstacleIndex = this.chaseApi.rules.getObstacleIndex(session, runtimeGroup.id); } catch { obstacleIndex = null; }
+        const splitState = this.chaseApi.rules.canSplitRuntimeGroup?.(session, runtimeGroup.id) ?? { allowed: false };
+        const mergeCandidates = session.groups.filter(other => other.id !== runtimeGroup.id).filter(other => {
+          try { return this.chaseApi.rules.canMergeRuntimeGroups?.(session, [runtimeGroup.id, other.id])?.allowed === true; } catch { return false; }
+        }).map(other => ({ runtimeGroupId: other.id, name: runtimeGroupDisplayName(session, other) }));
+        const transferCandidates = session.groups.filter(other => other.id !== runtimeGroup.id).filter(other => {
+          try { return this.chaseApi.rules.canTransferParticipants?.(session, runtimeGroup.id, other.id)?.allowed === true; } catch { return false; }
+        }).map(other => ({ runtimeGroupId: other.id, name: runtimeGroupDisplayName(session, other) }));
+        const orderCandidate = groupOrderCandidates.get(runtimeGroup.id) ?? null;
+        const splitParticipants = participants.map(participant => ({ id: participant.id, name: participant.name, acted: participant.acted }));
+        const runtimeResolution = runtimeGroup.metadata?.runtimeResolution ?? null;
+        const runtimeResolved = runtimeGroup.completed === true || runtimeResolution?.terminal === true;
+        const resolvedStatusLabel = runtimeResolution?.outcome === "caught"
+          ? i18n("PF2E_CHASE_FORGE.Runner.GroupCaught", "Eingeholt")
+          : (runtimeResolution?.outcome === "escaped" ? i18n("PF2E_CHASE_FORGE.Runner.GroupEscaped", "Entkommen") : null);
         groups.push({
           runtime: cloneData(runtimeGroup), definition: cloneData(definition ?? { id: runtimeGroup.groupId, name: runtimeGroup.groupId, role: "participant" }),
+          displayName: runtimeGroupDisplayName(session, runtimeGroup),
           roleLabel: optionLabel(definition?.role), node: cloneData(node), obstacle: obstacle ? cloneData(obstacle) : null,
           approaches, participants, transitions, outgoingEdges,
           hasOutgoingEdges: outgoingEdges.length > 0,
           obstacleIndex,
           routeChoiceAvailable,
-          turnBlocked: activeRound && runtimeGroup.rules.paceMode === "roll" && !runtimeGroup.completed && !groupTurnAllowed,
-          turnBlockedReason: race ? "initiative" : "quarry",
-          waitingForInitiative: race && activeRound && runtimeGroup.rules.paceMode === "roll" && !runtimeGroup.completed && !groupTurnAllowed,
+          isActiveGroup: groupOrderState.activeRuntimeGroupId === runtimeGroup.id,
+          isRecommendedGroup: groupOrderState.recommendedRuntimeGroupId === runtimeGroup.id,
+          canActivateGroup: activeRound && !race && Boolean(orderCandidate) && groupOrderState.activeRuntimeGroupId !== runtimeGroup.id,
+          distanceToEnd: Number.isFinite(Number(orderCandidate?.distance)) ? Number(orderCandidate.distance) : null,
+          unactedCount: orderCandidate?.unactedCount ?? 0,
+          actedCount: orderCandidate?.actedCount ?? participants.filter(item => item.acted).length,
+          splitAllowed: splitState.allowed === true,
+          splitReason: splitState.reason ?? null,
+          splitParticipants,
+          canManageGroup: splitState.allowed === true || transferCandidates.length > 0,
+          transferCandidates,
+          hasTransferCandidates: transferCandidates.length > 0,
+          mergeCandidates,
+          hasMergeCandidates: mergeCandidates.length > 0,
+          runtimeResolved,
+          runtimeResolution: runtimeResolution ? cloneData(runtimeResolution) : null,
+          turnBlocked: activeRound && runtimeGroup.rules.paceMode === "roll" && !runtimeResolved && !groupTurnAllowed,
+          turnBlockedReason: race ? "initiative" : (usesGroupOrder && Boolean(orderCandidate) ? "groupOrder" : "quarry"),
+          waitingForInitiative: race && activeRound && runtimeGroup.rules.paceMode === "roll" && !runtimeResolved && !groupTurnAllowed,
+          waitingForGroupOrder: !race && usesGroupOrder && activeRound && Boolean(orderCandidate) && !groupTurnAllowed,
           paceLabel: runtimeGroup.rules.paceMode === "steady" ? "Konstantes Tempo" : "Proben",
-          statusLabel: runtimeGroup.completed ? "Am Ziel" : (node?.type === "card" ? "Am Hindernis" : (node?.type === "choice" ? "Wegentscheidung" : node?.type ?? "Unterwegs"))
+          statusLabel: resolvedStatusLabel ?? (runtimeGroup.completed ? "Am Ziel" : (node?.type === "card" ? "Am Hindernis" : (node?.type === "choice" ? "Wegentscheidung" : node?.type ?? "Unterwegs")))
         });
       }
       const consequenceRecords = (session.consequenceState?.records ?? []).filter(record => ["pendingConfirmation", "pendingSelection", "manualFallback", "blocked", "failed"].includes(record.status)).map(record => {
@@ -450,6 +578,7 @@ function getAppClass() {
         const entry = initiativeByParticipant.get(participantId) ?? { participantId, participantName: participantId, groupName: "" };
         return { ...entry, order: index + 1, current: participantId === currentRaceParticipantId, acted: session.roundState.actedParticipantIds.includes(participantId) };
       });
+      const routeMonitor = buildRouteMonitor(this.chaseApi, session, groupOrderState);
       return {
         session: cloneData(session),
         title: session.blueprintSnapshot?.name ?? session.id,
@@ -457,6 +586,11 @@ function getAppClass() {
         groups,
         activeRound,
         race,
+        usesGroupOrder,
+        groupOrderState,
+        groupOrderAutomatic: groupOrderState.mode === "automatic",
+        groupOrderManual: groupOrderState.mode === "manual",
+        routeMonitor,
         raceInitiativeRequired: race && initiativeEntries.length > 0,
         initiativeEntries,
         initiativeOrderDisplay,
@@ -546,7 +680,9 @@ function getAppClass() {
     static async _actionBeginRound() {
       try {
         let session = await this.chaseApi.sessionManager.getSession(this.sessionId);
-        const immediate = this.chaseApi.rules.evaluateOutcome(session, { phase: "startOfRound" });
+        const startResolution = this.chaseApi.rules.resolveRuntimeOutcomes?.(session, { phase: "startOfRound" }) ?? { session, evaluation: this.chaseApi.rules.evaluateOutcome(session, { phase: "startOfRound" }) };
+        session = startResolution.session;
+        const immediate = startResolution.evaluation;
         if (immediate.ended) {
           await this._saveOrFinish(session, { phase: "startOfRound" });
           return this.render({ force: true });
@@ -692,6 +828,86 @@ function getAppClass() {
         const session = await this.chaseApi.sessionManager.getSession(this.sessionId);
         const result = this.chaseApi.rules.chooseRoute(session, { runtimeGroupId: target.dataset.runtimeGroupId, edgeId: target.dataset.edgeId });
         await this._saveOrFinish(result.session);
+        return this.render({ force: true });
+      } catch (error) { console.error(error); notify("error", error.message); }
+    }
+
+    static async _actionActivateGroup(_event, target) {
+      try {
+        const session = await this.chaseApi.sessionManager.getSession(this.sessionId);
+        const next = this.chaseApi.rules.selectActiveGroup(session, target.dataset.runtimeGroupId);
+        await this.chaseApi.sessionManager.saveSession(next);
+        await this.chaseApi.sync?.publishSession?.(next, { open: true });
+        return this.render({ force: true });
+      } catch (error) { console.error(error); notify("error", error.message); }
+    }
+
+    static async _actionSetGroupOrderAutomatic() {
+      try {
+        const session = await this.chaseApi.sessionManager.getSession(this.sessionId);
+        const next = this.chaseApi.rules.setGroupOrderMode(session, "automatic");
+        await this.chaseApi.sessionManager.saveSession(next);
+        await this.chaseApi.sync?.publishSession?.(next, { open: true });
+        return this.render({ force: true });
+      } catch (error) { console.error(error); notify("error", error.message); }
+    }
+
+    static async _actionSetGroupOrderManual() {
+      try {
+        const session = await this.chaseApi.sessionManager.getSession(this.sessionId);
+        const next = this.chaseApi.rules.setGroupOrderMode(session, "manual");
+        await this.chaseApi.sessionManager.saveSession(next);
+        await this.chaseApi.sync?.publishSession?.(next, { open: true });
+        return this.render({ force: true });
+      } catch (error) { console.error(error); notify("error", error.message); }
+    }
+
+    static async _actionSplitGroup(_event, target) {
+      try {
+        const section = target.closest?.(".chase-runner-group");
+        const selected = [...(section?.querySelectorAll?.("[data-split-participant]:checked") ?? [])].map(input => input.value).filter(Boolean);
+        if (selected.length === 0) {
+          notify("warn", i18n("PF2E_CHASE_FORGE.Runner.SplitSelectParticipant", "Mindestens einen Beteiligten zum Abtrennen auswählen."));
+          return null;
+        }
+        const session = await this.chaseApi.sessionManager.getSession(this.sessionId);
+        const result = this.chaseApi.rules.splitRuntimeGroup(session, { runtimeGroupId: target.dataset.runtimeGroupId, participantIds: selected });
+        await this.chaseApi.sessionManager.saveSession(result.session);
+        await this.chaseApi.sync?.publishSession?.(result.session, { open: true });
+        notify("info", i18n("PF2E_CHASE_FORGE.Runner.GroupSplitDone", "Gruppe aufgeteilt."));
+        return this.render({ force: true });
+      } catch (error) { console.error(error); notify("error", error.message); }
+    }
+
+
+    static async _actionTransferParticipants(_event, target) {
+      try {
+        const section = target.closest?.(".chase-runner-group");
+        const selected = [...(section?.querySelectorAll?.("[data-split-participant]:checked") ?? [])].map(input => input.value).filter(Boolean);
+        if (selected.length === 0) {
+          notify("warn", i18n("PF2E_CHASE_FORGE.Runner.SplitSelectParticipant", "Mindestens einen Beteiligten auswählen."));
+          return null;
+        }
+        const session = await this.chaseApi.sessionManager.getSession(this.sessionId);
+        const result = this.chaseApi.rules.transferParticipants(session, {
+          fromRuntimeGroupId: target.dataset.runtimeGroupId,
+          toRuntimeGroupId: target.dataset.otherRuntimeGroupId,
+          participantIds: selected
+        });
+        await this._saveOrFinish(result.session);
+        notify("info", i18n("PF2E_CHASE_FORGE.Runner.ParticipantsTransferredDone", "Beteiligte verschoben."));
+        return this.render({ force: true });
+      } catch (error) { console.error(error); notify("error", error.message); }
+    }
+
+    static async _actionMergeGroups(_event, target) {
+      try {
+        const session = await this.chaseApi.sessionManager.getSession(this.sessionId);
+        const first = target.dataset.runtimeGroupId;
+        const second = target.dataset.otherRuntimeGroupId;
+        const result = this.chaseApi.rules.mergeRuntimeGroups(session, { runtimeGroupIds: [first, second], targetRuntimeGroupId: first });
+        await this._saveOrFinish(result.session);
+        notify("info", i18n("PF2E_CHASE_FORGE.Runner.GroupsMergedDone", "Gruppen zusammengeführt."));
         return this.render({ force: true });
       } catch (error) { console.error(error); notify("error", error.message); }
     }

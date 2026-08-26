@@ -1,6 +1,6 @@
 # GM Chase Runner Contract v1
 
-The GM Runner is the playable GM runtime surface for Chase Forge. Dev.17 adds participant-level race initiative and displays the effective per-group Chase Point requirement.
+The GM Runner is the playable GM runtime surface for Chase Forge. Dev.18 adds dynamic runtime groups, group-order control, and a compact full-route monitor while retaining dev.17 participant-level race initiative and effective per-group Chase Point requirements.
 
 ## Scope
 
@@ -30,6 +30,16 @@ The Runner supports:
 For `race` chases, the Runner displays an initiative field for every participant in a `roll`-pace competitor group before each round begins. The submitted values are sorted into `roundState.initiativeOrder`; only the current participant can resolve a roll, automatic contribution, or skipped turn. Steady-pace competitors are not entered into initiative and advance through the normal steady-pacing step.
 
 The rules engine remains authoritative: the Runner UI can hide/disable an action, but an out-of-order request is independently rejected by the rules layer.
+
+## Advanced runtime groups (dev.18)
+
+In pursuit and escape Sessions, runtime groups on the same Blueprint side can split and later reunite. A subgroup keeps its own node, route history, Chase Point progress, and participant membership. The GM can split selected participants at a fresh obstacle or between obstacles, merge compatible co-located groups, and move selected participants between co-located groups before partial obstacle progress begins. Global `roundState.actedParticipantIds` is never reset by these operations.
+
+The Runner exposes **Automatic** and **Manual** runtime-group order. Automatic mode recommends the eligible group with the longest shortest legal remaining route to an ending so lagging groups get the first opportunity to catch up. The GM can click another eligible group to override the recommendation for that group's turn. The recommendation is recalculated whenever the active group finishes, moves, splits, merges, or changes phase. Quarry-first side order remains authoritative. Race Sessions continue to use initiative and do not use runtime-group ordering.
+
+## Full-route monitor (dev.18)
+
+A compact side panel renders the complete route graph with obstacle names and runtime-group markers. It highlights the active and recommended groups, shows shortest remaining card distance to an ending, and reports graph distance from the selected group to other runtime groups. Branches at the same graph depth are shown side by side. Locked and undiscovered routes are excluded from automatic distance recommendations. The route monitor is GM-only.
 
 ## PF2e rolls
 

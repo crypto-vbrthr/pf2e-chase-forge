@@ -1,3 +1,16 @@
+## 0.1.0-dev.18 – Advanced Routing & Party Splitting
+
+- Adds dynamic runtime-group splitting so participants on one side can occupy different cards, branches, and mainline positions at the same time. Splits preserve participant round state and are blocked once partial Chase Point progress exists on the current obstacle.
+- Adds co-located runtime-group merging and selected-participant transfers. Merging preserves spent actions and accumulated Chase Points, then re-evaluates the effective threshold for the new group size; partial-progress transfers are blocked to prevent scaling exploits.
+- Implements PF2e separated-character behavior for singleton runtime groups, including one-success obstacle clearance and the existing +2 critical-success bonus on the first check against the next obstacle.
+- Adds pursuit/escape runtime-group scheduling. Automatic order recommends the eligible group with the longest shortest legal remaining route, with acted-count/group-size tie breakers; the GM can override the recommendation or switch to manual order. Race initiative remains unchanged.
+- Adds a compact full-route GM monitor with card names, branch layout, current group markers, active/recommended status, distance to the ending, and graph distance between runtime groups.
+- Player synchronization now follows dynamic runtime groups and exposes group-order waiting state without exposing the GM-only route monitor.
+- Split quarry groups resolve independently. A caught/escaped subgroup becomes terminal without ending the entire chase while other quarry groups remain active; mixed final outcomes are recorded as a custom result with per-group resolution metadata.
+- Hardens end-of-round auto-skip for dynamic group order and excludes undiscovered/locked routes from automatic shortest-path recommendations.
+- Raises the public API to v18 while keeping persisted schema versions and Campaign Forge Integration Contract v2 unchanged.
+- Adds focused Advanced Routing regression coverage for split, branch divergence, merge, transfer, action preservation, automatic/manual group order, auto-skip, distance calculation, and partial quarry resolution.
+
 ## 0.1.0-rc.1 – Release Candidate & Final Integration Review
 
 - Promotes the validated dev.17.4 code line to the first release candidate after a complete Builder → Session → GM/Player runtime → branching → completion/abort → Campaign Forge continuation review.

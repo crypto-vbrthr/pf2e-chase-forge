@@ -141,6 +141,7 @@ function getAppClass() {
         ...cloneData(group),
         hasObstacle: Boolean(group.obstacle),
         waitingForInitiative: group.turnBlockedReason === "initiative",
+        waitingForGroupOrder: group.turnBlockedReason === "groupOrder",
         isControlled: group.participants?.some?.(participant => participant.controlled) === true,
         myRollActions: rollActions.filter(action => action.runtimeGroupId === group.runtimeGroupId),
         canPropose: proposalActions.some(action => action.runtimeGroupId === group.runtimeGroupId),

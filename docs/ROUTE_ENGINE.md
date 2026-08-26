@@ -104,3 +104,9 @@ Before route mutation, the engine validates:
 - completed groups being on ending nodes.
 
 Unsafe states fail with `ChaseRouteError` rather than partially mutating a session.
+
+## Advanced runtime routing (dev.18)
+
+Route Traversal Contract v1 itself is unchanged. Dev.18 simply allows several runtime groups that share the same Blueprint `groupId` to traverse the DAG independently. A graph merge node no longer implies that those runtime groups must be combined; it only means their possible paths converge. Groups can arrive at different times, continue down the mainline separately, split again at later branches, and merge only when the GM explicitly combines compatible co-located runtime groups.
+
+The GM-order assistant uses shortest-path calculations over currently legal graph structure. Explicitly locked and still-undiscovered hidden/discoverable edges are excluded from those recommendations. Runtime-group distance for the route monitor is calculated over the same available graph as an undirected separation measure so the GM can see how many obstacle fields lie between groups even when they occupy different branch lanes.

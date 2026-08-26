@@ -1,12 +1,25 @@
 # PF2E Chase Forge
 
-**Version:** 0.1.0-rc.1  
+**Version:** 0.1.0-dev.18  
 **Foundry VTT:** 14  
 **System:** Pathfinder 2e
 
-PF2E Chase Forge is a modular Pathfinder 2e chase framework for Foundry VTT. `0.1.0-rc.1` is the first release candidate after the final rules, balance, runtime, Builder, GM/Player, branching, persistence, and Campaign Forge integration review. It keeps API v17, persisted schemas, and Campaign Forge Integration Contract v2 unchanged from the validated dev.17.x line.
+PF2E Chase Forge is a modular Pathfinder 2e chase framework for Foundry VTT. `0.1.0-dev.18` implements Advanced Routing & Party Splitting on top of the validated RC code line. Runtime groups can split, move independently across mainline and branch nodes, reunite later, and be scheduled by an automatic or GM-selected group order. The public API is v18; persisted schemas and Campaign Forge Integration Contract v2 remain unchanged.
 
 The underlying architecture remains intact: DAG route graphs, synchronized GM/Player runtime views, add-on registries, template-based generation, the 72-card Core Library, the shared Visual System, PF2e chase rules, consequence orchestration, optional Critical Forge / Effect Forge integration, Weather Forge prefill, and protected restart-safe Blueprint/Session persistence.
+
+
+## dev.18 Advanced Routing & Party Splitting
+
+Participants on the same side no longer have to remain one permanently synchronized movement block. The GM Runner can split a runtime group at a fresh obstacle or between obstacles, let the resulting subgroups take different branches and progress independently, and merge compatible groups again when they physically occupy the same route node. Co-located groups can also move selected participants between subgroups before Chase Point progress has begun. Participant acted/skipped state is global for the round, so splitting or merging never grants a second action.
+
+For pursuit and escape chases, Chase Forge now schedules runtime groups inside the existing quarry-first side phases. In **Automatic** mode it recommends the eligible subgroup with the longest shortest legal remaining route to an ending, recalculating after movement and group changes. This gives lagging groups the first chance to catch up. The GM can override that recommendation at any time or switch to fully **Manual** group order. Race chases continue to use participant initiative instead.
+
+The GM Runner includes a compact full-route monitor with card names, branch rows, current runtime-group markers, the active/recommended group, shortest remaining distance to an ending, and graph distance between the selected group and the other groups. The Player View stays local: it shows the participant's current runtime group and companions without receiving the GM's full route monitor.
+
+PF2e separated-character handling remains authoritative: a singleton subgroup clears an obstacle on one success, and a critical success grants the existing +2 circumstance bonus to its first check against the next obstacle. Automatically scalable Chase Point thresholds are recalculated from the current runtime-group size after splits, merges, or transfers. Split/transfer operations are blocked after partial Chase Point progress to avoid changing the threshold mid-attempt; merging preserves existing progress and re-evaluates the new requirement.
+
+Split quarry groups are resolved independently. Catching or escaping one subgroup no longer terminates the entire chase while another quarry subgroup is still active. If all quarry groups eventually resolve with mixed outcomes, the final ChaseResult records a custom mixed result with per-runtime-group resolution metadata.
 
 
 ## dev.17 Final Rules, Balance & Runtime Hardening

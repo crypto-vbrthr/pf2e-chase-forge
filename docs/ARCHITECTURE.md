@@ -2,7 +2,7 @@
 
 ## Baseline
 
-Version `0.1.0-rc.1` keeps the layered Chase architecture while completing final PF2e rules/runtime hardening. UI, transport, persistence, route traversal, PF2e rules, consequences, Journal integration, Campaign Forge integration, and optional Forge Suite bridges remain separate layers. The synchronized GM/Player runtime surfaces remain authoritative for route choices, race initiative, and group-aware Chase Point requirements. Builder ApplicationV2 renders additionally re-assert editability after runtime lifecycle refreshes so stale DOM `disabled` state cannot leak from a prior read-only render.
+Version `0.1.0-dev.18` keeps the layered Chase architecture and activates the dynamic runtime-group model that was prepared by the earlier Session design. The route graph remains a static DAG describing where travel is possible; runtime groups now describe only which participants currently move together and where they are. Multiple runtime groups from one Blueprint side may occupy arbitrary mainline or branch nodes simultaneously, split again, or later merge. UI, transport, persistence, route traversal, PF2e rules, consequences, Journal integration, Campaign Forge integration, and optional Forge Suite bridges remain separate layers.
 
 ```text
 External Chase Add-ons
