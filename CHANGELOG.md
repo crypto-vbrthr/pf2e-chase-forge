@@ -1,3 +1,11 @@
+## 0.1.0-rc.2 – Final Integration Review with Advanced Routing
+
+- Promotes the validated dev.18 Advanced Routing & Party Splitting code line to the second release candidate after a focused end-to-end review of dynamic runtime groups, branch divergence/rejoin, group-order assistance, Player View projection, Campaign Forge continuation, race initiative, and scalable Chase Point recalculation.
+- Adds RC regression coverage proving Campaign-linked split Sessions resume with their runtime topology and round state intact, race initiative remains participant-based after a split, merge operations re-evaluate scalable Chase Point requirements without discarding earned progress, and Player View identifies a controlled split group together with its current companions.
+- Hardens the player-safe ownership projection so `participant.controlled` is always an explicit boolean rather than occasionally resolving to an undefined falsey value.
+- Corrects stale public documentation that still reported API v10 and refreshes current-version headers for RC.2.
+- Keeps public API v18, all persisted schema versions, Extension Contract v1, Session Lifecycle Contract v1, and Campaign Forge Integration Contract v2 unchanged. No migration is required from dev.18.
+
 ## 0.1.0-dev.18 – Advanced Routing & Party Splitting
 
 - Adds dynamic runtime-group splitting so participants on one side can occupy different cards, branches, and mainline positions at the same time. Splits preserve participant round state and are blocked once partial Chase Point progress exists on the current obstacle.

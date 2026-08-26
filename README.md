@@ -1,10 +1,10 @@
 # PF2E Chase Forge
 
-**Version:** 0.1.0-dev.18  
+**Version:** 0.1.0-rc.2  
 **Foundry VTT:** 14  
 **System:** Pathfinder 2e
 
-PF2E Chase Forge is a modular Pathfinder 2e chase framework for Foundry VTT. `0.1.0-dev.18` implements Advanced Routing & Party Splitting on top of the validated RC code line. Runtime groups can split, move independently across mainline and branch nodes, reunite later, and be scheduled by an automatic or GM-selected group order. The public API is v18; persisted schemas and Campaign Forge Integration Contract v2 remain unchanged.
+PF2E Chase Forge is a modular Pathfinder 2e chase framework for Foundry VTT. `0.1.0-rc.2` is the final integration review candidate for the Advanced Routing & Party Splitting code line introduced in dev.18. Runtime groups can split, move independently across mainline and branch nodes, reunite later, and be scheduled by an automatic or GM-selected group order. The public API remains v18; persisted schemas and Campaign Forge Integration Contract v2 remain unchanged.
 
 The underlying architecture remains intact: DAG route graphs, synchronized GM/Player runtime views, add-on registries, template-based generation, the 72-card Core Library, the shared Visual System, PF2e chase rules, consequence orchestration, optional Critical Forge / Effect Forge integration, Weather Forge prefill, and protected restart-safe Blueprint/Session persistence.
 
@@ -467,7 +467,7 @@ Critical Forge / Effect Forge remains optional. When present, Chase Forge can ap
 const forge = game.modules.get("pf2e-chase-forge")?.api;
 ```
 
-Current API version: `10`.
+Current API version: `18`.
 
 Important surfaces:
 

@@ -56,7 +56,7 @@ export async function canUserControlParticipant(participant, user, { fromUuid = 
     const ownership = actor.ownership ?? actor.permission ?? {};
     const level = Number(ownership?.[user.id] ?? ownership?.default ?? 0);
     if (level >= ownerLevel) return true;
-    return user.character?.id && user.character.id === actor.id;
+    return Boolean(user.character?.id && user.character.id === actor.id);
   } catch {
     return false;
   }
