@@ -405,11 +405,14 @@ export function addParticipantToBasicBlueprint(input, groupId, participantInput)
     (participant.uuid && candidate.uuid === participant.uuid) || candidate.id === participant.id
   );
   if (!duplicate) group.participants.push(participant);
-  // Participant mutations are valid for both the linear and branching Builder.
-  // Do not collapse a branching Blueprint back to `basic` metadata here: doing
-  // so makes isBuilderEditableBlueprint() reject the still-branched graph and
-  // the UI consequently renders the entire document read-only.
-  ensureBuilderMetadata(next, { preserveMode: true });
+  // Participant mutations are also valid on protected advanced graphs. Only
+  // stamp Builder metadata when this document already belongs to a managed
+  // Builder mode (or is a Basic linear graph); otherwise an external route
+  // graph would be mislabeled as Basic and become harder to inspect safely.
+  const existingBuilderMode = blueprint.metadata?.builder?.mode ?? null;
+  if (isBasicLinearBlueprint(blueprint) || ["basic", "branching"].includes(existingBuilderMode)) {
+    ensureBuilderMetadata(next, { preserveMode: true });
+  }
   next.updatedAt = nowIso();
   return createChaseBlueprint(next);
 }
@@ -442,9 +445,13 @@ export function replaceBasicGroupsForChaseType(input, chaseType, { preserveParti
       next.settings.victory.roundLimit = CHASE_LENGTH_GUIDELINES[next.settings.length] ?? CHASE_LENGTH_GUIDELINES.short;
     }
   }
-  // Group resets are also allowed on branching Blueprints, so retain the
-  // existing Builder mode instead of invalidating the visual route editor.
-  ensureBuilderMetadata(next, { preserveMode: true });
+  // Group resets are also valid on protected advanced graphs. Preserve a
+  // managed Builder mode when one exists, but do not invent one for an
+  // external/free-form route graph.
+  const existingBuilderMode = blueprint.metadata?.builder?.mode ?? null;
+  if (isBasicLinearBlueprint(blueprint) || ["basic", "branching"].includes(existingBuilderMode)) {
+    ensureBuilderMetadata(next, { preserveMode: true });
+  }
   next.updatedAt = nowIso();
   return createChaseBlueprint(next);
 }

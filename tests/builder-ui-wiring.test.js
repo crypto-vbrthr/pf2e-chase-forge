@@ -274,6 +274,9 @@ test("Builder exposes a permanent New Chase action and separates world Chases fr
 
   assert.match(template, /data-action="newBlueprint"/);
   assert.match(template, /data-action="loadLibraryBlueprint"/);
+  assert.match(template, /data-action="toggleLibraryGroup"/);
+  assert.match(template, /data-library-group-id=/);
+  assert.match(template, /aria-expanded=/);
   assert.match(template, /data-action="copyLibraryBlueprint"/);
   assert.match(template, /PF2E_CHASE_FORGE\.Builder\.MyChases/);
   assert.match(template, /PF2E_CHASE_FORGE\.Builder\.Library/);
@@ -501,4 +504,38 @@ test("Builder re-enables editable controls after a forced ApplicationV2 refresh"
     if (previousGame === undefined) delete globalThis.game; else globalThis.game = previousGame;
     if (previousUi === undefined) delete globalThis.ui; else globalThis.ui = previousUi;
   }
+});
+
+test("Builder filters large registered-card libraries and can insert registered cards before or after the selected route card", async () => {
+  const template = await readFile(new URL("../templates/chase-builder.hbs", import.meta.url), "utf8");
+  const source = await readFile(new URL("../scripts/app/chase-builder-app.js", import.meta.url), "utf8");
+  const css = await readFile(new URL("../styles/chase-forge.css", import.meta.url), "utf8");
+  const de = JSON.parse(await readFile(new URL("../lang/de.json", import.meta.url), "utf8"));
+  const en = JSON.parse(await readFile(new URL("../lang/en.json", import.meta.url), "utf8"));
+
+  assert.match(template, /name="registeredCardSourceFilter"/);
+  assert.match(template, /name="registeredCardCategoryFilter"/);
+  assert.match(template, /registeredCardVisibleCount/);
+  assert.match(template, /registeredCardTotalCount/);
+  assert.match(source, /_bindRegisteredCardFilters/);
+  assert.match(source, /_registeredCardSourceFilter/);
+  assert.match(source, /_registeredCardCategoryFilter/);
+  assert.match(css, /\.chase-registered-card-picker/);
+
+  assert.match(template, /data-action="insertRegisteredCardBefore"/);
+  assert.match(template, /data-action="insertRegisteredCardAfter"/);
+  assert.match(source, /insertCardRelativeToBuilderCard/);
+  assert.match(source, /_insertRegisteredCardRelative\(target, position\)/);
+  assert.match(source, /originCardRef: rawCard\.id/);
+
+  const moveUpStart = source.indexOf("static async _actionMoveCardUp");
+  const moveUpEnd = source.indexOf("static async _actionMoveCardDown", moveUpStart);
+  const moveDownEnd = source.indexOf("static async _actionRemoveCard", moveUpEnd);
+  assert.match(source.slice(moveUpStart, moveUpEnd), /this\._captureScrollPosition\(\)/);
+  assert.match(source.slice(moveUpEnd, moveDownEnd), /this\._captureScrollPosition\(\)/);
+
+  assert.equal(de["PF2E_CHASE_FORGE.Builder.AllRegisteredCardSources"], "Alle Quellen");
+  assert.equal(en["PF2E_CHASE_FORGE.Builder.AllRegisteredCardSources"], "All sources");
+  assert.ok(de["PF2E_CHASE_FORGE.Builder.InsertRegisteredCardBefore"]);
+  assert.ok(en["PF2E_CHASE_FORGE.Builder.InsertRegisteredCardBefore"]);
 });

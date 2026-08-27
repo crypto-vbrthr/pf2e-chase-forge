@@ -36,19 +36,24 @@
       <p>{{localize "PF2E_CHASE_FORGE.Builder.LibraryHint"}}</p>
       <div class="chase-builder-library-groups">
         {{#each libraryGroups}}
-          <div class="chase-builder-library-group">
-            <div class="chase-builder-library-group-header">
-              <span><i class="fa-solid fa-box-archive" aria-hidden="true"></i> {{label}}</span>
+          <div class="chase-builder-library-group {{#if collapsed}}collapsed{{/if}}">
+            <button type="button" class="chase-builder-library-group-header" data-action="toggleLibraryGroup" data-library-group-id="{{id}}" aria-expanded="{{#if expanded}}true{{else}}false{{/if}}" title="{{localize "PF2E_CHASE_FORGE.Builder.LibraryGroupToggle"}}">
+              <span class="chase-builder-library-group-title">
+                <i class="fa-solid {{#if expanded}}fa-chevron-down{{else}}fa-chevron-right{{/if}} chase-builder-library-chevron" aria-hidden="true"></i>
+                <i class="fa-solid fa-box-archive" aria-hidden="true"></i> {{label}}
+              </span>
               <small>{{count}} {{localize "PF2E_CHASE_FORGE.Builder.LibraryChasesShort"}}{{#if version}} · v{{version}}{{/if}}</small>
-            </div>
-            <div class="chase-builder-blueprint-list">
-              {{#each chases}}
-                <button type="button" class="chase-blueprint-row chase-library-row {{#if active}}active{{/if}}" data-action="loadLibraryBlueprint" data-library-blueprint-id="{{id}}">
-                  <span class="chase-blueprint-row-title"><i class="fa-solid fa-lock" aria-hidden="true"></i> {{name}}</span>
-                  <span class="chase-blueprint-row-meta">{{chaseTypeLabel}} · {{cardCount}} {{localize "PF2E_CHASE_FORGE.Builder.CardsShort"}}</span>
-                </button>
-              {{/each}}
-            </div>
+            </button>
+            {{#if expanded}}
+              <div class="chase-builder-blueprint-list">
+                {{#each chases}}
+                  <button type="button" class="chase-blueprint-row chase-library-row {{#if active}}active{{/if}}" data-action="loadLibraryBlueprint" data-library-blueprint-id="{{id}}">
+                    <span class="chase-blueprint-row-title"><i class="fa-solid fa-lock" aria-hidden="true"></i> {{name}}</span>
+                    <span class="chase-blueprint-row-meta">{{chaseTypeLabel}} · {{cardCount}} {{localize "PF2E_CHASE_FORGE.Builder.CardsShort"}}</span>
+                  </button>
+                {{/each}}
+              </div>
+            {{/if}}
           </div>
         {{else}}
           <div class="chase-builder-empty compact">{{localize "PF2E_CHASE_FORGE.Builder.LibraryEmpty"}}</div>
@@ -101,7 +106,7 @@
         </div>
       </div>
     {{else}}
-      {{#unless editable}}
+      {{#if advancedRouteProtected}}
         <div class="chase-builder-banner warning">
           <i class="fa-solid fa-code-branch"></i>
           <div>
@@ -109,7 +114,7 @@
             <p>{{localize "PF2E_CHASE_FORGE.Builder.NonLinearHint"}}</p>
           </div>
         </div>
-      {{/unless}}
+      {{/if}}
     {{/if}}
 
     {{#if validationErrors.length}}
@@ -432,18 +437,37 @@
             <h3><i class="fa-solid fa-diagram-project"></i> {{localize "PF2E_CHASE_FORGE.Builder.Route"}}</h3>
             <p>{{localize "PF2E_CHASE_FORGE.Builder.RouteHint"}}</p>
           </div>
-          {{#if editable}}
+          {{#if routeEditable}}
             <div class="chase-builder-card-adders">
               <button type="button" data-action="addManualCard"><i class="fa-solid fa-plus"></i> {{localize "PF2E_CHASE_FORGE.Builder.AddManualCard"}}</button>
               {{#if hasRegisteredCards}}
-                <select name="registeredCard">
-                  {{#each registeredCardGroups}}
-                    <optgroup label="{{label}}">
-                      {{#each cards}}<option value="{{id}}">{{name}}</option>{{/each}}
-                    </optgroup>
-                  {{/each}}
-                </select>
-                <button type="button" data-action="addRegisteredCard"><i class="fa-solid fa-layer-group"></i> {{localize "PF2E_CHASE_FORGE.Builder.AddRegisteredCard"}}</button>
+                <div class="chase-registered-card-picker">
+                  <div class="chase-registered-card-filters">
+                    <select name="registeredCardSourceFilter" aria-label="{{localize 'PF2E_CHASE_FORGE.Builder.RegisteredCardSource'}}" title="{{localize 'PF2E_CHASE_FORGE.Builder.RegisteredCardSource'}}">
+                      <option value="">{{localize "PF2E_CHASE_FORGE.Builder.AllRegisteredCardSources"}}</option>
+                      {{#each registeredCardSourceOptions}}<option value="{{value}}" {{#if selected}}selected{{/if}}>{{label}}</option>{{/each}}
+                    </select>
+                    <select name="registeredCardCategoryFilter" aria-label="{{localize 'PF2E_CHASE_FORGE.Builder.RegisteredCardCategory'}}" title="{{localize 'PF2E_CHASE_FORGE.Builder.RegisteredCardCategory'}}">
+                      <option value="">{{localize "PF2E_CHASE_FORGE.Builder.AllRegisteredCardCategories"}}</option>
+                      {{#each registeredCardCategoryOptions}}<option value="{{value}}" {{#if selected}}selected{{/if}}>{{label}}</option>{{/each}}
+                    </select>
+                  </div>
+                  <div class="chase-registered-card-select-row">
+                    <select name="registeredCard" {{#unless hasVisibleRegisteredCards}}disabled{{/unless}}>
+                      {{#if hasVisibleRegisteredCards}}
+                        {{#each registeredCardGroups}}
+                          <optgroup label="{{label}}">
+                            {{#each cards}}<option value="{{id}}">{{name}}</option>{{/each}}
+                          </optgroup>
+                        {{/each}}
+                      {{else}}
+                        <option value="">{{localize "PF2E_CHASE_FORGE.Builder.NoRegisteredCardsForFilter"}}</option>
+                      {{/if}}
+                    </select>
+                    <button type="button" data-action="addRegisteredCard" {{#unless hasVisibleRegisteredCards}}disabled{{/unless}} title="{{localize 'PF2E_CHASE_FORGE.Builder.AddRegisteredCardAtEndHint'}}"><i class="fa-solid fa-layer-group"></i> {{localize "PF2E_CHASE_FORGE.Builder.AddRegisteredCard"}}</button>
+                  </div>
+                  <small class="chase-registered-card-count">{{registeredCardVisibleCount}} / {{registeredCardTotalCount}} {{localize "PF2E_CHASE_FORGE.Builder.RegisteredCardsVisible"}}</small>
+                </div>
               {{/if}}
             </div>
           {{/if}}
@@ -456,7 +480,7 @@
           </div>
         {{/if}}
 
-        {{#if builderSupported}}
+        {{#if routeWorkspaceSupported}}
           <div class="chase-route-workspace {{#unless hasInspector}}no-inspector{{/unless}}">
             <div class="chase-route-diagram-panel">
               <div class="chase-route-diagram-heading">
@@ -580,6 +604,14 @@
                       <button type="button" data-action="insertManualCardAfter" data-card-ref="{{selectedCard.ref}}" title="{{localize 'PF2E_CHASE_FORGE.Builder.InsertCardAfterHint'}}">
                         <i class="fa-solid fa-plus"></i><i class="fa-solid fa-arrow-down"></i> {{localize "PF2E_CHASE_FORGE.Builder.InsertCardAfter"}}
                       </button>
+                      {{#if hasVisibleRegisteredCards}}
+                        <button type="button" data-action="insertRegisteredCardBefore" data-card-ref="{{selectedCard.ref}}" title="{{localize 'PF2E_CHASE_FORGE.Builder.InsertRegisteredCardBeforeHint'}}">
+                          <i class="fa-solid fa-layer-group"></i><i class="fa-solid fa-arrow-up"></i> {{localize "PF2E_CHASE_FORGE.Builder.InsertRegisteredCardBefore"}}
+                        </button>
+                        <button type="button" data-action="insertRegisteredCardAfter" data-card-ref="{{selectedCard.ref}}" title="{{localize 'PF2E_CHASE_FORGE.Builder.InsertRegisteredCardAfterHint'}}">
+                          <i class="fa-solid fa-layer-group"></i><i class="fa-solid fa-arrow-down"></i> {{localize "PF2E_CHASE_FORGE.Builder.InsertRegisteredCardAfter"}}
+                        </button>
+                      {{/if}}
                     </div>
                   {{/if}}
 

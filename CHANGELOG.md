@@ -1,3 +1,52 @@
+## 1.0.8 – Builder Card Library UX
+
+- Moving a route card up or down now preserves the independent main-editor and sidebar scroll positions instead of jumping the Builder back to the top.
+- The registered-card picker now scales to larger add-on collections with independent source/pack and category filters plus a visible/total card counter.
+- Registered cards can now be inserted directly before or after the currently inspected route card, including cards inside managed branch lanes; the existing add action still appends to the end of the main route.
+- Relative registered-card insertion preserves origin metadata, recommended Chase Point scaling, and the existing branch ownership/merge semantics used by manual relative insertion.
+- Public API v18, persisted schemas, Extension Contract v1, and Campaign Forge Integration Contract v2 remain unchanged. No migration is required.
+
+## 1.0.7 – Collapsible Add-on Libraries
+
+- Add-on Library groups in the Chase Builder sidebar can now be expanded and collapsed independently, keeping the selection column compact as more content modules are installed.
+- Each Library header shows a chevron, pack label, chase count, and version while collapsed, so the source remains identifiable without displaying every prepared chase.
+- Collapse state is preserved across Builder re-renders for the lifetime of the open Builder window, including when selecting Library chases or editing world chases.
+- Toggling a Library preserves the independent sidebar and main-editor scroll positions.
+- Public API v18, persisted schemas, and Campaign Forge Integration Contract v2 remain unchanged.
+
+## 1.0.6 – Library Copy Localization Hotfix
+
+- Fixes prepared add-on card titles, player descriptions, GM notes, and standard approach labels being frozen with the add-on fallback language when a Library Chase is copied into **My Chases**.
+- Library-copy snapshots are now materialized in the user's current Foundry language before the copied Chase becomes editable, and route-card node labels are synchronized with the localized snapshot titles.
+- Localization bindings are removed from the owned local snapshots after materialization so later GM edits remain authoritative and are not overwritten by the source add-on's i18n keys during play.
+- Existing 1.0.4/1.0.5 Library copies are repaired conservatively when opened: source-equivalent text is localized, while fields already customized by the GM are preserved.
+- Public API v18, persisted schemas, and Campaign Forge Integration Contract v2 remain unchanged.
+
+## 1.0.5 – Library Copy Editability Hotfix
+
+- Library Blueprints copied into **My Chases** now adopt conventional `choice → routes → merge` graphs into Chase Forge's managed Branching Builder format after their referenced cards are frozen locally. Existing compatible world copies are adopted automatically the next time they are opened.
+- Copied prepared chases using the standard split/merge shape are therefore fully editable, including route cards, branch structure, and participants.
+- More exotic/free-form copied graphs remain route-protected, but the owned Chase document itself is no longer globally read-only: general settings, endings, and participant groups can still be edited and saved.
+- Protected advanced routes now remain visible in the route preview using their local snapshots instead of collapsing to an empty protected-state panel.
+- Participant and group mutations no longer stamp unsupported advanced graphs as Basic Builder documents.
+- Added regression coverage for library-copy graph adoption and protected advanced world-copy participant editing.
+
+## 1.0.4 – Library Reference Preview & Copy Hotfix
+
+- Fixes linear reference-mode Library Blueprints being misclassified as editable Basic Builder routes, which caused the false `One or more linear route cards do not have a local snapshot.` validation error.
+- Library entries now always use the reference-aware read-only route/card model, even when their graph is structurally linear and otherwise Basic-Builder compatible.
+- Restores full card details in the inspector for linear prepared add-on chases such as Urban Pursuits' Market Thief.
+- Library validation now checks the Blueprint structure plus actual registry resolvability instead of requiring local Builder snapshots.
+- Copying a Library Blueprint into the world now freezes its referenced cards into local snapshots, making the copied chase genuinely independent and editable.
+- Direct Library starts reject only genuinely unresolved card references; Public API v18, persisted schemas, and Campaign Forge Integration Contract v2 remain unchanged.
+
+## 1.0.3 – Library Blueprint Inspection Hotfix
+
+- Fixed prepared Library Blueprints using reference-mode content not showing card details in the Chase Builder inspector.
+- The read-only Builder preview now resolves referenced cards from the active Chase card registry while preferring embedded snapshots when available.
+- Generic Library route previews now understand explicit choice/merge graphs, so prepared add-on chases remain inspectable without being converted into editable world-builder data.
+- Library content remains read-only; copying a prepared chase into the world is still required before editing.
+
 ## 1.0.2 – GM Route Monitor Layout Polish
 
 - Centers card/node titles in the compact GM Runner route monitor so the route reads more cleanly along its visual centerline.

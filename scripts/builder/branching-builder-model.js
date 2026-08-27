@@ -66,6 +66,125 @@ export function isBuilderEditableBlueprint(input) {
   return isBasicLinearBlueprint(input) || isBranchingBuilderBlueprint(input);
 }
 
+/**
+ * Adopt a compatible external choice/merge graph into the managed Branching
+ * Builder format. This is primarily used when a read-only Library Blueprint
+ * is copied into the world: card references have already been frozen into
+ * local snapshots, so a conventional choice -> route(s) -> merge structure
+ * can safely become fully editable without changing the route semantics.
+ *
+ * Graphs with terminal splits, nested choices, non-card branch sources or
+ * ambiguous route segments remain advanced graphs and are returned unchanged.
+ */
+export function adoptCompatibleExtendedGraph(input) {
+  const original = createChaseBlueprint(input);
+  if (isBuilderEditableBlueprint(original)) return original;
+  if (original.contentSnapshots?.mode !== "snapshot") return original;
+
+  const snapshotRefs = new Set((original.contentSnapshots?.cards ?? [])
+    .filter(record => record?.ref && record?.data)
+    .map(record => record.ref));
+  const requiredRefs = (original.graph?.nodes ?? [])
+    .filter(node => node?.type === "card" && node.cardRef)
+    .map(node => node.cardRef);
+  if (requiredRefs.some(ref => !snapshotRefs.has(ref))) return original;
+
+  const choiceIds = (original.graph?.nodes ?? []).filter(node => node?.type === "choice").map(node => node.id);
+  if (choiceIds.length === 0) return original;
+
+  const next = cloneData(original);
+  const fail = () => original;
+
+  for (const choiceId of choiceIds) {
+    const { nodeById, incoming, outgoing } = buildGraphIndex(next.graph);
+    const choice = nodeById.get(choiceId);
+    if (!choice || choice.type !== "choice") return fail();
+
+    const incomingEdges = incoming.get(choiceId) ?? [];
+    const entryEdges = outgoing.get(choiceId) ?? [];
+    if (incomingEdges.length !== 1 || entryEdges.length !== 2) return fail();
+
+    const incomingEdge = incomingEdges[0];
+    const sourceNode = nodeById.get(incomingEdge.from);
+    if (!sourceNode || sourceNode.type !== "card" || sourceNode.metadata?.branchGroupId) return fail();
+
+    const traces = [];
+    for (const entry of entryEdges) {
+      const pathNodes = [];
+      const pathEdges = [];
+      const seen = new Set();
+      let currentId = entry.to;
+      let mergeNode = null;
+
+      while (currentId && !seen.has(currentId)) {
+        seen.add(currentId);
+        const current = nodeById.get(currentId);
+        if (!current) return fail();
+        if (current.type === "merge") { mergeNode = current; break; }
+        if (current.type !== "card") return fail();
+        pathNodes.push(current);
+        const nextEdges = outgoing.get(currentId) ?? [];
+        if (nextEdges.length !== 1) return fail();
+        pathEdges.push(nextEdges[0]);
+        currentId = nextEdges[0].to;
+      }
+      if (!mergeNode) return fail();
+      traces.push({ entry, mergeNode, pathNodes, pathEdges });
+    }
+
+    const mergeId = traces[0]?.mergeNode?.id ?? null;
+    if (!mergeId || traces.some(trace => trace.mergeNode.id !== mergeId)) return fail();
+    const mergeNode = nodeById.get(mergeId);
+    const continuationEdges = outgoing.get(mergeId) ?? [];
+    if (!mergeNode || continuationEdges.length !== 1) return fail();
+    const continuationEdge = continuationEdges[0];
+    const branchGroupId = `adopted:${choiceId}`;
+
+    // Remove the explicit choice node and its incoming edge. The route-entry
+    // edges themselves are retained so labels/visibility/conditions survive.
+    next.graph.nodes = next.graph.nodes.filter(node => node.id !== choiceId);
+    next.graph.edges = next.graph.edges.filter(edge => edge.id !== incomingEdge.id);
+
+    traces.forEach((trace, index) => {
+      const lane = index === 0 ? "left" : "right";
+      const entry = next.graph.edges.find(edge => edge.id === trace.entry.id);
+      if (!entry) return;
+      entry.from = sourceNode.id;
+      entry.metadata = { ...(entry.metadata ?? {}), branchGroupId, branchEntry: true, branchLane: lane };
+      for (const pathNode of trace.pathNodes) {
+        const node = next.graph.nodes.find(candidate => candidate.id === pathNode.id);
+        if (node) node.metadata = { ...(node.metadata ?? {}), branchGroupId, branchLane: lane };
+      }
+      for (const pathEdge of trace.pathEdges) {
+        const edge = next.graph.edges.find(candidate => candidate.id === pathEdge.id);
+        if (edge) edge.metadata = { ...(edge.metadata ?? {}), branchGroupId, branchLane: lane };
+      }
+    });
+
+    const liveMerge = next.graph.nodes.find(node => node.id === mergeId);
+    liveMerge.metadata = {
+      ...(liveMerge.metadata ?? {}),
+      branchGroupId,
+      sourceNodeId: sourceNode.id,
+      continuationNodeId: continuationEdge.to,
+      i18n: { ...(liveMerge.metadata?.i18n ?? {}), label: "PF2E_CHASE_FORGE.Builder.MergeNode" }
+    };
+    const liveContinuation = next.graph.edges.find(edge => edge.id === continuationEdge.id);
+    liveContinuation.metadata = { ...(liveContinuation.metadata ?? {}), branchGroupId, branchContinuation: true };
+  }
+
+  if ((next.graph?.nodes ?? []).some(node => node?.type === "choice")) return original;
+  next.metadata ??= {};
+  next.metadata.builder ??= {};
+  next.metadata.builder.mode = "branching";
+  next.metadata.builder.contractVersion = BRANCHING_BUILDER_CONTRACT_VERSION;
+  next.settings.routeComplexity = choiceIds.length > 1 ? "highlyBranched" : "branched";
+  next.updatedAt = nowIso();
+
+  const adopted = createChaseBlueprint(next);
+  return isBranchingBuilderBlueprint(adopted) ? adopted : original;
+}
+
 export function convertToBranchingBuilder(input) {
   const blueprint = createChaseBlueprint(input);
   if (!isBasicLinearBlueprint(blueprint) && !isBranchingBuilderBlueprint(blueprint)) {

@@ -1118,19 +1118,47 @@
 
 .chase-builder-library-group-header {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   justify-content: space-between;
   gap: 0.5rem;
-  padding: 0 0.15rem;
+  width: 100%;
+  min-height: 0;
+  margin: 0;
+  padding: 0.15rem;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
 }
 
-.chase-builder-library-group-header > span {
+.chase-builder-library-group-header:hover,
+.chase-builder-library-group-header:focus-visible {
+  background: rgba(255,255,255,0.055);
+}
+
+.chase-builder-library-group-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-width: 0;
   font-weight: 700;
+}
+
+.chase-builder-library-chevron {
+  width: 0.8rem;
+  text-align: center;
+  opacity: 0.75;
 }
 
 .chase-builder-library-group-header small {
   opacity: 0.72;
   white-space: nowrap;
+}
+
+.chase-builder-library-group.collapsed {
+  gap: 0;
 }
 
 /* 0.1.0-dev.10.2: visual route diagram and click-to-open card/branch inspector */
@@ -2130,4 +2158,44 @@
   flex-wrap: wrap;
   gap: 0.35rem;
   margin-top: 0.45rem;
+}
+
+/* 1.0.8: scalable registered-card picker */
+.chase-registered-card-picker {
+  display: grid;
+  gap: 5px;
+  min-width: min(520px, 100%);
+  flex: 1 1 420px;
+}
+
+.chase-registered-card-filters,
+.chase-registered-card-select-row {
+  display: grid;
+  gap: 5px;
+  align-items: center;
+}
+
+.chase-registered-card-filters {
+  grid-template-columns: repeat(2, minmax(140px, 1fr));
+}
+
+.chase-registered-card-select-row {
+  grid-template-columns: minmax(220px, 1fr) auto;
+}
+
+.chase-registered-card-picker select {
+  min-width: 0;
+  width: 100%;
+}
+
+.chase-registered-card-count {
+  opacity: .72;
+  text-align: right;
+}
+
+@media (max-width: 760px) {
+  .chase-registered-card-picker { min-width: 100%; }
+  .chase-registered-card-filters,
+  .chase-registered-card-select-row { grid-template-columns: 1fr; }
+  .chase-registered-card-count { text-align: left; }
 }

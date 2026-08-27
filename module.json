@@ -2,7 +2,7 @@
   "id": "pf2e-chase-forge",
   "title": "PF2E Chase Forge",
   "description": "A modular Pathfinder 2e chase framework for Foundry VTT with Campaign Forge and Journal integration, a shared Visual System, Core Card Library, seeded template-based route generation, activity-diagram route Builder, branching routes, read-only add-on Chase libraries, synchronized GM and Player views, PF2e chase rules, consequences, protected persistence, and optional Weather Forge integration.",
-  "version": "1.0.2",
+  "version": "1.0.8",
   "authors": [
     {
       "name": "crypto-vbrthr"
@@ -41,7 +41,7 @@
   "readme": "README.md",
   "url": "https://github.com/crypto-vbrthr/pf2e-chase-forge",
   "manifest": "https://raw.githubusercontent.com/crypto-vbrthr/pf2e-chase-forge/main/module.json",
-  "download": "https://github.com/crypto-vbrthr/pf2e-chase-forge/releases/download/v1.0.2/pf2e-chase-forge.zip",
+  "download": "https://github.com/crypto-vbrthr/pf2e-chase-forge/releases/download/v1.0.8/pf2e-chase-forge.zip",
   "styles": [
     "styles/chase-forge.css"
   ],

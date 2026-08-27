@@ -1,26 +1,44 @@
 # PF2E Chase Forge
 
-**Version:** 1.0.2  
+**Version:** 1.0.8  
 **Foundry VTT:** 14  
 **System:** Pathfinder 2e
 
-PF2E Chase Forge is a modular Pathfinder 2e chase framework for Foundry VTT. `1.0.2` is a small GM Runner layout polish release on top of the stable 1.0.x line, consolidating the validated Advanced Routing & Party Splitting runtime, final PF2e chase-rules alignment, synchronized GM/Player play, Campaign Forge continuation, branching routes, protected persistence, and extensible Chase libraries. The public API remains v18; persisted schemas and Campaign Forge Integration Contract v2 remain unchanged.
+PF2E Chase Forge is a modular Pathfinder 2e chase framework for Foundry VTT. `1.0.8` improves large registered-card libraries in the Builder with source/category filters, relative registered-card insertion, and scroll-preserving card reordering. The collapsible add-on Chase libraries, localized Library-copy workflow, validated Advanced Routing & Party Splitting runtime, final PF2e chase-rules alignment, synchronized GM/Player play, Campaign Forge continuation, protected persistence, and extensible Chase libraries remain unchanged. The public API remains v18; persisted schemas and Campaign Forge Integration Contract v2 remain unchanged.
 
 The underlying architecture remains intact: DAG route graphs, synchronized GM/Player runtime views, add-on registries, template-based generation, the 72-card Core Library, the shared Visual System, PF2e chase rules, consequence orchestration, optional Critical Forge / Effect Forge integration, Weather Forge prefill, and protected restart-safe Blueprint/Session persistence.
 
 
-## Part of the Forge Suite
+## 1.0.8 Builder Card Library UX
 
-**Chase Forge** is part of the **Forge Suite**, a growing collection of Foundry VTT modules and add-ons built for the busy Game Master. The suite is designed to reduce preparation and bookkeeping, make common GM tasks easier, and add useful tools that help make running and playing campaigns smoother and more enjoyable.
+- Route-card up/down actions preserve the Builder scroll position.
+- Registered cards can be narrowed by source/pack and category, with a visible/total count for large content collections.
+- The registered card selected in the picker can be appended to the main route or inserted directly before/after the currently inspected route card, including managed branch lanes.
+- Relative insertion keeps normal Builder snapshot/origin metadata and scalable Chase Point recommendations intact.
 
-An overview of the Forge Suite, its modules, add-ons, and shared documentation is available here:
+## 1.0.7 Collapsible Add-on Libraries
 
-**Forge Suite:** https://github.com/crypto-vbrthr/pf2e-forge-suite
+External Library packs in the Chase Builder sidebar can be expanded and collapsed independently. The compact header keeps the pack name, chase count, and version visible while its prepared chases are hidden, and the chosen state survives normal Builder re-renders for as long as the Builder window remains open.
+
+## 1.0.6 Library Copy Localization Hotfix
+
+Prepared add-on chases copied into **My Chases** now materialize their referenced card content in the user's active Foundry language before becoming editable world content. Card titles, player-facing descriptions, GM notes, and standard approach labels are frozen locally, and route-card labels follow the localized card title. The source add-on i18n binding is then removed from those local snapshots so a GM can freely rewrite the copied content without having it translated back over their edits later. Existing 1.0.4/1.0.5 copies are repaired conservatively when opened, preserving fields that have already been customized.
 
 
-## 1.0.2 GM Route Monitor Layout Polish
+## 1.0.5 Library Copy Editability Hotfix
 
-The compact GM Runner route monitor now centers each route-card title within its node. Runtime-group markers and their remaining-distance indicators stay in the existing structured row beneath the title, so the overview is visually calmer without sacrificing scanability. Mainline nodes, branch nodes, start, merge, and ending nodes use the same title alignment. No runtime, rules, API, schema, or Campaign Forge contract changes are involved.
+Prepared Library chases can be copied into **My Chases** without becoming globally read-only. Standard choice/merge graphs are converted to Chase Forge's managed Branching Builder representation after card references have been frozen into local snapshots; compatible copies created by 1.0.4 are adopted automatically when opened again. Free-form or multi-ending route graphs remain protected at the topology level, but their copied Chase settings, endings, and participant groups remain editable.
+
+## 1.0.4 Library Reference Preview & Copy Hotfix
+
+Reference-mode Library Blueprints are now handled as read-only library content before the Builder considers whether their graph happens to look like an editable Basic/Branching route. This fixes linear prepared add-on chases being routed through the snapshot-only Basic Builder path, which produced a false missing-snapshot error and an empty card inspector. Library validation resolves cards against the active registry, and copying a prepared chase into the world now freezes those references into local snapshots so the copy remains editable and independent of the source add-on.
+
+
+## 1.0.3 Library Blueprint Inspection Hotfix
+
+Prepared chases supplied by add-ons can keep their cards as registry references instead of embedding editable world snapshots. The Chase Builder now resolves those referenced cards for its read-only Library preview, so selecting a route card shows its full card inspector again, including description, GM notes, Chase Points, approaches, and image information. Embedded snapshots are still preferred when a Library Blueprint provides them.
+
+The preview also understands the explicit choice/merge route graphs commonly used by add-on prepared chases. This is presentation-only: Library entries remain read-only, and the GM must still copy a prepared chase into the world before modifying it. Public API v18, persisted schemas, and Campaign Forge Integration Contract v2 remain unchanged.
 
 
 ## 1.0.1 Localization Hotfix

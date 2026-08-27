@@ -23,9 +23,11 @@ import {
   appendCardToBranchRoute,
   appendMainlineCard,
   appendMainlineManualCard,
+  adoptCompatibleExtendedGraph,
   convertToBranchingBuilder,
   isBranchingBuilderBlueprint,
   isBuilderEditableBlueprint,
+  insertCardRelativeToBuilderCard,
   insertManualCardRelativeToBuilderCard,
   listBranchGroups,
   listEditableCards,
@@ -35,6 +37,7 @@ import {
   validateBranchingBuilderBlueprint
 } from "../builder/branching-builder-model.js";
 import { cloneData, createId, nowIso } from "../data/utils.js";
+import { buildGraphIndex, topologicalSort } from "../data/graph.js";
 import { localizeApproachLabel, localizeChaseCard, localizeSkillLabel } from "../content/content-localization.js";
 import { openFoundryImagePicker } from "../images/foundry-image-picker.js";
 import { obstaclePointScalingModeForIndex, obstaclePointsForScalingMode, rollingGroupSizeForBlueprint, stampRecommendedPointScaling } from "../rules/chase-guidelines.js";
@@ -190,6 +193,273 @@ function compactRouteCard(item, { selected = null, editable = false } = {}) {
  * Branch blocks are inserted immediately after the card that owns their
  * branch-entry edges, while branch-lane cards are removed from the mainline.
  */
+
+
+function resolvePreviewCard(blueprint, cardRef, chaseApi) {
+  if (!cardRef) return null;
+  const snapshot = (blueprint?.contentSnapshots?.cards ?? []).find(record => record?.ref === cardRef && record?.data);
+  const raw = snapshot?.data ?? chaseApi?.cards?.get?.(cardRef, { includeDisabled: true }) ?? null;
+  return raw ? localizeChaseCard(raw) : null;
+}
+
+function freezeLocalizedCard(cardInput) {
+  const localized = cloneData(localizeChaseCard(cardInput));
+  if (localized?.metadata && typeof localized.metadata === "object") delete localized.metadata.i18n;
+  return localized;
+}
+
+/**
+ * Turn add-on card snapshots inside an owned Library copy into editable text in
+ * the user's current Foundry language. The i18n binding is deliberately
+ * removed afterwards: once a Library Chase is copied into My Chases, its text
+ * becomes owned world content and subsequent user edits must not be replaced
+ * by the source add-on's translations at runtime.
+ *
+ * Existing 1.0.4/1.0.5 copies are repaired conservatively. A field is only
+ * replaced when it still matches the live add-on fallback text; customized
+ * fields are preserved.
+ */
+export function materializeLibraryCopyLocalization(input, chaseApi) {
+  const blueprint = chaseApi?.factories?.blueprint ? chaseApi.factories.blueprint(input) : cloneData(input);
+  if (!blueprint?.metadata?.libraryOrigin || blueprint?.contentSnapshots?.mode !== "snapshot") return blueprint;
+  const next = cloneData(blueprint);
+  let changed = false;
+  const localizedByRef = new Map();
+
+  for (const record of next.contentSnapshots?.cards ?? []) {
+    if (!record?.ref || !record?.data) continue;
+    const liveRaw = chaseApi?.cards?.get?.(record.ref, { includeDisabled: true }) ?? null;
+    const sourceCard = liveRaw ?? record.data;
+    if (!sourceCard?.metadata?.i18n && !record.data?.metadata?.i18n) continue;
+
+    const localized = freezeLocalizedCard(sourceCard);
+    const current = cloneData(record.data);
+
+    // Preserve edits made to older copied Chases. Only source-equivalent text
+    // is safe to replace automatically. New copies always satisfy this test.
+    if (!liveRaw || current.name === liveRaw.name) current.name = localized.name;
+    if (!liveRaw || current.description === liveRaw.description) current.description = localized.description;
+    if (!liveRaw || current.gmNotes === liveRaw.gmNotes) current.gmNotes = localized.gmNotes;
+    if (current.image && localized.image) {
+      if (!liveRaw || current.image.alt === liveRaw.image?.alt) current.image.alt = localized.image.alt;
+    }
+
+    const liveApproaches = new Map((liveRaw?.approaches ?? []).map(item => [item.id, item]));
+    const localizedApproaches = new Map((localized.approaches ?? []).map(item => [item.id, item]));
+    current.approaches = (current.approaches ?? []).map(approach => {
+      const rawApproach = liveApproaches.get(approach.id) ?? null;
+      const translated = localizedApproaches.get(approach.id) ?? null;
+      if (!translated) return approach;
+      const updated = cloneData(approach);
+      if (!rawApproach || updated.label === rawApproach.label) updated.label = translated.label;
+      if (!rawApproach || updated.description === rawApproach.description) updated.description = translated.description;
+      return updated;
+    });
+
+    current.metadata ??= {};
+    if (Object.hasOwn(current.metadata, "i18n")) {
+      delete current.metadata.i18n;
+      changed = true;
+    }
+
+    const normalizedCurrent = chaseApi?.factories?.card ? chaseApi.factories.card(current) : current;
+    if (JSON.stringify(normalizedCurrent) !== JSON.stringify(record.data)) changed = true;
+    record.data = normalizedCurrent;
+    localizedByRef.set(record.ref, normalizedCurrent);
+  }
+
+  // The visual route title should follow the frozen local card title rather
+  // than retaining the add-on's fallback label.
+  for (const node of next.graph?.nodes ?? []) {
+    if (node?.type !== "card" || !node.cardRef) continue;
+    const card = localizedByRef.get(node.cardRef);
+    if (card?.name && node.label !== card.name) {
+      node.label = card.name;
+      changed = true;
+    }
+  }
+
+  if (next.metadata?.i18nBase) {
+    delete next.metadata.i18nBase;
+    changed = true;
+  }
+  if (changed) next.updatedAt = nowIso();
+  return chaseApi?.factories?.blueprint ? chaseApi.factories.blueprint(next) : next;
+}
+
+function nearestCommonMerge(graph, branchStarts = []) {
+  if (!graph || branchStarts.length < 2) return null;
+  const { nodeById, outgoing } = buildGraphIndex(graph);
+  const distancesFrom = startId => {
+    const distances = new Map();
+    const queue = [[startId, 0]];
+    while (queue.length) {
+      const [nodeId, distance] = queue.shift();
+      if (!nodeId || distances.has(nodeId)) continue;
+      distances.set(nodeId, distance);
+      for (const edge of outgoing.get(nodeId) ?? []) queue.push([edge.to, distance + 1]);
+    }
+    return distances;
+  };
+  const distanceMaps = branchStarts.map(distancesFrom);
+  const candidates = [...nodeById.values()].filter(node => node.type === "merge" && distanceMaps.every(map => map.has(node.id)));
+  candidates.sort((a, b) => {
+    const aMax = Math.max(...distanceMaps.map(map => map.get(a.id)));
+    const bMax = Math.max(...distanceMaps.map(map => map.get(b.id)));
+    if (aMax !== bMax) return aMax - bMax;
+    const aSum = distanceMaps.reduce((sum, map) => sum + map.get(a.id), 0);
+    const bSum = distanceMaps.reduce((sum, map) => sum + map.get(b.id), 0);
+    return aSum - bSum || String(a.id).localeCompare(String(b.id));
+  });
+  return candidates[0] ?? null;
+}
+
+/**
+ * Build a read-only route/card view for Library Blueprints. Library entries are
+ * allowed to keep their content in reference mode and do not carry Builder
+ * metadata, so the editable Builder model cannot be used for inspection.
+ */
+export function buildLibraryBlueprintPreview(blueprint, chaseApi) {
+  const graph = blueprint?.graph ?? { nodes: [], edges: [] };
+  const { nodeById, incoming, outgoing } = buildGraphIndex(graph);
+  const order = topologicalSort(graph) ?? (graph.nodes ?? []).map(node => node.id);
+  const cardItems = [];
+  const cardByNode = new Map();
+
+  for (const nodeId of order) {
+    const node = nodeById.get(nodeId);
+    if (!node || node.type !== "card" || !node.cardRef) continue;
+    const card = resolvePreviewCard(blueprint, node.cardRef, chaseApi);
+    if (!card) continue;
+    const record = (blueprint?.contentSnapshots?.cards ?? []).find(candidate => candidate?.ref === node.cardRef) ?? {
+      ref: node.cardRef,
+      source: cloneData(card.source ?? null),
+      data: cloneData(card),
+      metadata: { originCardRef: node.cardRef }
+    };
+    const item = {
+      index: cardItems.length,
+      node: cloneData(node),
+      nodeId: node.id,
+      ref: node.cardRef,
+      record: cloneData(record),
+      card: cloneData(card),
+      incomingEdges: cloneData(incoming.get(node.id) ?? []),
+      outgoingEdges: cloneData(outgoing.get(node.id) ?? []),
+      branchGroupId: null,
+      canAddBranch: false
+    };
+    cardItems.push(item);
+    cardByNode.set(node.id, item);
+  }
+
+  const branchGroups = [];
+  for (const choice of graph.nodes ?? []) {
+    if (choice?.type !== "choice") continue;
+    const entries = outgoing.get(choice.id) ?? [];
+    if (entries.length < 2) continue;
+    const merge = nearestCommonMerge(graph, entries.map(edge => edge.to));
+    if (!merge) continue;
+
+    const predecessor = (incoming.get(choice.id) ?? [])
+      .map(edge => nodeById.get(edge.from))
+      .find(node => node?.type === "card") ?? null;
+    if (!predecessor) continue;
+
+    const routes = entries.map((entry, routeIndex) => {
+      const nodes = [];
+      const seen = new Set();
+      let currentId = entry.to;
+      while (currentId && currentId !== merge.id && !seen.has(currentId)) {
+        seen.add(currentId);
+        const current = nodeById.get(currentId);
+        if (!current) break;
+        if (current.type === "card") {
+          const item = cardByNode.get(current.id);
+          nodes.push({ nodeId: current.id, ref: current.cardRef, name: item?.card?.name ?? current.label ?? current.id });
+        }
+        const nextEdges = outgoing.get(currentId) ?? [];
+        if (nextEdges.length !== 1) break;
+        currentId = nextEdges[0].to;
+      }
+      return {
+        edgeId: entry.id,
+        label: entry.label || i18n("PF2E_CHASE_FORGE.Builder.RouteLabelFallback", `Route ${routeIndex + 1}`),
+        description: entry.description || "",
+        visibility: entry.visibility ?? "public",
+        type: entry.type ?? "branch",
+        nodes
+      };
+    });
+
+    const continuationEdge = (outgoing.get(merge.id) ?? [])[0] ?? null;
+    const continuation = continuationEdge ? nodeById.get(continuationEdge.to) : null;
+    branchGroups.push({
+      branchGroupId: `library:${choice.id}`,
+      sourceNodeId: predecessor.id,
+      sourceLabel: cardByNode.get(predecessor.id)?.card?.name ?? predecessor.label ?? predecessor.id,
+      mergeNodeId: merge.id,
+      continuationNodeId: continuation?.id ?? null,
+      continuationLabel: continuation?.type === "card"
+        ? (cardByNode.get(continuation.id)?.card?.name ?? continuation.label ?? continuation.id)
+        : (continuation?.label ?? continuation?.id ?? ""),
+      routes
+    });
+  }
+
+  return { cards: cardItems, branchGroups };
+}
+
+/**
+ * Validate a read-only Library Blueprint without requiring Builder-local card
+ * snapshots. Reference-mode library content is valid as long as the Blueprint
+ * itself is structurally valid and every referenced card can be resolved from
+ * either an embedded snapshot or the active card registry.
+ */
+export function validateLibraryBlueprintPreview(blueprint, chaseApi, preview = null) {
+  const base = chaseApi?.validation?.blueprint?.(blueprint) ?? { valid: true, errors: [], warnings: [] };
+  const errors = [...(base.errors ?? [])];
+  const warnings = [...(base.warnings ?? [])];
+  const resolvedPreview = preview ?? buildLibraryBlueprintPreview(blueprint, chaseApi);
+  const expectedRefs = [...new Set((blueprint?.graph?.nodes ?? [])
+    .filter(node => node?.type === "card" && node.cardRef)
+    .map(node => node.cardRef))];
+  const resolvedRefs = new Set((resolvedPreview?.cards ?? []).map(item => item?.ref).filter(Boolean));
+  const missingRefs = expectedRefs.filter(ref => !resolvedRefs.has(ref));
+  if (missingRefs.length > 0) {
+    errors.push({
+      code: "LIBRARY_CARD_UNRESOLVED",
+      path: "graph.nodes",
+      message: "One or more Library Blueprint cards could not be resolved from the active Chase Card registry.",
+      details: { refs: missingRefs }
+    });
+  }
+  return Object.freeze({ valid: errors.length === 0, errors, warnings, blueprint });
+}
+
+/**
+ * Select the route/card model used by the Builder. Library Blueprints always
+ * use the reference-aware read-only preview, even when their graph happens to
+ * match the editable Basic/Branching Builder shape.
+ */
+export function resolveBuilderRouteData(blueprint, chaseApi, { librarySelected = false } = {}) {
+  const linearEditable = isBasicLinearBlueprint(blueprint);
+  const branchingEditable = isBranchingBuilderBlueprint(blueprint);
+  const builderSupported = isBuilderEditableBlueprint(blueprint);
+  const libraryPreview = librarySelected ? buildLibraryBlueprintPreview(blueprint, chaseApi) : null;
+  const protectedPreview = !librarySelected && !builderSupported
+    ? buildLibraryBlueprintPreview(blueprint, chaseApi)
+    : null;
+  const cards = librarySelected
+    ? (libraryPreview?.cards ?? [])
+    : (builderSupported ? listEditableCards(blueprint) : (protectedPreview?.cards ?? []));
+  const branchGroups = librarySelected
+    ? (libraryPreview?.branchGroups ?? [])
+    : (branchingEditable ? listBranchGroups(blueprint) : (protectedPreview?.branchGroups ?? []));
+  const routeWorkspaceSupported = cards.length > 0 || builderSupported;
+  return { linearEditable, branchingEditable, builderSupported, libraryPreview, protectedPreview, cards, branchGroups, routeWorkspaceSupported };
+}
+
 export function buildRouteDiagramModel(cards = [], branchGroups = [], { selected = null, editable = false } = {}) {
   const cardByNodeId = new Map();
   const cardByRef = new Map();
@@ -443,6 +713,7 @@ function getAppClass() {
         newBlueprint: this._actionNewBlueprint,
         loadBlueprint: this._actionLoadBlueprint,
         loadLibraryBlueprint: this._actionLoadLibraryBlueprint,
+        toggleLibraryGroup: this._actionToggleLibraryGroup,
         copyLibraryBlueprint: this._actionCopyLibraryBlueprint,
         saveBlueprint: this._actionSaveBlueprint,
         copyJournalLink: this._actionCopyJournalLink,
@@ -455,6 +726,8 @@ function getAppClass() {
         addRegisteredCard: this._actionAddRegisteredCard,
         insertManualCardBefore: this._actionInsertManualCardBefore,
         insertManualCardAfter: this._actionInsertManualCardAfter,
+        insertRegisteredCardBefore: this._actionInsertRegisteredCardBefore,
+        insertRegisteredCardAfter: this._actionInsertRegisteredCardAfter,
         moveCardUp: this._actionMoveCardUp,
         moveCardDown: this._actionMoveCardDown,
         removeCard: this._actionRemoveCard,
@@ -503,6 +776,9 @@ function getAppClass() {
       this._dropBoundElement = null;
       this._participantDropHandlers = null;
       this._generatorTemplateId = null;
+      this._collapsedLibraryGroups = new Set();
+      this._registeredCardSourceFilter = "";
+      this._registeredCardCategoryFilter = "";
     }
 
     get draft() { return cloneData(this._draft); }
@@ -510,7 +786,22 @@ function getAppClass() {
     async loadBlueprint(blueprintId) {
       const blueprint = await this.chaseApi.persistence.blueprints.get(blueprintId);
       if (!blueprint) throw new Error(`Unknown Chase Blueprint '${blueprintId}'.`);
-      this._draft = this.chaseApi.factories.blueprint(blueprint);
+      let normalized = this.chaseApi.factories.blueprint(blueprint);
+      let shouldSave = false;
+
+      const localizedCopy = materializeLibraryCopyLocalization(normalized, this.chaseApi);
+      if (JSON.stringify(localizedCopy) !== JSON.stringify(normalized)) {
+        normalized = localizedCopy;
+        shouldSave = true;
+      }
+
+      const adopted = adoptCompatibleExtendedGraph(normalized);
+      if (!isBuilderEditableBlueprint(normalized) && isBuilderEditableBlueprint(adopted)) {
+        normalized = adopted;
+        shouldSave = true;
+      }
+      if (shouldSave) normalized = await this.chaseApi.persistence.blueprints.save(normalized);
+      this._draft = normalized;
       this._persisted = true;
       this._libraryBlueprintId = null;
       this._lastValidation = null;
@@ -539,6 +830,8 @@ function getAppClass() {
       const now = nowIso();
       const metadata = cloneData(source.metadata ?? {});
       delete metadata.library;
+      delete metadata.i18nBase;
+      delete metadata.i18n;
       metadata.libraryOrigin = {
         blueprintId: source.id,
         source: cloneData(source.source ?? null),
@@ -620,15 +913,28 @@ function getAppClass() {
       const blueprints = await this.chaseApi.persistence.blueprints.list();
       const libraryBlueprints = this.chaseApi.library?.list?.({ includeDisabled: false }) ?? [];
       const summaries = blueprints
-        .map(blueprint => ({ ...basicBuilderSummary(blueprint), chaseTypeLabel: i18n(`PF2E_CHASE_FORGE.ChaseType.${blueprint.settings?.chaseType ?? "pursuit"}`, blueprint.settings?.chaseType ?? "pursuit"), active: !this._libraryBlueprintId && blueprint.id === this._draft.id }))
+        .map(blueprint => ({
+          ...basicBuilderSummary(blueprint),
+          cardCount: blueprint.graph?.nodes?.filter?.(node => node.type === "card")?.length ?? 0,
+          participantCount: (blueprint.groups ?? []).reduce((sum, group) => sum + (group.participants?.length ?? 0), 0),
+          editable: isBuilderEditableBlueprint(blueprint),
+          chaseTypeLabel: i18n(`PF2E_CHASE_FORGE.ChaseType.${blueprint.settings?.chaseType ?? "pursuit"}`, blueprint.settings?.chaseType ?? "pursuit"),
+          active: !this._libraryBlueprintId && blueprint.id === this._draft.id
+        }))
         .sort((a, b) => String(b.updatedAt).localeCompare(String(a.updatedAt)));
-      const linearEditable = isBasicLinearBlueprint(this._draft);
-      const branchingEditable = isBranchingBuilderBlueprint(this._draft);
-      const builderSupported = isBuilderEditableBlueprint(this._draft);
       const librarySelected = Boolean(this._libraryBlueprintId);
-      const editable = builderSupported && !librarySelected;
-      const cards = builderSupported ? listEditableCards(this._draft) : [];
-      const branchGroups = branchingEditable ? listBranchGroups(this._draft) : [];
+      const {
+        linearEditable,
+        branchingEditable,
+        builderSupported,
+        libraryPreview,
+        cards,
+        branchGroups,
+        routeWorkspaceSupported
+      } = resolveBuilderRouteData(this._draft, this.chaseApi, { librarySelected });
+      const editable = !librarySelected;
+      const routeEditable = builderSupported && !librarySelected;
+      const advancedRouteProtected = editable && !builderSupported;
       const imageProviders = this.chaseApi.images?.providers?.list?.() ?? [];
       const imageProviderOptions = [
         { value: "", label: i18n("PF2E_CHASE_FORGE.Visual.AnyProvider", "Beliebiger Anbieter") },
@@ -682,11 +988,46 @@ function getAppClass() {
         const category = card.metadata?.i18n?.category
           ? i18n(card.metadata.i18n.category, card.metadata?.category ?? "")
           : (card.metadata?.category ?? "");
-        return { id: card.id, name: card.name, type: card.type, source, category, sourcePackId: card.source?.packId ?? card.source?.moduleId ?? "cards" };
+        const categoryId = card.metadata?.category ?? card.metadata?.i18n?.category ?? "general";
+        return {
+          id: card.id,
+          name: card.name,
+          type: card.type,
+          source,
+          category,
+          categoryId,
+          sourcePackId: card.source?.packId ?? card.source?.moduleId ?? "cards"
+        };
       }).sort((a, b) => String(a.source).localeCompare(String(b.source)) || String(a.category).localeCompare(String(b.category)) || String(a.name).localeCompare(String(b.name)));
-      const registeredCardGroupMap = new Map();
+
+      const registeredCardSourceMap = new Map();
       for (const card of registeredCardViews) {
-        const groupId = `${card.sourcePackId}:${card.category || "general"}`;
+        if (!registeredCardSourceMap.has(card.sourcePackId)) registeredCardSourceMap.set(card.sourcePackId, card.source || card.sourcePackId);
+      }
+      const registeredCardSourceOptions = [...registeredCardSourceMap.entries()]
+        .map(([value, label]) => ({ value, label, selected: value === this._registeredCardSourceFilter }))
+        .sort((a, b) => String(a.label).localeCompare(String(b.label)));
+      if (this._registeredCardSourceFilter && !registeredCardSourceMap.has(this._registeredCardSourceFilter)) this._registeredCardSourceFilter = "";
+
+      const sourceFilteredRegisteredCards = this._registeredCardSourceFilter
+        ? registeredCardViews.filter(card => card.sourcePackId === this._registeredCardSourceFilter)
+        : registeredCardViews;
+      const registeredCardCategoryMap = new Map();
+      for (const card of sourceFilteredRegisteredCards) {
+        const label = card.category || i18n("PF2E_CHASE_FORGE.Builder.RegisteredCardsGeneral", "Allgemein");
+        if (!registeredCardCategoryMap.has(card.categoryId)) registeredCardCategoryMap.set(card.categoryId, label);
+      }
+      if (this._registeredCardCategoryFilter && !registeredCardCategoryMap.has(this._registeredCardCategoryFilter)) this._registeredCardCategoryFilter = "";
+      const registeredCardCategoryOptions = [...registeredCardCategoryMap.entries()]
+        .map(([value, label]) => ({ value, label, selected: value === this._registeredCardCategoryFilter }))
+        .sort((a, b) => String(a.label).localeCompare(String(b.label)));
+
+      const filteredRegisteredCardViews = this._registeredCardCategoryFilter
+        ? sourceFilteredRegisteredCards.filter(card => card.categoryId === this._registeredCardCategoryFilter)
+        : sourceFilteredRegisteredCards;
+      const registeredCardGroupMap = new Map();
+      for (const card of filteredRegisteredCardViews) {
+        const groupId = `${card.sourcePackId}:${card.categoryId || "general"}`;
         if (!registeredCardGroupMap.has(groupId)) {
           registeredCardGroupMap.set(groupId, {
             id: groupId,
@@ -698,9 +1039,11 @@ function getAppClass() {
       }
       const registeredCardGroups = [...registeredCardGroupMap.values()];
       const generationMeta = this._draft.metadata?.generator ?? null;
-      const validation = linearEditable
-        ? validateBasicBuilderBlueprint(this._draft)
-        : (branchingEditable ? validateBranchingBuilderBlueprint(this._draft) : this.chaseApi.validation.blueprint(this._draft));
+      const validation = librarySelected
+        ? validateLibraryBlueprintPreview(this._draft, this.chaseApi, libraryPreview)
+        : (linearEditable
+          ? validateBasicBuilderBlueprint(this._draft)
+          : (branchingEditable ? validateBranchingBuilderBlueprint(this._draft) : this.chaseApi.validation.blueprint(this._draft)));
       const builderMeta = this._draft.metadata?.builder ?? {};
       const persisted = !librarySelected && blueprints.some(item => item.id === this._draft.id);
       this._persisted = persisted;
@@ -749,7 +1092,10 @@ function getAppClass() {
         libraryGroupMap.get(groupId).chases.push(blueprint);
       }
       const libraryGroups = [...libraryGroupMap.values()]
-        .map(group => ({ ...group, count: group.chases.length }))
+        .map(group => {
+          const collapsed = this._collapsedLibraryGroups.has(group.id);
+          return { ...group, count: group.chases.length, collapsed, expanded: !collapsed };
+        })
         .sort((a, b) => String(a.label).localeCompare(String(b.label)));
 
       const branchSourceNodeIds = new Set(branchGroups.map(group => group.sourceNodeId).filter(Boolean));
@@ -757,10 +1103,10 @@ function getAppClass() {
         ...item,
         displayIndex: item.index + 1,
         typeLabel: i18n(`PF2E_CHASE_FORGE.CardType.${item.card?.type ?? "obstacle"}`, item.card?.type ?? "obstacle"),
-        editable,
+        editable: routeEditable,
         linearEditable,
-        canDelete: editable && (linearEditable || !branchSourceNodeIds.has(item.node?.id)),
-        deleteProtected: editable && !linearEditable && branchSourceNodeIds.has(item.node?.id),
+        canDelete: routeEditable && (linearEditable || !branchSourceNodeIds.has(item.node?.id)),
+        deleteProtected: routeEditable && !linearEditable && branchSourceNodeIds.has(item.node?.id),
         card: item.card ? {
           ...item.card,
           tagsText: item.card.tags.join(", "),
@@ -801,10 +1147,10 @@ function getAppClass() {
       }));
       const branchViews = branchGroups.map(group => ({
         ...group,
-        editable,
+        editable: routeEditable,
         routes: group.routes.map(route => ({
           ...route,
-          editable,
+          editable: routeEditable,
           visibilityLabel: i18n(`PF2E_CHASE_FORGE.RouteVisibility.${route.visibility}`, route.visibility),
           visibilityIcon: route.visibility === "hidden" ? "fa-eye-slash" : (route.visibility === "discoverable" ? "fa-eye-low-vision" : "fa-eye"),
           visibilityOptions: optionList(["public", "discoverable", "hidden"], route.visibility, "PF2E_CHASE_FORGE.RouteVisibility")
@@ -817,7 +1163,7 @@ function getAppClass() {
           ? branchViews.some(group => group.branchGroupId === this._selectedInspector.id)
           : false);
       if (!selectionIsValid) this._selectedInspector = cardViews[0]?.ref ? { type: "card", id: cardViews[0].ref } : null;
-      const routeDiagram = buildRouteDiagramModel(cardViews, branchViews, { selected: this._selectedInspector, editable });
+      const routeDiagram = buildRouteDiagramModel(cardViews, branchViews, { selected: this._selectedInspector, editable: routeEditable });
       const selectedCard = this._selectedInspector?.type === "card"
         ? cardViews.find(item => item.ref === this._selectedInspector.id) ?? null
         : null;
@@ -850,7 +1196,10 @@ function getAppClass() {
         ...context,
         draft: cloneData(this._draft),
         editable,
+        routeEditable,
+        advancedRouteProtected,
         builderSupported,
+        routeWorkspaceSupported,
         librarySelected,
         libraryBlueprintId: this._libraryBlueprintId,
         linearEditable,
@@ -885,9 +1234,16 @@ function getAppClass() {
         hasLibraryBlueprints: librarySummaries.length > 0,
         openableSessions,
         hasOpenableSessions: openableSessions.length > 0,
-        registeredCards: registeredCardViews,
+        registeredCards: filteredRegisteredCardViews,
         registeredCardGroups,
+        registeredCardSourceOptions,
+        registeredCardCategoryOptions,
+        registeredCardSourceFilter: this._registeredCardSourceFilter,
+        registeredCardCategoryFilter: this._registeredCardCategoryFilter,
+        registeredCardVisibleCount: filteredRegisteredCardViews.length,
+        registeredCardTotalCount: registeredCardViews.length,
         hasRegisteredCards: registeredCards.length > 0,
+        hasVisibleRegisteredCards: filteredRegisteredCardViews.length > 0,
         generatorTemplateGroups,
         hasGeneratorTemplates: generatorTemplateViews.length > 0,
         selectedGeneratorTemplateId: this._generatorTemplateId,
@@ -976,7 +1332,32 @@ function getAppClass() {
 
       this._synchronizeEditorControlState(root, context);
       this._bindPointScalingControls(root);
+      this._bindRegisteredCardFilters(root);
       this._bindParticipantDropZones(root);
+    }
+
+    _bindRegisteredCardFilters(root = this.element) {
+      const sourceFilter = root?.querySelector?.('[name="registeredCardSourceFilter"]') ?? null;
+      const categoryFilter = root?.querySelector?.('[name="registeredCardCategoryFilter"]') ?? null;
+
+      if (sourceFilter && sourceFilter.dataset.chaseFilterBound !== "true") {
+        sourceFilter.dataset.chaseFilterBound = "true";
+        sourceFilter.addEventListener?.("change", () => {
+          this._registeredCardSourceFilter = sourceFilter.value ?? "";
+          this._registeredCardCategoryFilter = "";
+          this._captureScrollPosition();
+          void this.render({ force: true });
+        });
+      }
+
+      if (categoryFilter && categoryFilter.dataset.chaseFilterBound !== "true") {
+        categoryFilter.dataset.chaseFilterBound = "true";
+        categoryFilter.addEventListener?.("change", () => {
+          this._registeredCardCategoryFilter = categoryFilter.value ?? "";
+          this._captureScrollPosition();
+          void this.render({ force: true });
+        });
+      }
     }
 
     _bindPointScalingControls(root = this.element) {
@@ -1010,12 +1391,18 @@ function getAppClass() {
       // Re-assert the authoritative Builder state after every render instead of
       // relying on the template diff alone to clear DOM properties.
       const librarySelected = context?.librarySelected ?? Boolean(this._libraryBlueprintId);
-      const editable = context?.editable ?? (isBuilderEditableBlueprint(this._draft) && !librarySelected);
+      const editable = context?.editable ?? !librarySelected;
+      const routeEditable = context?.routeEditable ?? (isBuilderEditableBlueprint(this._draft) && !librarySelected);
       const locked = librarySelected || !editable;
 
       editor.classList?.toggle?.("chase-builder-read-only", Boolean(librarySelected));
       for (const control of editor.querySelectorAll?.("input, textarea, select") ?? []) {
         control.disabled = locked;
+      }
+      if (!routeEditable) {
+        for (const control of editor.querySelectorAll?.("[data-builder-card] input, [data-builder-card] textarea, [data-builder-card] select, [data-branch-edge] input, [data-branch-edge] textarea, [data-branch-edge] select") ?? []) {
+          control.disabled = true;
+        }
       }
 
       // These controls are disabled solely by global Builder editability in the
@@ -1041,7 +1428,8 @@ function getAppClass() {
 
     _applyLibraryReadOnlyUi(root = this.element) {
       return this._synchronizeEditorControlState(root, {
-        editable: isBuilderEditableBlueprint(this._draft) && !this._libraryBlueprintId,
+        editable: !this._libraryBlueprintId,
+        routeEditable: isBuilderEditableBlueprint(this._draft) && !this._libraryBlueprintId,
         librarySelected: Boolean(this._libraryBlueprintId)
       });
     }
@@ -1115,8 +1503,11 @@ function getAppClass() {
 
     _syncDraftFromForm() {
       if (this._libraryBlueprintId) return this._draft;
-      if (!this.element || !isBuilderEditableBlueprint(this._draft)) return this._draft;
+      if (!this.element) return this._draft;
       const root = this.element;
+      const builderSupported = isBuilderEditableBlueprint(this._draft);
+      const linearDraft = isBasicLinearBlueprint(this._draft);
+      const branchingDraft = isBranchingBuilderBlueprint(this._draft);
       const value = name => root.querySelector(`[name="${name}"]`)?.value;
       const checked = name => root.querySelector(`[name="${name}"]`)?.checked === true;
       const next = cloneData(this._draft);
@@ -1153,11 +1544,12 @@ function getAppClass() {
       next.tags = csv(value("blueprint.tags"));
       next.metadata ??= {};
       next.metadata.builder ??= {};
-      const branchingDraft = isBranchingBuilderBlueprint(this._draft);
-      next.metadata.builder.mode = branchingDraft ? "branching" : "basic";
-      next.metadata.builder.contractVersion = 1;
-      next.metadata.builder.actionLevel = value("metadata.actionLevel") || "medium";
-      next.metadata.builder.humorLevel = value("metadata.humorLevel") || "low";
+      if (builderSupported) {
+        next.metadata.builder.mode = branchingDraft ? "branching" : "basic";
+        next.metadata.builder.contractVersion = 1;
+      }
+      next.metadata.builder.actionLevel = value("metadata.actionLevel") || next.metadata.builder.actionLevel || "medium";
+      next.metadata.builder.humorLevel = value("metadata.humorLevel") || next.metadata.builder.humorLevel || "low";
 
       for (const groupElement of root.querySelectorAll("[data-builder-group]")) {
         const groupId = groupElement.dataset.groupId;
@@ -1254,7 +1646,9 @@ function getAppClass() {
       }
 
       const normalized = this.chaseApi.factories.blueprint(next);
-      this._draft = branchingDraft ? normalized : rebuildBasicLinearGraph(normalized);
+      if (branchingDraft) this._draft = normalized;
+      else if (linearDraft) this._draft = rebuildBasicLinearGraph(normalized);
+      else this._draft = normalized;
       return this._draft;
     }
 
@@ -1380,11 +1774,36 @@ function getAppClass() {
       if (id) await this.loadLibraryBlueprint(id);
     }
 
+    static async _actionToggleLibraryGroup(_event, target) {
+      const id = String(target?.dataset?.libraryGroupId ?? "").trim();
+      if (!id) return;
+      this._captureScrollPosition();
+      if (this._collapsedLibraryGroups.has(id)) this._collapsedLibraryGroups.delete(id);
+      else this._collapsedLibraryGroups.add(id);
+      await this.render({ force: true });
+    }
+
     static async _actionCopyLibraryBlueprint() {
       if (!this._libraryBlueprintId) return null;
       const copy = this._worldCopyFromLibrary();
       if (!copy) return null;
-      const saved = await this.chaseApi.persistence.blueprints.create(copy);
+      let saved = await this.chaseApi.persistence.blueprints.create(copy, { snapshotContent: true });
+      const localizedCopy = materializeLibraryCopyLocalization(saved, this.chaseApi);
+      if (JSON.stringify(localizedCopy) !== JSON.stringify(saved)) {
+        saved = await this.chaseApi.persistence.blueprints.save(localizedCopy);
+      }
+
+      // Library packs may use the public choice/merge graph shape instead of
+      // Chase Forge's internal managed-branch metadata. Once the referenced
+      // cards have been frozen into the world copy, adopt conventional
+      // choice -> route(s) -> merge graphs so the copied Chase becomes fully
+      // editable. More exotic graphs remain route-protected, but the copied
+      // document and its participant groups are still editable.
+      const adopted = adoptCompatibleExtendedGraph(saved);
+      if (isBuilderEditableBlueprint(adopted) && !isBuilderEditableBlueprint(saved)) {
+        saved = await this.chaseApi.persistence.blueprints.save(adopted);
+      }
+
       this._draft = saved;
       this._persisted = true;
       this._libraryBlueprintId = null;
@@ -1459,7 +1878,7 @@ function getAppClass() {
     static async _actionStartBlueprint() {
       if (this._libraryBlueprintId) {
         const saved = this.chaseApi.library?.get?.(this._libraryBlueprintId, { includeDisabled: false });
-        const validation = saved ? this.chaseApi.validation.blueprint(saved) : { valid: false };
+        const validation = saved ? validateLibraryBlueprintPreview(saved, this.chaseApi) : { valid: false };
         if (!saved || !validation.valid) {
           notify("error", i18n("PF2E_CHASE_FORGE.Builder.CannotStart", "Die Verfolgungsjagd kann noch nicht gestartet werden."));
           return;
@@ -1483,29 +1902,16 @@ function getAppClass() {
       }
       const linearEditable = isBasicLinearBlueprint(this._draft);
       const branchingEditable = isBranchingBuilderBlueprint(this._draft);
-      const editable = linearEditable || branchingEditable;
-      let saved = null;
-      if (editable) {
-        saved = await this._save({ silent: true });
-        if (!saved) return;
-        const validation = linearEditable
-          ? validateBasicBuilderBlueprint(saved, { forStart: true })
-          : validateBranchingBuilderBlueprint(saved, { forStart: true });
-        if (!validation.valid) {
-          notify("error", i18n("PF2E_CHASE_FORGE.Builder.CannotStart", "Die Verfolgungsjagd kann noch nicht gestartet werden."));
-          return this.render({ force: true });
-        }
-      } else {
-        if (!this._persisted) {
-          notify("error", i18n("PF2E_CHASE_FORGE.Builder.CannotStart", "Die Verfolgungsjagd kann noch nicht gestartet werden."));
-          return;
-        }
-        saved = await this.chaseApi.persistence.blueprints.get(this._draft.id);
-        const validation = saved ? this.chaseApi.validation.blueprint(saved) : { valid: false };
-        if (!saved || !validation.valid) {
-          notify("error", i18n("PF2E_CHASE_FORGE.Builder.CannotStart", "Die Verfolgungsjagd kann noch nicht gestartet werden."));
-          return;
-        }
+      let saved = await this._save({ silent: true });
+      if (!saved) return;
+      const validation = linearEditable
+        ? validateBasicBuilderBlueprint(saved, { forStart: true })
+        : (branchingEditable
+          ? validateBranchingBuilderBlueprint(saved, { forStart: true })
+          : this.chaseApi.validation.blueprint(saved));
+      if (!validation.valid) {
+        notify("error", i18n("PF2E_CHASE_FORGE.Builder.CannotStart", "Die Verfolgungsjagd kann noch nicht gestartet werden."));
+        return this.render({ force: true });
       }
       const draftSession = await this.chaseApi.sessionManager.createSession(saved.id);
       const session = await this.chaseApi.sessionManager.startSession(draftSession.id);
@@ -1744,30 +2150,77 @@ function getAppClass() {
       return this.render({ force: true });
     }
 
-    static async _actionAddRegisteredCard() {
-      this._syncDraftFromForm();
-      this._captureScrollPosition();
+    _selectedRegisteredCardForInsertion({ scalingIndex = null } = {}) {
       const select = this.element?.querySelector?.('[name="registeredCard"]');
       const cardId = select?.value;
-      if (!cardId) return;
+      if (!cardId) return null;
       const rawCard = this.chaseApi.cards.get(cardId, { includeDisabled: false });
       if (!rawCard) {
         notify("warn", i18n("PF2E_CHASE_FORGE.Builder.CardUnavailable", "Diese Karte ist nicht mehr verfügbar."));
-        return;
+        return null;
       }
       let card = localizeChaseCard(rawCard);
       if (card.obstacle?.scalable !== false) {
+        const index = Number.isInteger(Number(scalingIndex))
+          ? Math.max(0, Math.trunc(Number(scalingIndex)))
+          : listEditableCards(this._draft).length;
         card = stampRecommendedPointScaling(card, {
           groupSize: rollingGroupSizeForBlueprint(this._draft),
-          mode: obstaclePointScalingModeForIndex(listEditableCards(this._draft).length)
+          mode: obstaclePointScalingModeForIndex(index)
         });
       }
+      return { rawCard, card };
+    }
+
+    static async _actionAddRegisteredCard() {
+      this._syncDraftFromForm();
+      this._captureScrollPosition();
+      const selected = this._selectedRegisteredCardForInsertion();
+      if (!selected) return;
+      const { rawCard, card } = selected;
       const result = isBranchingBuilderBlueprint(this._draft)
         ? appendMainlineCard(this._draft, card, { originCardRef: rawCard.id })
         : addCardToBasicBlueprint(this._draft, card, { originCardRef: rawCard.id });
       this._draft = result.blueprint;
       this._selectedInspector = result.ref ? { type: "card", id: result.ref } : this._selectedInspector;
       return this.render({ force: true });
+    }
+
+    async _insertRegisteredCardRelative(target, position) {
+      this._syncDraftFromForm();
+      this._captureScrollPosition();
+      const cardRef = target?.dataset?.cardRef ?? this._selectedInspector?.id ?? null;
+      if (!cardRef) return null;
+      const cards = listEditableCards(this._draft);
+      const selectedCard = cards.find(item => item.ref === cardRef);
+      if (!selectedCard) return null;
+      const scalingIndex = selectedCard.index + (position === "after" ? 1 : 0);
+      const selected = this._selectedRegisteredCardForInsertion({ scalingIndex });
+      if (!selected) return null;
+      const { rawCard, card } = selected;
+      try {
+        const result = isBranchingBuilderBlueprint(this._draft)
+          ? insertCardRelativeToBuilderCard(this._draft, cardRef, card, { position, originCardRef: rawCard.id })
+          : addCardToBasicBlueprint(this._draft, card, {
+              index: scalingIndex,
+              originCardRef: rawCard.id
+            });
+        this._draft = result.blueprint;
+        this._selectedInspector = result.ref ? { type: "card", id: result.ref } : this._selectedInspector;
+        return this.render({ force: true });
+      } catch (error) {
+        console.warn(`${MODULE_ID} | Failed to insert registered Chase card ${position}.`, error);
+        notify("error", i18n("PF2E_CHASE_FORGE.Builder.InsertRegisteredCardFailed", "Die registrierte Karte konnte an dieser Stelle nicht eingefügt werden."));
+        return null;
+      }
+    }
+
+    static async _actionInsertRegisteredCardBefore(_event, target) {
+      return this._insertRegisteredCardRelative(target, "before");
+    }
+
+    static async _actionInsertRegisteredCardAfter(_event, target) {
+      return this._insertRegisteredCardRelative(target, "after");
     }
 
     async _insertManualCardRelative(target, position) {
@@ -1802,6 +2255,7 @@ function getAppClass() {
 
     static async _actionMoveCardUp(_event, target) {
       this._syncDraftFromForm();
+      this._captureScrollPosition();
       const index = Number(target.dataset.cardIndex);
       this._draft = moveCardInBasicBlueprint(this._draft, index, index - 1);
       return this.render({ force: true });
@@ -1809,6 +2263,7 @@ function getAppClass() {
 
     static async _actionMoveCardDown(_event, target) {
       this._syncDraftFromForm();
+      this._captureScrollPosition();
       const index = Number(target.dataset.cardIndex);
       this._draft = moveCardInBasicBlueprint(this._draft, index, index + 1);
       return this.render({ force: true });
