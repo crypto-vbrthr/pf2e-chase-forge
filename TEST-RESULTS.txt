@@ -1,30 +1,13 @@
-PF2E Chase Forge 1.0.8
-======================
+PF2E Chase Forge 1.0.11 - Test Results
 
-Validation date: 2026-08-27
+PASS: Core automated suite 418/418
+PASS: Embedded Effect Editor bridge prefers api.ui.effectEditor.create and returns edited definitions to the Chase host
+PASS: Legacy standalone Effect Forge editor remains a compatibility fallback
+PASS: External add-on Chase libraries default to collapsed on first discovery and retain manual state during the open Builder session
+PASS: JavaScript syntax checks
 
-Automated test suite
---------------------
-Command: npm test
-Result: PASS
-Tests: 410 passed, 0 failed
-
-Focused 1.0.8 coverage
-----------------------
-- Route card Move Up/Move Down actions capture and restore Builder scroll position.
-- Registered-card picker exposes source/pack and category filters.
-- Registered-card picker reports visible/total card counts and handles empty filtered results.
-- Registered cards can be appended to the main route as before.
-- Registered cards can be inserted before/after the selected route card.
-- Branch-aware insertion delegates to the managed graph insertion helper, preserving branch/merge semantics.
-- Registered-card origin metadata and recommended Chase Point scaling are preserved.
-- German/English localization keys remain in parity.
-- Manifest/package/constants agree on version 1.0.8.
-
-Public contracts
-----------------
-Public API: v18 (unchanged)
-Extension Contract: v1 (unchanged)
+Public API: 18
+Extension Contract: 1
 Persisted schemas: unchanged
-Campaign Forge Integration Contract: v2 (unchanged)
-Migration required: no
+Foundry VTT: minimum/verified 14
+PF2e: minimum 8.1.2

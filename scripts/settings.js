@@ -4,7 +4,8 @@ export const SETTINGS = Object.freeze({
   CONTENT_PACK_STATES: "contentPackStates",
   STORAGE_VERSION: "storageVersion",
   VAULT_ID: "vaultId",
-  VAULT_BACKUP: "vaultBackup"
+  VAULT_BACKUP: "vaultBackup",
+  EFFECT_CONSEQUENCE_PRESENTATION: "effectConsequencePresentation"
 });
 
 export function registerSettings() {
@@ -33,6 +34,22 @@ export function registerSettings() {
     type: String,
     default: ""
   });
+
+  game.settings.register(MODULE_ID, SETTINGS.EFFECT_CONSEQUENCE_PRESENTATION, {
+    name: "PF2E_CHASE_FORGE.Settings.EffectConsequencePresentation.Name",
+    hint: "PF2E_CHASE_FORGE.Settings.EffectConsequencePresentation.Hint",
+    scope: "world",
+    config: true,
+    type: String,
+    choices: {
+      runner: "PF2E_CHASE_FORGE.Settings.EffectConsequencePresentation.Runner",
+      dialog: "PF2E_CHASE_FORGE.Settings.EffectConsequencePresentation.Dialog",
+      chatGm: "PF2E_CHASE_FORGE.Settings.EffectConsequencePresentation.ChatGm",
+      chatPublic: "PF2E_CHASE_FORGE.Settings.EffectConsequencePresentation.ChatPublic",
+      automatic: "PF2E_CHASE_FORGE.Settings.EffectConsequencePresentation.Automatic"
+    },
+    default: "runner"
+  });
   game.settings.register(MODULE_ID, SETTINGS.VAULT_BACKUP, {
     name: "PF2E Chase Forge protected vault backup",
     hint: "Internal recovery copy of Chase Forge persistence data. Used only if the protected Journal vault is unexpectedly removed.",
@@ -58,5 +75,17 @@ export class FoundryPackStateStore {
     states[packId] = enabled === true;
     if (game?.settings?.set) await game.settings.set(MODULE_ID, SETTINGS.CONTENT_PACK_STATES, states);
     return states[packId];
+  }
+}
+
+
+export const EFFECT_CONSEQUENCE_PRESENTATION_MODES = Object.freeze(["runner", "dialog", "chatGm", "chatPublic", "automatic"]);
+
+export function getEffectConsequencePresentationMode() {
+  try {
+    const value = globalThis.game?.settings?.get?.(MODULE_ID, SETTINGS.EFFECT_CONSEQUENCE_PRESENTATION);
+    return EFFECT_CONSEQUENCE_PRESENTATION_MODES.includes(value) ? value : "runner";
+  } catch (_error) {
+    return "runner";
   }
 }

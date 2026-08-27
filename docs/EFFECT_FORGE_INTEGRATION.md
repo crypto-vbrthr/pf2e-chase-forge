@@ -19,7 +19,7 @@ api.effects.apply
 api.effects.readItem
 ```
 
-Optional capabilities such as `checkCompatibility` and `ui.openEffectForgeDefinition` are detected independently.
+Optional capabilities such as `checkCompatibility`, the pure embedded `ui.effectEditor.create` surface, and legacy standalone editor helpers are detected independently.
 
 ## Embedded definitions
 
@@ -64,10 +64,27 @@ A consequence with `required: true` becomes `blocked`. The rest of the Chase Ses
 
 ## Shared editor
 
-When available, Chase Forge exposes the Critical Forge editor through:
+Chase Forge prefers Critical Forge's pure embedded editor surface:
 
 ```js
-await forge.integrations.effectForge.openEditor(reference);
+const editor = api.ui.effectEditor.create({ definition, onChange });
+await editor.mount(containerElement);
+const editedDefinition = editor.value;
+editor.unmount();
 ```
 
-Future Chase Card editing should use this bridge rather than implementing a second effect editor.
+The Chase Builder owns the surrounding modal and its **Add Effect to Card** / cancel actions. The resulting Effect Definition is stored directly in the editable card snapshot, so no Foundry Item is created. This follows the Effect Editor contract: the editor edits a definition while the host owns persistence.
+
+`forge.integrations.effectForge.openEditor(reference, { onSave })` remains the Chase-facing bridge. Legacy standalone editor helpers are retained only as compatibility fallbacks for older Critical Forge versions. Read-only Library cards expose consequence details but are not mutated in place.
+
+## Presentation modes (1.0.10)
+
+The world setting `effectConsequencePresentation` controls only how `effectForge` occurrences are offered to the GM. It does not rewrite the stored card definition. Supported modes are:
+
+- `runner`: hold the occurrence for confirmation and show **Apply** directly beside the affected participant in the GM Runner;
+- `dialog`: open a modal GM confirmation;
+- `chatGm`: post an actionable blind/GM Chat card;
+- `chatPublic`: post a public Chat card whose apply control is functional only for a GM;
+- `automatic`: force the occurrence to require no confirmation and apply immediately.
+
+Non-Effect-Forge consequence kinds retain their own normal confirmation rules.

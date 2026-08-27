@@ -152,6 +152,33 @@ test("Effect Forge consequence targets the acting participant and stores only se
   assert.equal(calls[0].targets[0].uuid, "Actor.hero1");
 });
 
+test("Token participant UUIDs are normalized to their Actor before Effect Forge application", async () => {
+  const calls = [];
+  const tokenUuid = "Scene.scene1.Token.token1";
+  const actorUuid = "Actor.hero1";
+  const blueprint = sampleBlueprint();
+  blueprint.groups[0].participants[0].uuid = tokenUuid;
+  blueprint.groups[0].participants[0].kind = "token";
+  const session = createChaseSession({
+    ...sampleSession(),
+    blueprintSnapshot: blueprint
+  });
+  const engine = createConsequenceEngine({
+    effectForgeBridge: availableBridge(calls),
+    uuidResolver: async uuid => uuid === tokenUuid ? { uuid: tokenUuid, actor: { uuid: actorUuid } } : null
+  });
+  const occurrence = createConsequenceOccurrence(effectConsequence({ gmConfirmation: false }), {
+    sourceEventId: "event-token-effect",
+    runtimeGroupId: "runtime-heroes",
+    participantId: "hero-1"
+  });
+  const result = await engine.execute(session, occurrence);
+  assert.equal(result.records[0].status, "applied");
+  assert.deepEqual(result.records[0].targetUuids, [actorUuid]);
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].targets[0].uuid, actorUuid);
+});
+
 test("runtime-group Effect Forge targeting resolves every participant with a UUID", async () => {
   const calls = [];
   const engine = createConsequenceEngine({

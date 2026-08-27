@@ -47,9 +47,11 @@ The Runner invokes the existing PF2e statistic/check API. It extracts the final 
 
 ## Consequences
 
-Rules results are handed to the Consequence Engine with GM confirmation disabled by default. Consequences requiring confirmation remain in `ChaseSession.consequenceState.records` and are surfaced in the Runner.
+Rules results are handed to the Consequence Engine using the configured Effect Forge presentation mode. In the default `runner` mode, an Effect Forge occurrence is deliberately held as `pendingConfirmation` and rendered directly beneath the affected participant with an **Apply** action. This keeps a critical-failure consequence visible even when the general consequence section is outside the current scroll position.
 
-Because consequence records persist ids rather than executable definitions, the Runner reconstructs the originating consequence from the Blueprint card snapshot using `cardId`, `approachId`, `degree`, and `consequenceId` before confirmation.
+Alternative world modes open a modal confirmation, post an actionable blind-GM or public Chat card, or apply Effect Forge consequences automatically. The presentation layer changes confirmation behavior only for `effectForge` occurrences; other consequence kinds keep their own normal rules.
+
+Because consequence records persist ids rather than executable definitions, the Runner and Chat workflow reconstruct the originating consequence from the Blueprint card snapshot using `cardId`, `approachId`, `degree`, and `consequenceId` before confirmation.
 
 ## Chat boundary
 

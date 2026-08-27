@@ -34,6 +34,7 @@ import {
   removeApproachFromBuilderCard,
   removeBuilderCardByRef,
   removeBranchGroup,
+  updateBuilderCardByRef,
   validateBranchingBuilderBlueprint
 } from "../builder/branching-builder-model.js";
 import { cloneData, createId, nowIso } from "../data/utils.js";
@@ -88,6 +89,64 @@ const IMAGE_MODE_VALUES = ["none", "manual", "predefined", "provider", "automati
 const GROUP_ROLE_VALUES = ["quarry", "pursuer", "competitor", "participant"];
 const GROUP_PACE_VALUES = ["roll", "steady"];
 const CARD_TYPE_VALUES = ["obstacle", "complication", "opportunity", "finale"];
+
+const DEGREE_VALUES = ["criticalSuccess", "success", "failure", "criticalFailure"];
+
+function degreeLabel(value) {
+  const fallback = { criticalSuccess: "Kritischer Erfolg", success: "Erfolg", failure: "Fehlschlag", criticalFailure: "Kritischer Fehlschlag" }[value] ?? value;
+  return i18n(`PF2E_CHASE_FORGE.Runner.Label.${value}`, fallback);
+}
+
+function consequenceKindLabel(value) {
+  const fallback = { effectForge: "Effect Forge", routeUnlock: "Route freischalten", routeLock: "Route sperren", routeSelect: "Route wählen", narrative: "Erzählung", custom: "Benutzerdefiniert" }[value] ?? value;
+  return i18n(`PF2E_CHASE_FORGE.Builder.ConsequenceKind.${value}`, fallback);
+}
+
+function cardConsequenceViews(card) {
+  const rows = [];
+  for (const degree of DEGREE_VALUES) {
+    for (const [index, consequence] of (card?.outcomes?.[degree] ?? []).entries()) {
+      if (consequence?.kind === "chasePoints") continue;
+      rows.push({ degree, degreeLabel: degreeLabel(degree), scope: "card", scopeLabel: i18n("PF2E_CHASE_FORGE.Builder.ConsequenceScopeCard", "Karte"), approachIndex: null, consequenceIndex: index, id: consequence.id, kind: consequence.kind, kindLabel: consequenceKindLabel(consequence.kind), label: consequence.label || consequence.payload?.definition?.name || consequence.id, description: consequence.payload?.definition?.description ?? consequence.payload?.text ?? "", isEffectForge: consequence.kind === "effectForge" });
+    }
+    for (const [approachIndex, approach] of (card?.approaches ?? []).entries()) {
+      for (const [index, consequence] of (approach?.outcomes?.[degree] ?? []).entries()) {
+        if (consequence?.kind === "chasePoints") continue;
+        rows.push({ degree, degreeLabel: degreeLabel(degree), scope: "approach", scopeLabel: localizeApproachLabel(approach), approachIndex, consequenceIndex: index, id: consequence.id, kind: consequence.kind, kindLabel: consequenceKindLabel(consequence.kind), label: consequence.label || consequence.payload?.definition?.name || consequence.id, description: consequence.payload?.definition?.description ?? consequence.payload?.text ?? "", isEffectForge: consequence.kind === "effectForge" });
+      }
+    }
+  }
+  return rows;
+}
+
+function blankEffectConsequence(schemaVersion = 2) {
+  const id = createId("builder-effect");
+  return {
+    id: `chase-${id}`,
+    kind: "effectForge",
+    label: i18n("PF2E_CHASE_FORGE.Builder.NewEffectConsequence", "Neue Effekt-Konsequenz"),
+    severity: "significant",
+    optional: false,
+    gmConfirmation: true,
+    payload: {
+      source: "embedded",
+      required: false,
+      targetMode: "participant",
+      targetParticipantIds: [],
+      targetUuids: [],
+      definition: {
+        schemaVersion: Number.isInteger(schemaVersion) ? schemaVersion : 2,
+        id: `pf2e-chase-forge.${id}`,
+        name: i18n("PF2E_CHASE_FORGE.Builder.NewEffectConsequence", "Neue Effekt-Konsequenz"),
+        description: "",
+        duration: { value: 1, unit: "minutes", expiry: null },
+        components: [],
+        application: {},
+        metadata: { sourceModule: MODULE_ID, chaseBuilderConsequence: true }
+      }
+    }
+  };
+}
 const DC_MODE_VALUES = ["level", "fixed", "simple", "gm", "none"];
 const PROFICIENCY_VALUES = ["untrained", "trained", "expert", "master", "legendary"];
 const DIFFICULTY_ADJUSTMENTS = [-10, -5, -2, 0, 2, 5, 10];
@@ -733,6 +792,9 @@ function getAppClass() {
         removeCard: this._actionRemoveCard,
         addApproach: this._actionAddApproach,
         removeApproach: this._actionRemoveApproach,
+        addEffectConsequence: this._actionAddEffectConsequence,
+        editEffectConsequence: this._actionEditEffectConsequence,
+        removeEffectConsequence: this._actionRemoveEffectConsequence,
         addSelectedTokens: this._actionAddSelectedTokens,
         removeParticipant: this._actionRemoveParticipant,
         resetGroups: this._actionResetGroups,
@@ -777,6 +839,7 @@ function getAppClass() {
       this._participantDropHandlers = null;
       this._generatorTemplateId = null;
       this._collapsedLibraryGroups = new Set();
+      this._initializedLibraryGroupDefaults = new Set();
       this._registeredCardSourceFilter = "";
       this._registeredCardCategoryFilter = "";
     }
@@ -1091,6 +1154,11 @@ function getAppClass() {
         }
         libraryGroupMap.get(groupId).chases.push(blueprint);
       }
+      for (const group of libraryGroupMap.values()) {
+        if (this._initializedLibraryGroupDefaults.has(group.id)) continue;
+        if (group.moduleId && group.moduleId !== MODULE_ID) this._collapsedLibraryGroups.add(group.id);
+        this._initializedLibraryGroupDefaults.add(group.id);
+      }
       const libraryGroups = [...libraryGroupMap.values()]
         .map(group => {
           const collapsed = this._collapsedLibraryGroups.has(group.id);
@@ -1099,7 +1167,10 @@ function getAppClass() {
         .sort((a, b) => String(a.label).localeCompare(String(b.label)));
 
       const branchSourceNodeIds = new Set(branchGroups.map(group => group.sourceNodeId).filter(Boolean));
-      const cardViews = cards.map(item => ({
+      const cardViews = cards.map(item => {
+        const consequenceViews = cardConsequenceViews(item.card);
+        const criticalFailureConsequences = consequenceViews.filter(entry => entry.degree === "criticalFailure");
+        return {
         ...item,
         displayIndex: item.index + 1,
         typeLabel: i18n(`PF2E_CHASE_FORGE.CardType.${item.card?.type ?? "obstacle"}`, item.card?.type ?? "obstacle"),
@@ -1143,8 +1214,16 @@ function getAppClass() {
         first: item.index === 0,
         last: item.index === cards.length - 1,
         canAddBranch: item.canAddBranch === true,
-        originLabel: item.record?.metadata?.originCardRef ?? ""
-      }));
+        originLabel: item.record?.metadata?.originCardRef ?? "",
+        hasConsequences: consequenceViews.length > 0,
+        consequenceCount: consequenceViews.length,
+        hasCriticalFailureConsequences: criticalFailureConsequences.length > 0,
+        criticalFailureConsequenceCount: criticalFailureConsequences.length,
+        consequenceBadgeTitle: criticalFailureConsequences.length > 0
+          ? format("PF2E_CHASE_FORGE.Builder.CardCriticalFailureConsequences", { count: criticalFailureConsequences.length }, `${criticalFailureConsequences.length} Konsequenz(en) bei kritischem Fehlschlag`)
+          : format("PF2E_CHASE_FORGE.Builder.CardConsequences", { count: consequenceViews.length }, `${consequenceViews.length} Konsequenz(en)`)
+      };
+      });
       const branchViews = branchGroups.map(group => ({
         ...group,
         editable: routeEditable,
@@ -1171,6 +1250,11 @@ function getAppClass() {
         ? branchViews.find(group => group.branchGroupId === this._selectedInspector.id) ?? null
         : null;
       if (selectedCard?.card) {
+        const effectForgeReport = this.chaseApi.integrations?.effectForge?.inspect?.() ?? { available: false, compatible: false, capabilities: {} };
+        selectedCard.card.effectForgeEditorAvailable = effectForgeReport.compatible === true && effectForgeReport.capabilities?.editor === true;
+        selectedCard.card.consequences = cardConsequenceViews(selectedCard.card);
+        selectedCard.card.hasConsequences = selectedCard.card.consequences.length > 0;
+        selectedCard.card.consequenceDegreeOptions = DEGREE_VALUES.map(value => ({ value, label: degreeLabel(value), selected: value === "criticalFailure" }));
         try {
           const candidateResult = await this.chaseApi.images?.candidatesFor?.(selectedCard.card.image ?? {}, {
             blueprint: this._draft,
@@ -2028,6 +2112,135 @@ function getAppClass() {
       }));
       this.chaseApi.images?.clearCache?.();
       return true;
+    }
+
+    _selectedCardConsequenceLocation(target) {
+      if (this._libraryBlueprintId || this._selectedInspector?.type !== "card") return null;
+      const degree = target?.dataset?.degree;
+      if (!DEGREE_VALUES.includes(degree)) return null;
+      const scope = target?.dataset?.scope ?? "card";
+      const approachIndex = scope === "approach" ? Number(target?.dataset?.approachIndex) : null;
+      const consequenceIndex = Number(target?.dataset?.consequenceIndex);
+      return { cardRef: this._selectedInspector.id, degree, scope, approachIndex, consequenceIndex };
+    }
+
+    _updateConsequenceAt(location, updater) {
+      if (!location || !Number.isInteger(location.consequenceIndex) || location.consequenceIndex < 0) return false;
+      this._draft = updateBuilderCardByRef(this._draft, location.cardRef, card => {
+        const next = cloneData(card);
+        const owner = location.scope === "approach" ? next.approaches?.[location.approachIndex] : next;
+        if (!owner) return next;
+        owner.outcomes ??= { criticalSuccess: [], success: [], failure: [], criticalFailure: [] };
+        owner.outcomes[location.degree] ??= [];
+        const list = owner.outcomes[location.degree];
+        const current = list[location.consequenceIndex];
+        if (!current) return next;
+        const updated = updater(cloneData(current));
+        if (updated === null) list.splice(location.consequenceIndex, 1);
+        else list[location.consequenceIndex] = updated;
+        return next;
+      });
+      return true;
+    }
+
+    _appendConsequence(location, consequence) {
+      if (!location?.cardRef || !DEGREE_VALUES.includes(location.degree)) return null;
+      let index = null;
+      this._draft = updateBuilderCardByRef(this._draft, location.cardRef, card => {
+        const next = cloneData(card);
+        const owner = location.scope === "approach" ? next.approaches?.[location.approachIndex] : next;
+        if (!owner) return next;
+        owner.outcomes ??= { criticalSuccess: [], success: [], failure: [], criticalFailure: [] };
+        owner.outcomes[location.degree] ??= [];
+        index = owner.outcomes[location.degree].length;
+        owner.outcomes[location.degree].push(cloneData(consequence));
+        return next;
+      });
+      return Number.isInteger(index) ? index : null;
+    }
+
+    _effectEditorDefinitionCandidate(value) {
+      if (!value || typeof value !== "object") return null;
+      if (value.definition?.schemaVersion) return value.definition;
+      if (value.value?.definition?.schemaVersion) return value.value.definition;
+      if (value.schemaVersion) return value;
+      return null;
+    }
+
+    async _openEffectEditorForConsequence(location, consequence, { insertOnSave = false } = {}) {
+      const bridge = this.chaseApi.integrations?.effectForge;
+      const report = bridge?.inspect?.() ?? { compatible: false, capabilities: {} };
+      if (!report.compatible || !report.capabilities?.editor) {
+        notify("warn", i18n("PF2E_CHASE_FORGE.Builder.EffectForgeEditorUnavailable", "Der Effect-Forge-Editor ist nicht verfügbar."));
+        return false;
+      }
+      let saved = false;
+      let activeLocation = { ...location };
+      const commit = rawDefinition => {
+        const definition = this._effectEditorDefinitionCandidate(rawDefinition) ?? rawDefinition;
+        if (!definition || typeof definition !== "object" || !definition.schemaVersion) return false;
+        const nextConsequence = {
+          ...cloneData(consequence),
+          label: definition.name || consequence.label,
+          payload: { ...(consequence.payload ?? {}), source: "embedded", definition: cloneData(definition) }
+        };
+        if (insertOnSave && (!Number.isInteger(activeLocation.consequenceIndex) || activeLocation.consequenceIndex < 0)) {
+          const index = this._appendConsequence(activeLocation, nextConsequence);
+          if (!Number.isInteger(index)) return false;
+          activeLocation = { ...activeLocation, consequenceIndex: index };
+        } else {
+          const updated = this._updateConsequenceAt(activeLocation, () => nextConsequence);
+          if (!updated) return false;
+        }
+        this._lastValidation = null;
+        saved = true;
+        return true;
+      };
+      const onSave = value => {
+        if (!commit(value)) return;
+        void this.render({ force: true });
+      };
+      const result = await bridge.openEditor(
+        { source: "embedded", definition: consequence.payload?.definition },
+        { onSave }
+      );
+      const candidate = this._effectEditorDefinitionCandidate(result);
+      if (!saved && candidate && commit(candidate)) await this.render({ force: true });
+      return saved || result != null;
+    }
+
+    static async _actionAddEffectConsequence(_event, target) {
+      if (this._libraryBlueprintId || this._selectedInspector?.type !== "card") return null;
+      this._syncDraftFromForm();
+      const controls = target.closest?.(".chase-builder-consequence-add");
+      const degree = controls?.querySelector?.("[data-new-effect-degree]")?.value ?? "criticalFailure";
+      if (!DEGREE_VALUES.includes(degree)) return null;
+      const report = this.chaseApi.integrations?.effectForge?.inspect?.() ?? {};
+      const consequence = blankEffectConsequence(report.schemaVersion ?? 2);
+      const location = { cardRef: this._selectedInspector.id, degree, scope: "card", approachIndex: null, consequenceIndex: null };
+      return this._openEffectEditorForConsequence(location, consequence, { insertOnSave: true });
+    }
+
+    static async _actionEditEffectConsequence(_event, target) {
+      if (this._libraryBlueprintId) return null;
+      this._syncDraftFromForm();
+      const location = this._selectedCardConsequenceLocation(target);
+      if (!location) return null;
+      const card = listEditableCards(this._draft).find(item => item.ref === location.cardRef)?.card ?? null;
+      const owner = location.scope === "approach" ? card?.approaches?.[location.approachIndex] : card;
+      const consequence = owner?.outcomes?.[location.degree]?.[location.consequenceIndex] ?? null;
+      if (!consequence || consequence.kind !== "effectForge") return null;
+      return this._openEffectEditorForConsequence(location, consequence);
+    }
+
+    static async _actionRemoveEffectConsequence(_event, target) {
+      if (this._libraryBlueprintId) return null;
+      this._syncDraftFromForm();
+      const location = this._selectedCardConsequenceLocation(target);
+      if (!location) return null;
+      this._updateConsequenceAt(location, () => null);
+      this._lastValidation = null;
+      return this.render({ force: true });
     }
 
     static async _actionBrowseBlueprintImage() {

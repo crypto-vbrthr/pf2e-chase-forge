@@ -1,13 +1,35 @@
 # PF2E Chase Forge
 
-**Version:** 1.0.8  
+**Version:** 1.0.11  
 **Foundry VTT:** 14  
 **System:** Pathfinder 2e
 
-PF2E Chase Forge is a modular Pathfinder 2e chase framework for Foundry VTT. `1.0.8` improves large registered-card libraries in the Builder with source/category filters, relative registered-card insertion, and scroll-preserving card reordering. The collapsible add-on Chase libraries, localized Library-copy workflow, validated Advanced Routing & Party Splitting runtime, final PF2e chase-rules alignment, synchronized GM/Player play, Campaign Forge continuation, protected persistence, and extensible Chase libraries remain unchanged. The public API remains v18; persisted schemas and Campaign Forge Integration Contract v2 remain unchanged.
+PF2E Chase Forge is a modular Pathfinder 2e chase framework for Foundry VTT. `1.0.11` fixes embedded Effect Forge card editing: the Builder now hosts the public pure `api.ui.effectEditor` surface itself, so saving an effect attaches its definition directly to the Chase card instead of opening the standalone Item workflow. External add-on libraries also start collapsed by default while keeping their user-selected expand/collapse state for the open Builder window. The 1.0.10 consequence presentation modes and card-consequence inspector remain intact. Public API v18 and persisted schemas are unchanged.
 
 The underlying architecture remains intact: DAG route graphs, synchronized GM/Player runtime views, add-on registries, template-based generation, the 72-card Core Library, the shared Visual System, PF2e chase rules, consequence orchestration, optional Critical Forge / Effect Forge integration, Weather Forge prefill, and protected restart-safe Blueprint/Session persistence.
 
+
+## 1.0.11 Embedded Effect Editor Host & Library Defaults
+
+Editable Chase cards now use Critical Forge's pure embedded Effect Editor surface (`api.ui.effectEditor.create`) inside a Chase Forge-owned modal. **Add Effect to Card** stores the edited Effect Definition directly in the card snapshot; it does not create a standalone world Item. Older Critical Forge builds without the embedded surface retain the previous standalone-editor fallback.
+
+Prepared Chase libraries supplied by external modules start collapsed the first time they appear in a Builder window. Once the GM expands or collapses a library, that choice is preserved across normal re-renders for the lifetime of the open Builder. Chase Forge's own library behavior is unchanged.
+
+## 1.0.10 Consequence UX & Effect Forge Card Editing
+
+A new world setting, **Effect Forge consequence presentation**, controls how effect-bearing Chase outcomes are handled. The default **GM Runner** mode creates a pending consequence directly beneath the affected participant with an **Apply** button. Alternative modes open a modal confirmation dialog, post a blind GM Chat card, post a public Chat card with a GM-only apply control, or apply the effect automatically.
+
+The route diagram now marks cards with consequences, with critical-failure consequences highlighted by the same warning badge. Selecting a card exposes the trigger degree, card/approach scope, consequence kind, label, and effect description. On editable world cards, GMs can create, edit, or remove embedded Effect Forge consequences through the public shared Effect Forge editor bridge. Read-only Library cards expose the information but remain immutable until copied/inserted into an owned chase.
+
+The presentation layer controls GM confirmation without mutating the source card definition. This means add-on cards can remain portable while each world chooses its preferred workflow. Public API v18 and all persisted schemas remain unchanged.
+
+
+## 1.0.9 Effect Consequence Reliability
+
+- Token and TokenDocument participant UUIDs are normalized to their PF2e Actor before Effect Forge analysis/application.
+- Automatic Effect Forge outcomes now show a GM notification when applied, when manual fallback is required, or when application fails.
+- Failed Effect Forge outcomes also emit a detailed console record for live diagnosis.
+- Public API remains v18 and no persisted schema changed.
 
 ## 1.0.8 Builder Card Library UX
 
@@ -594,3 +616,8 @@ If Weather Forge is active but its own persistent `weatherState` setting is not 
 - Every successful persistence write is mirrored to a hidden world-setting recovery backup.
 - If the protected Journal is unexpectedly removed outside Chase Forge, it is recreated automatically from that backup.
 - Worlds that already lost the vault before this hotfix recover gracefully with a new empty vault and a visible warning instead of leaving the Builder unusable.
+
+
+## Consequence presentation
+
+Effect Forge consequences can be presented at the affected participant in the GM Runner, in a confirmation dialog, as a blind GM Chat card, as a public Chat card, or applied automatically. The world setting **Effect Forge consequence presentation** selects the workflow. The Chase Builder card inspector also exposes consequence triggers and, when the optional Effect Forge editor is available, can add or edit embedded effect consequences without implementing a second effect editor.

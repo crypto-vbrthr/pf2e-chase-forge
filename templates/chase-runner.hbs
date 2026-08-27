@@ -236,6 +236,16 @@
                       {{/if}}
                     </div>
                   </div>
+                  {{#if participant.hasEffectConsequences}}
+                    <div class="chase-runner-participant-consequences">
+                      {{#each participant.effectConsequences as |record|}}
+                        <div class="chase-runner-participant-consequence">
+                          <span><i class="fa-solid fa-triangle-exclamation"></i> <strong>{{record.consequenceLabel}}</strong>{{#if record.consequenceDescription}}<small>{{record.consequenceDescription}}</small>{{/if}}</span>
+                          <button type="button" data-action="confirmConsequence" data-occurrence-id="{{record.occurrenceId}}"><i class="fa-solid fa-wand-magic-sparkles"></i> {{localize "PF2E_CHASE_FORGE.Runner.Apply"}}</button>
+                        </div>
+                      {{/each}}
+                    </div>
+                  {{/if}}
                   {{#if participant.canAct}}
                     <div class="chase-runner-participant-actions">
                       {{#each participant.approaches as |approach|}}

@@ -2199,3 +2199,88 @@
   .chase-registered-card-select-row { grid-template-columns: 1fr; }
   .chase-registered-card-count { text-align: left; }
 }
+
+
+/* 1.0.10: consequence presentation and Builder consequence editor */
+.chase-runner-participant-consequences { grid-column: 1 / -1; display: grid; gap: 6px; margin-top: 4px; }
+.chase-runner-participant-consequence { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border: 1px solid var(--chase-border); border-radius: 6px; background: color-mix(in srgb, var(--chase-danger) 9%, transparent); }
+.chase-runner-participant-consequence > span { flex: 1; min-width: 0; }
+.chase-runner-participant-consequence small { display: block; margin-top: 2px; opacity: .78; }
+.chase-runner-participant-consequence button { width: auto; white-space: nowrap; }
+.chase-builder-consequences { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--chase-border); }
+.chase-builder-consequence-list { display: grid; gap: 6px; margin: 8px 0; }
+.chase-builder-consequence-row { display: flex; gap: 8px; align-items: center; padding: 8px; border: 1px solid var(--chase-border); border-radius: 6px; }
+.chase-builder-consequence-row .grow { flex: 1; min-width: 0; }
+.chase-builder-consequence-row small { display: block; margin-top: 3px; opacity: .78; }
+.chase-builder-consequence-meta { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-bottom: 3px; font-size: .8em; opacity: .86; }
+.chase-builder-consequence-add { display: grid; grid-template-columns: minmax(150px, .7fr) minmax(210px, 1.3fr); gap: 8px; margin-top: 8px; }
+.chase-builder-consequence-add button { width: auto; }
+.pf2e-chase-forge-chat.chase-chat-consequence { border-left: 4px solid var(--chase-danger, #9b3a34); padding-left: 10px; }
+.pf2e-chase-forge-chat.chase-chat-consequence button { width: auto; margin-top: 6px; }
+.pf2e-chase-forge-chat.chase-chat-consequence.applied { opacity: .8; }
+.chase-consequence-dialog .chase-consequence-description { opacity: .8; }
+@media (max-width: 760px) {
+  .chase-runner-participant-consequence { align-items: flex-start; flex-direction: column; }
+  .chase-builder-consequence-add { grid-template-columns: 1fr; }
+}
+
+
+.pf2e-chase-forge .chase-route-consequence-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  width: fit-content;
+  margin-top: 0.2rem;
+  padding: 0.12rem 0.38rem;
+  border: 1px solid color-mix(in srgb, var(--color-border-light-primary, #777) 70%, transparent);
+  border-radius: 999px;
+  font-size: 0.72rem;
+  line-height: 1.1;
+  opacity: 0.88;
+}
+
+.pf2e-chase-forge .chase-route-consequence-badge.critical-failure {
+  font-weight: 600;
+}
+
+/* 1.0.11: host the shared Effect Editor without materializing a world Item */
+dialog.pf2e-chase-forge-effect-editor-dialog {
+  width: min(1100px, 94vw);
+  height: min(860px, 90vh);
+  max-width: none;
+  max-height: none;
+  padding: 0;
+  border: 1px solid var(--chase-border, rgba(255,255,255,.18));
+  border-radius: 10px;
+  background: var(--color-bg, #202225);
+  color: var(--color-text-primary, #f0f0f0);
+  box-shadow: 0 18px 60px rgba(0,0,0,.45);
+}
+dialog.pf2e-chase-forge-effect-editor-dialog::backdrop {
+  background: rgba(0,0,0,.55);
+}
+.chase-effect-editor-shell {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  height: 100%;
+  min-height: 0;
+}
+.chase-effect-editor-header {
+  padding: 14px 16px 10px;
+  border-bottom: 1px solid var(--chase-border, rgba(255,255,255,.18));
+}
+.chase-effect-editor-header h2 { margin: 0 0 4px; }
+.chase-effect-editor-header p { margin: 0; opacity: .78; }
+.chase-effect-editor-mount {
+  min-height: 0;
+  overflow: auto;
+  padding: 12px 16px;
+}
+.chase-effect-editor-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 10px 16px 14px;
+  border-top: 1px solid var(--chase-border, rgba(255,255,255,.18));
+}
+.chase-effect-editor-actions button { width: auto; }

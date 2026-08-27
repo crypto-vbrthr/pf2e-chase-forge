@@ -9,6 +9,7 @@ import { createChasePlayerUiService } from "./app/chase-player-app.js";
 import { createChaseSessionSyncService } from "./sync/chase-session-sync.js";
 import { createCoreTemplatePack } from "./content/core-templates.js";
 import { createCoreCardPack } from "./content/core-cards.js";
+import { registerEffectConsequenceChatActions } from "./consequences/effect-consequence-presentation.js";
 
 let registryService = null;
 let builderUi = null;
@@ -42,6 +43,7 @@ function startSessionSyncWithRetry() {
 
 Hooks.once("init", () => {
   registerSettings();
+  registerEffectConsequenceChatActions();
   registerFoundryChaseVaultProtectionHooks();
   registryService = createRegistryService({ stateStore: new FoundryPackStateStore() });
   try { registryService.registerPacks(MODULE_ID, [createCoreTemplatePack(), createCoreCardPack()]); }

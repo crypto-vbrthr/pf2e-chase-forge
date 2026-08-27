@@ -1,6 +1,6 @@
 {
   "name": "pf2e-chase-forge",
-  "version": "1.0.8",
+  "version": "1.0.11",
   "private": true,
   "type": "module",
   "scripts": {

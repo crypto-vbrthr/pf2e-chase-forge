@@ -539,3 +539,10 @@ test("Builder filters large registered-card libraries and can insert registered 
   assert.ok(de["PF2E_CHASE_FORGE.Builder.InsertRegisteredCardBefore"]);
   assert.ok(en["PF2E_CHASE_FORGE.Builder.InsertRegisteredCardBefore"]);
 });
+
+test("external Chase libraries default to collapsed only on first discovery", async () => {
+  const source = await readFile(new URL("../scripts/app/chase-builder-app.js", import.meta.url), "utf8");
+  assert.match(source, /_initializedLibraryGroupDefaults = new Set\(\)/);
+  assert.match(source, /if \(group\.moduleId && group\.moduleId !== MODULE_ID\) this\._collapsedLibraryGroups\.add\(group\.id\)/);
+  assert.match(source, /this\._initializedLibraryGroupDefaults\.add\(group\.id\)/);
+});

@@ -44,8 +44,14 @@ function mockApi(calls = []) {
       }
     },
     ui: {
-      async openEffectForgeDefinition(definition) {
-        calls.push(["openEditor", definition.id]);
+      effectEditor: {
+        create(options = {}) {
+          calls.push(["createEmbeddedEditor", options.definition?.id, options]);
+          return { value: options.definition, async mount() {}, async unmount() {} };
+        }
+      },
+      async openEffectForgeDefinition(definition, options = {}) {
+        calls.push(["openEditor", definition.id, options]);
         return definition.id;
       }
     }
@@ -93,9 +99,44 @@ test("item-backed Effect Forge consequences resolve the Item through UUID and pr
   assert.equal(resolved.itemUuid, item.uuid);
 });
 
-test("Effect Forge bridge can open the shared Effect Forge editor", async () => {
+test("Effect Forge bridge prefers the pure embedded editor so Chase Forge owns persistence", async () => {
   const calls = [];
-  const bridge = createEffectForgeBridge({ apiResolver: () => mockApi(calls) });
+  const edited = effectDefinition({ name: "Edited in Chase" });
+  const bridge = createEffectForgeBridge({
+    apiResolver: () => mockApi(calls),
+    embeddedEditorHost: async (surface, definition) => {
+      calls.push(["embeddedHost", definition.id, typeof surface.create]);
+      return edited;
+    }
+  });
+  const result = await bridge.openEditor({ source: "embedded", definition: effectDefinition() });
+  assert.equal(result.name, "Edited in Chase");
+  assert.ok(calls.some(call => call[0] === "embeddedHost"));
+  assert.equal(calls.some(call => call[0] === "openEditor"), false);
+});
+
+
+test("Effect Forge bridge returns the embedded definition to the Chase host save callback", async () => {
+  const calls = [];
+  const edited = effectDefinition({ name: "Attached Effect" });
+  let saved = null;
+  const bridge = createEffectForgeBridge({
+    apiResolver: () => mockApi(calls),
+    embeddedEditorHost: async () => edited
+  });
+  const result = await bridge.openEditor(
+    { source: "embedded", definition: effectDefinition() },
+    { onSave: definition => { saved = definition; } }
+  );
+  assert.equal(result.name, "Attached Effect");
+  assert.equal(saved.name, "Attached Effect");
+});
+
+test("Effect Forge bridge keeps the older standalone definition editor as a compatibility fallback", async () => {
+  const calls = [];
+  const api = mockApi(calls);
+  delete api.ui.effectEditor;
+  const bridge = createEffectForgeBridge({ apiResolver: () => api });
   const result = await bridge.openEditor({ source: "embedded", definition: effectDefinition() });
   assert.equal(result, "pf2e-chase-forge.sprained-ankle");
   assert.ok(calls.some(call => call[0] === "openEditor"));

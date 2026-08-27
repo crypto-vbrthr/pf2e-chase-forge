@@ -1,3 +1,30 @@
+# Changelog
+
+## 1.0.11 – Embedded Effect Editor Host & Library Defaults
+
+- Fixed new Effect Forge consequences opening an Item-oriented workflow that could not return the edited definition to the Chase card.
+- Chase Forge now prefers Critical Forge's public pure `api.ui.effectEditor.create` surface and hosts it in a Chase-owned modal with an explicit **Add Effect to Card** action.
+- Embedded Effect Definitions are stored directly in the editable card snapshot; no standalone world Item is created.
+- Retained the previous standalone definition editor only as a compatibility fallback for older Critical Forge builds.
+- External add-on Chase Library groups now start collapsed by default on first discovery while preserving manual expand/collapse choices across Builder re-renders.
+- Public API v18 and persisted schemas remain unchanged.
+
+## 1.0.10 – Consequence UX & Effect Forge Card Editing
+
+- Added a world setting for effect-consequence presentation: participant-local GM Runner controls, confirmation dialog, blind GM Chat card, public Chat card, or automatic application.
+- Pending Effect Forge consequences can now be applied directly beside the affected Chase participant.
+- Added actionable consequence Chat cards with GM-only application controls.
+- Card inspector now lists consequence triggers and shows their degree of success, scope, type, label, and effect description.
+- Editable cards can add, edit, and remove Effect Forge consequences through the shared Effect Forge editor when that integration is available.
+- Extended the Effect Forge editor bridge with an optional `onSave` callback while preserving the previous call contract.
+
+## 1.0.9 – Effect Consequence Reliability
+
+- Normalize resolved Token / TokenDocument chase participants to their Actor before delegating automatic consequences to Effect Forge.
+- Add immediate GM notifications for applied, manual-fallback, blocked, and failed Effect Forge consequences.
+- Add regression coverage for token-based participants.
+- Keep API v18 and all persisted schemas unchanged.
+
 ## 1.0.8 – Builder Card Library UX
 
 - Moving a route card up or down now preserves the independent main-editor and sidebar scroll positions instead of jumping the Builder back to the top.

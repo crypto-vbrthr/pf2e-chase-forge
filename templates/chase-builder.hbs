@@ -505,6 +505,7 @@
                       {{/if}}
                       <span class="chase-route-card-copy">
                         <strong>{{item.card.name}}</strong>
+                        {{#if item.card.hasConsequences}}<small class="chase-route-consequence-badge {{#if item.card.hasCriticalFailureConsequences}}critical-failure{{/if}}" title="{{item.card.consequenceBadgeTitle}}"><i class="fa-solid fa-triangle-exclamation"></i> {{item.card.consequenceCount}}</small>{{/if}}
                       </span>
                     </button>
                     {{#if item.card.canAddBranch}}
@@ -539,6 +540,7 @@
                                 {{/if}}
                                 <span class="chase-route-card-copy">
                                   <strong>{{routeCard.name}}</strong>
+                                  {{#if routeCard.hasConsequences}}<small class="chase-route-consequence-badge {{#if routeCard.hasCriticalFailureConsequences}}critical-failure{{/if}}" title="{{routeCard.consequenceBadgeTitle}}"><i class="fa-solid fa-triangle-exclamation"></i> {{routeCard.consequenceCount}}</small>{{/if}}
                                 </span>
                               </button>
                               <div class="chase-route-lane-line"><i class="fa-solid fa-arrow-down"></i></div>
@@ -704,6 +706,38 @@
                       </div>
                     </div>
                   {{/if}}
+
+                  <div class="chase-builder-consequences">
+                    <div class="chase-builder-subheading">
+                      <strong><i class="fa-solid fa-triangle-exclamation"></i> {{localize "PF2E_CHASE_FORGE.Builder.Consequences"}}</strong>
+                      <small>{{localize "PF2E_CHASE_FORGE.Builder.ConsequencesHint"}}</small>
+                    </div>
+                    {{#if selectedCard.card.hasConsequences}}
+                      <div class="chase-builder-consequence-list">
+                        {{#each selectedCard.card.consequences as |consequence|}}
+                          <div class="chase-builder-consequence-row">
+                            <div class="grow">
+                              <div class="chase-builder-consequence-meta"><span class="chase-runner-pill">{{consequence.degreeLabel}}</span><span>{{consequence.scopeLabel}}</span><span>{{consequence.kindLabel}}</span></div>
+                              <strong>{{consequence.label}}</strong>
+                              {{#if consequence.description}}<small>{{consequence.description}}</small>{{/if}}
+                            </div>
+                            {{#if @root.selectedCard.editable}}
+                              {{#if consequence.isEffectForge}}<button type="button" class="icon" data-action="editEffectConsequence" data-degree="{{consequence.degree}}" data-scope="{{consequence.scope}}" data-approach-index="{{consequence.approachIndex}}" data-consequence-index="{{consequence.consequenceIndex}}" title="{{localize 'PF2E_CHASE_FORGE.Builder.EditWithEffectForge'}}"><i class="fa-solid fa-wand-magic-sparkles"></i></button>{{/if}}
+                              <button type="button" class="icon danger" data-action="removeEffectConsequence" data-degree="{{consequence.degree}}" data-scope="{{consequence.scope}}" data-approach-index="{{consequence.approachIndex}}" data-consequence-index="{{consequence.consequenceIndex}}" title="{{localize 'PF2E_CHASE_FORGE.Builder.RemoveConsequence'}}"><i class="fa-solid fa-trash"></i></button>
+                            {{/if}}
+                          </div>
+                        {{/each}}
+                      </div>
+                    {{else}}
+                      <div class="chase-builder-empty inline">{{localize "PF2E_CHASE_FORGE.Builder.NoConsequences"}}</div>
+                    {{/if}}
+                    {{#if selectedCard.editable}}
+                      <div class="chase-builder-consequence-add">
+                        <select data-new-effect-degree>{{#each selectedCard.card.consequenceDegreeOptions}}<option value="{{value}}" {{#if selected}}selected{{/if}}>{{label}}</option>{{/each}}</select>
+                        <button type="button" data-action="addEffectConsequence" {{#unless selectedCard.card.effectForgeEditorAvailable}}disabled title="{{localize 'PF2E_CHASE_FORGE.Builder.EffectForgeEditorUnavailable'}}"{{/unless}}><i class="fa-solid fa-wand-magic-sparkles"></i> {{localize "PF2E_CHASE_FORGE.Builder.AddEffectConsequence"}}</button>
+                      </div>
+                    {{/if}}
+                  </div>
 
                   <div class="chase-builder-approaches">
                     <div class="chase-builder-subheading">

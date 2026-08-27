@@ -29,6 +29,94 @@ function compactIssue(issue = {}) {
   };
 }
 
+function uiLabel(key, fallback) {
+  try {
+    const value = globalThis.game?.i18n?.localize?.(key);
+    return value && value !== key ? value : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+async function defaultEmbeddedEditorHost(effectEditorApi, definition, options = {}) {
+  const document = globalThis.document;
+  if (!document?.createElement || !document?.body) {
+    throw integrationError("EFFECT_FORGE_EMBEDDED_EDITOR_HOST_UNAVAILABLE", "The embedded Effect Forge editor requires a browser document host.");
+  }
+
+  const dialog = document.createElement("dialog");
+  dialog.className = "pf2e-chase-forge-effect-editor-dialog";
+  dialog.innerHTML = `
+    <div class="chase-effect-editor-shell">
+      <header class="chase-effect-editor-header">
+        <h2><i class="fa-solid fa-wand-magic-sparkles"></i> ${uiLabel("PF2E_CHASE_FORGE.Builder.EffectConsequenceEditorTitle", "Effect-Forge-Konsequenz")}</h2>
+        <p>${uiLabel("PF2E_CHASE_FORGE.Builder.EffectConsequenceEditorHint", "Der Effekt wird in dieser Chase-Karte gespeichert und nicht als eigenständiges Item angelegt.")}</p>
+      </header>
+      <div class="chase-effect-editor-mount"></div>
+      <footer class="chase-effect-editor-actions">
+        <button type="button" data-action="cancel"><i class="fa-solid fa-xmark"></i> ${uiLabel("PF2E_CHASE_FORGE.Common.Cancel", "Abbrechen")}</button>
+        <button type="button" data-action="save" class="default bright"><i class="fa-solid fa-check"></i> ${uiLabel("PF2E_CHASE_FORGE.Builder.AttachEffectToCard", "Effekt zur Karte hinzufügen")}</button>
+      </footer>
+    </div>`;
+  document.body.append(dialog);
+
+  const mount = dialog.querySelector(".chase-effect-editor-mount");
+  let latest = cloneData(definition);
+  const editor = effectEditorApi.create({
+    definition: cloneData(definition),
+    onChange(value) {
+      const candidate = value?.definition?.schemaVersion ? value.definition
+        : value?.value?.definition?.schemaVersion ? value.value.definition
+          : value?.value?.schemaVersion ? value.value
+            : value?.schemaVersion ? value
+              : null;
+      if (isPlainObject(candidate)) latest = cloneData(candidate);
+    }
+  });
+
+  const close = async () => {
+    try { await editor?.unmount?.(); } catch { /* best effort */ }
+    try { dialog.close?.(); } catch { /* best effort */ }
+    dialog.remove?.();
+  };
+
+  let resolveChoice;
+  const choice = new Promise(resolve => { resolveChoice = resolve; });
+  let settled = false;
+  const finish = async value => {
+    if (settled) return;
+    settled = true;
+    await close();
+    resolveChoice(value);
+  };
+  dialog.querySelector('[data-action="cancel"]')?.addEventListener("click", () => void finish(null), { once: true });
+  dialog.querySelector('[data-action="save"]')?.addEventListener("click", () => {
+    const raw = editor?.value ?? latest;
+    const candidate = raw?.definition?.schemaVersion ? raw.definition
+      : raw?.value?.definition?.schemaVersion ? raw.value.definition
+        : raw?.value?.schemaVersion ? raw.value
+          : raw?.schemaVersion ? raw
+            : latest;
+    void finish(isPlainObject(candidate) ? cloneData(candidate) : null);
+  }, { once: true });
+  dialog.addEventListener?.("cancel", event => {
+    event.preventDefault?.();
+    void finish(null);
+  }, { once: true });
+
+  if (typeof dialog.showModal === "function") dialog.showModal();
+  else if (typeof dialog.show === "function") dialog.show();
+  else dialog.setAttribute("open", "");
+
+  try {
+    await editor.mount(mount);
+  } catch (error) {
+    await close();
+    throw error;
+  }
+  return choice;
+}
+
 export function inspectEffectForgeApi(api) {
   if (!api) {
     return Object.freeze({
@@ -39,7 +127,7 @@ export function inspectEffectForgeApi(api) {
       moduleVersion: null,
       schemaVersion: null,
       missing: [...EFFECT_FORGE_MIN_API_SURFACE],
-      capabilities: Object.freeze({ apply: false, execute: false, readItem: false, analyze: false, migrate: false, editor: false })
+      capabilities: Object.freeze({ apply: false, execute: false, readItem: false, analyze: false, migrate: false, checkCompatibility: false, embeddedEditor: false, standaloneEditor: false, editor: false })
     });
   }
 
@@ -51,7 +139,9 @@ export function inspectEffectForgeApi(api) {
     analyze: typeof api.effects?.analyze === "function",
     migrate: typeof api.effects?.migrate === "function",
     checkCompatibility: typeof api.effects?.checkCompatibility === "function",
-    editor: typeof api.ui?.openEffectForgeDefinition === "function" || typeof api.ui?.openEffectForge === "function"
+    embeddedEditor: typeof api.ui?.effectEditor?.create === "function",
+    standaloneEditor: typeof api.ui?.openEffectForgeDefinition === "function" || typeof api.ui?.openEffectForge === "function",
+    editor: typeof api.ui?.effectEditor?.create === "function" || typeof api.ui?.openEffectForgeDefinition === "function" || typeof api.ui?.openEffectForge === "function"
   });
 
   return Object.freeze({
@@ -69,7 +159,8 @@ export function inspectEffectForgeApi(api) {
 export function createEffectForgeBridge({
   moduleId = CRITICAL_FORGE_MODULE_ID,
   apiResolver = null,
-  uuidResolver = null
+  uuidResolver = null,
+  embeddedEditorHost = defaultEmbeddedEditorHost
 } = {}) {
   const resolveApi = apiResolver ?? (() => globalThis.game?.modules?.get?.(moduleId)?.api ?? null);
   const resolveUuid = uuidResolver ?? (async uuid => {
@@ -199,14 +290,32 @@ export function createEffectForgeBridge({
     });
   }
 
-  async function openEditor(reference = {}) {
+  async function openEditor(reference = {}, options = {}) {
     const { api } = assertAvailable();
     const resolved = await resolveDefinition(reference);
-    if (typeof api.ui?.openEffectForgeDefinition === "function") {
-      return api.ui.openEffectForgeDefinition(resolved.definition, { unmanagedRules: resolved.unmanagedRules });
+
+    // Prefer the pure embedded Effect Editor. The host owns persistence, so a
+    // Chase consequence can store the edited definition directly instead of
+    // materializing a world Item through the standalone Effect Forge window.
+    if (typeof api.ui?.effectEditor?.create === "function") {
+      const edited = await embeddedEditorHost(api.ui.effectEditor, resolved.definition, {
+        unmanagedRules: resolved.unmanagedRules,
+        ...(options.editorOptions ?? {})
+      });
+      if (edited && typeof options.onSave === "function") options.onSave(edited);
+      return edited;
     }
-    if (resolved.item && typeof api.ui?.openEffectForge === "function") return api.ui.openEffectForge(resolved.item);
-    if (typeof api.ui?.openEffectForge === "function") return api.ui.openEffectForge();
+
+    // Backward-compatible fallback for older Critical Forge builds. These
+    // surfaces may be Item-oriented, so consumers should prefer the embedded
+    // editor capability whenever it is available.
+    if (typeof api.ui?.openEffectForgeDefinition === "function") {
+      const editorOptions = { unmanagedRules: resolved.unmanagedRules, ...(options.editorOptions ?? {}) };
+      if (typeof options.onSave === "function") editorOptions.onSave = options.onSave;
+      return api.ui.openEffectForgeDefinition(resolved.definition, editorOptions);
+    }
+    if (resolved.item && typeof api.ui?.openEffectForge === "function") return api.ui.openEffectForge(resolved.item, options.editorOptions ?? {});
+    if (typeof api.ui?.openEffectForge === "function") return api.ui.openEffectForge(options.editorOptions ?? {});
     throw integrationError("EFFECT_FORGE_EDITOR_UNAVAILABLE", "Effect Forge is installed, but its public editor API is unavailable.");
   }
 

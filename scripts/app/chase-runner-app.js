@@ -4,6 +4,8 @@ import { buildGraphIndex, topologicalSort } from "../data/graph.js";
 import { openChaseImage } from "../images/image-popout.js";
 import { createChaseChatPresenter } from "../presentation/chat-presenter.js";
 import { localizeApproachLabel, localizeChaseCard, localizeNodeLabel, localizeStatisticLabel } from "../content/content-localization.js";
+import { getEffectConsequencePresentationMode } from "../settings.js";
+import { confirmEffectConsequenceDialog, pendingEffectItems, postEffectConsequenceChatCard, prepareOccurrencesForPresentation, reconstructConsequenceOccurrence } from "../consequences/effect-consequence-presentation.js";
 
 export const GM_RUNNER_CONTRACT_VERSION = 1;
 
@@ -23,6 +25,29 @@ function format(key, data = {}, fallback = null) {
 function notify(kind, message) {
   const fn = globalThis.ui?.notifications?.[kind] ?? globalThis.ui?.notifications?.info;
   fn?.call(globalThis.ui?.notifications, message);
+}
+
+function notifyConsequenceExecution(execution) {
+  for (const item of execution?.processed ?? []) {
+    if (item?.occurrence?.consequence?.kind !== "effectForge") continue;
+    const label = item.occurrence.consequence.label || item.record?.consequenceId || i18n("PF2E_CHASE_FORGE.Runner.Effect", "Effekt");
+    const participant = resolveParticipant(execution.session, item.occurrence.participantId);
+    const participantName = participant?.name || i18n("PF2E_CHASE_FORGE.Runner.UnknownParticipant", "Beteiligter");
+    const status = item.record?.status;
+    if (status === "applied") {
+      notify("info", format("PF2E_CHASE_FORGE.Runner.EffectConsequenceApplied", { effect: label, participant: participantName }, `Effekt angewendet: ${label} → ${participantName}`));
+      continue;
+    }
+    if (status === "manualFallback") {
+      notify("warn", format("PF2E_CHASE_FORGE.Runner.EffectConsequenceFallback", { effect: label, participant: participantName }, `Effekt konnte nicht automatisch angewendet werden: ${label} → ${participantName}.`));
+      console.warn(`${MODULE_ID} | Effect Forge consequence requires manual fallback.`, item.record);
+      continue;
+    }
+    if (["blocked", "failed"].includes(status)) {
+      notify("error", format("PF2E_CHASE_FORGE.Runner.EffectConsequenceFailed", { effect: label, participant: participantName }, `Effektanwendung fehlgeschlagen: ${label} → ${participantName}.`));
+      console.error(`${MODULE_ID} | Effect Forge consequence failed.`, item.record);
+    }
+  }
 }
 
 function escapeHtml(value) {
@@ -83,25 +108,36 @@ function resolveCardById(api, session, cardId) {
   return resolved ? localizeChaseCard(resolved) : null;
 }
 
-function reconstructOccurrence(api, session, record) {
-  const card = resolveCardById(api, session, record.cardId);
-  const approach = card?.approaches?.find(item => item.id === record.approachId) ?? null;
-  const candidates = [
-    ...(approach?.outcomes?.[record.degree] ?? []),
-    ...(card?.outcomes?.[record.degree] ?? [])
+function warnIfRegisteredCardSnapshotOutdated(api, session, result) {
+  const context = result?.consequenceContext;
+  const degree = result?.degree ?? context?.degree ?? null;
+  if (!context?.cardId || !degree) return false;
+  const snapshot = resolveCardById(api, session, context.cardId);
+  const originRef = snapshot?.metadata?.originCardRef ?? null;
+  if (!originRef) return false;
+  const current = api?.cards?.get?.(originRef, { includeDisabled: true }) ?? null;
+  if (!current) return false;
+  const snapshotApproach = snapshot.approaches?.find(item => item.id === context.approachId) ?? null;
+  const currentApproach = current.approaches?.find(item => item.id === context.approachId) ?? null;
+  const deferred = items => (items ?? []).filter(item => item?.kind !== "chasePoints");
+  const snapshotConsequences = [
+    ...deferred(snapshotApproach?.outcomes?.[degree]),
+    ...deferred(snapshot.outcomes?.[degree])
   ];
-  const consequence = candidates.find(item => item.id === record.consequenceId) ?? null;
-  if (!consequence) return null;
-  return api.consequences.createOccurrence(consequence, {
-    occurrenceId: record.occurrenceId,
-    sourceEventId: record.sourceEventId,
-    runtimeGroupId: record.runtimeGroupId,
-    participantId: record.participantId,
-    nodeId: record.nodeId,
-    cardId: record.cardId,
-    approachId: record.approachId,
-    degree: record.degree
-  });
+  const currentConsequences = [
+    ...deferred(currentApproach?.outcomes?.[degree]),
+    ...deferred(current.outcomes?.[degree])
+  ];
+  const snapshotKeys = new Set(snapshotConsequences.map(item => `${item.kind}:${item.id}`));
+  const missing = currentConsequences.filter(item => !snapshotKeys.has(`${item.kind}:${item.id}`));
+  if (missing.length === 0) return false;
+  notify("warn", format(
+    "PF2E_CHASE_FORGE.Runner.RegisteredCardSnapshotOutdated",
+    { card: snapshot.name || current.name || originRef },
+    `Die Kartenkopie „${snapshot.name || current.name || originRef}“ stammt aus einer älteren registrierten Version. Füge die registrierte Karte neu ein, um aktuelle Konsequenzen zu übernehmen.`
+  ));
+  console.warn(`${MODULE_ID} | Registered card snapshot is missing current source consequences.`, { originRef, degree, missing: missing.map(item => ({ id: item.id, kind: item.kind })) });
+  return true;
 }
 
 function rollNatural(roll) {
@@ -570,11 +606,13 @@ function getAppClass() {
           statusLabel: resolvedStatusLabel ?? (runtimeGroup.completed ? "Am Ziel" : (node?.type === "card" ? "Am Hindernis" : (node?.type === "choice" ? "Wegentscheidung" : node?.type ?? "Unterwegs")))
         });
       }
-      const consequenceRecords = (session.consequenceState?.records ?? []).filter(record => ["pendingConfirmation", "pendingSelection", "manualFallback", "blocked", "failed"].includes(record.status)).map(record => {
+      const consequencePresentationMode = getEffectConsequencePresentationMode();
+      const allConsequenceRecords = (session.consequenceState?.records ?? []).filter(record => ["pendingConfirmation", "pendingSelection", "manualFallback", "blocked", "failed"].includes(record.status)).map(record => {
         const edgeIds = record.result?.edgeIds ?? [];
-        const occurrence = reconstructOccurrence(this.chaseApi, session, record);
+        const occurrence = reconstructConsequenceOccurrence(this.chaseApi, session, record);
         return {
-          ...cloneData(record), consequenceLabel: occurrence?.consequence?.label || record.consequenceId, statusLabel: optionLabel(record.status),
+          ...cloneData(record), consequenceLabel: occurrence?.consequence?.label || record.consequenceId, consequenceKind: occurrence?.consequence?.kind ?? record.kind, statusLabel: optionLabel(record.status),
+          consequenceDescription: occurrence?.consequence?.payload?.definition?.description ?? "",
           canConfirm: record.status === "pendingConfirmation",
           needsRouteSelection: record.status === "pendingSelection",
           routeChoices: edgeIds.map(edgeId => {
@@ -583,6 +621,21 @@ function getAppClass() {
           })
         };
       });
+      const participantConsequenceMap = new Map();
+      if (consequencePresentationMode === "runner") {
+        for (const record of allConsequenceRecords) {
+          if (record.consequenceKind !== "effectForge" || !record.participantId || record.status !== "pendingConfirmation") continue;
+          if (!participantConsequenceMap.has(record.participantId)) participantConsequenceMap.set(record.participantId, []);
+          participantConsequenceMap.get(record.participantId).push(record);
+        }
+        for (const group of groups) {
+          for (const participant of group.participants ?? []) {
+            participant.effectConsequences = participantConsequenceMap.get(participant.id) ?? [];
+            participant.hasEffectConsequences = participant.effectConsequences.length > 0;
+          }
+        }
+      }
+      const consequenceRecords = allConsequenceRecords.filter(record => !(consequencePresentationMode === "runner" && record.consequenceKind === "effectForge" && record.participantId && record.status === "pendingConfirmation"));
       const chaseImage = await resolveBlueprintImage(this.chaseApi, session);
       const completion = terminalSummary(session, chaseImage);
       const initiativeEntries = race
@@ -619,6 +672,7 @@ function getAppClass() {
         chaseImage,
         completion,
         consequenceRecords,
+        consequencePresentationMode,
         hasConsequences: consequenceRecords.length > 0,
         weather: session.blueprintSnapshot?.settings?.weather?.label ?? session.blueprintSnapshot?.settings?.weather ?? null,
         timeOfDay: session.blueprintSnapshot?.settings?.timeOfDay ?? null
@@ -683,12 +737,28 @@ function getAppClass() {
     }
 
     async _applyRulesResult(result, { participantName = "", approachLabel = "" } = {}) {
+      warnIfRegisteredCardSnapshotOutdated(this.chaseApi, result.session, result);
+      const presentationMode = getEffectConsequencePresentationMode();
       let consequenceResult = null;
       if ((result.consequenceOccurrences ?? []).length > 0) {
-        consequenceResult = await this.chaseApi.consequences.executeRulesResult(result, { autoConfirm: false });
+        const occurrences = prepareOccurrencesForPresentation(this.chaseApi, result, presentationMode);
+        consequenceResult = await this.chaseApi.consequences.execute(result.session, occurrences, { autoConfirm: false });
+        if (presentationMode === "dialog") {
+          for (const item of pendingEffectItems(consequenceResult)) {
+            const dialogItem = { ...item, session: consequenceResult.session };
+            if (!await confirmEffectConsequenceDialog(dialogItem)) continue;
+            consequenceResult = await this.chaseApi.consequences.execute(consequenceResult.session, item.occurrence, { confirmedOccurrenceIds: [item.occurrence.occurrenceId] });
+          }
+        }
+        notifyConsequenceExecution(consequenceResult);
       }
       const session = consequenceResult?.session ?? result.session;
       await this._saveOrFinish(session);
+      if (["chatGm", "chatPublic"].includes(presentationMode) && consequenceResult) {
+        for (const item of pendingEffectItems(consequenceResult)) {
+          await postEffectConsequenceChatCard({ ...item, session }, { mode: presentationMode }).catch(error => console.warn(`${MODULE_ID} | Failed to post consequence Chat card.`, error));
+        }
+      }
       await this.chat.postRollResult({ sessionId: session.id, participantName, approachLabel, result }).catch(error => console.warn(`${MODULE_ID} | Failed to post chase roll result.`, error));
       return this.render({ force: true });
     }

@@ -107,7 +107,9 @@ A manual card starts with one Athletics approach using a level-based DC. The GM 
 - proficiency for simple DCs;
 - hidden/public DC state.
 
-Outcome/consequence editing is not part of the Basic Builder UI in dev.7. Existing registered card outcomes are preserved when a card is cloned into the Blueprint snapshot.
+Registered and local card outcomes are preserved in the Blueprint snapshot. As of 1.0.10, the route diagram marks cards that contain non-Chase-Point consequences, and the card inspector lists each trigger degree, card/approach scope, consequence kind, label, and effect description.
+
+For editable world cards, the GM can add a card-level Effect Forge consequence to a selected degree of success, reopen an existing embedded Effect Forge consequence in the shared editor, or remove it. Read-only Library cards expose the same summary but cannot be edited until copied or inserted into an owned chase.
 
 ## Persistence flow
 

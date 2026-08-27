@@ -158,6 +158,15 @@ function targetUuid(value) {
   return value?.uuid ?? value?.document?.uuid ?? value?.actor?.uuid ?? null;
 }
 
+function effectTargetDocument(value) {
+  if (!value || typeof value !== "object") return value;
+  // Effect Forge applies PF2e effects to Actors. Chase participants may however
+  // store Token / TokenDocument UUIDs, especially when they were added from the
+  // canvas. Normalize those resolved documents to their Actor (including a
+  // synthetic Actor for unlinked tokens) before handing them to Effect Forge.
+  return value.actor ?? value.document?.actor ?? value;
+}
+
 async function defaultUuidResolver(uuid) {
   if (typeof globalThis.fromUuid !== "function") return null;
   return globalThis.fromUuid(uuid);
@@ -168,20 +177,23 @@ async function resolveUuidTargets(values, resolver) {
   const seen = new Set();
   for (const value of values ?? []) {
     if (value && typeof value === "object") {
-      const uuid = targetUuid(value) ?? `object:${resolved.length}`;
+      const target = effectTargetDocument(value);
+      const uuid = targetUuid(target) ?? `object:${resolved.length}`;
       if (!seen.has(uuid)) {
         seen.add(uuid);
-        resolved.push(value);
+        resolved.push(target);
       }
       continue;
     }
-    const uuid = String(value ?? "").trim();
-    if (!uuid || seen.has(uuid)) continue;
-    const target = await resolver(uuid);
-    if (target) {
-      seen.add(uuid);
-      resolved.push(target);
-    }
+    const sourceUuid = String(value ?? "").trim();
+    if (!sourceUuid) continue;
+    const document = await resolver(sourceUuid);
+    if (!document) continue;
+    const target = effectTargetDocument(document);
+    const uuid = targetUuid(target) ?? sourceUuid;
+    if (seen.has(uuid)) continue;
+    seen.add(uuid);
+    resolved.push(target);
   }
   return resolved;
 }
