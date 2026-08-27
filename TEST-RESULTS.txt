@@ -1,9 +1,33 @@
-PF2E Chase Forge 1.0.12 - Test Results
+PF2E Chase Forge 1.1.0-rc.1 - Release Candidate Test Results
+===============================================================
 
-Command: npm test
-Result: 420/420 tests passed
-Failures: 0
+Automated Node test suite
+- Tests: 421
+- Passed: 421
+- Failed: 0
+- Skipped: 0
 
-Regression coverage added in 1.0.12:
-- GM Runner pending-consequence actions use reconstructConsequenceOccurrence and no longer reference undefined reconstructOccurrence.
-- Embedded Effect Forge add/edit saves capture Builder scroll state before the forced re-render.
+Static verification
+- JavaScript syntax check: PASS across 101 script/test files
+- Manifest/package/constants version parity: PASS
+- Foundry 14 / PF2e manifest compatibility checks: PASS
+- German/English localization key parity: PASS
+- Public API version: 18 (unchanged)
+- Extension Contract version: 1 (unchanged)
+- Persisted schema versions: unchanged
+- Legacy undefined reconstructOccurrence call: not present
+
+RC focus coverage
+- Registered-card source/category filtering and contextual insertion
+- Builder scroll preservation for card movement and embedded Effect Forge editing
+- External add-on library default collapse behavior
+- Five Effect Forge consequence presentation modes
+- Participant-local GM Runner consequence actions
+- Token/TokenDocument -> Actor resolution for Effect Forge
+- Embedded Effect Editor definition handoff without creating world Items
+- PF2e chase rules, branching, multi-group runtime, Player View
+- Generator, protected persistence, Journal, Campaign Forge and Weather Forge integrations
+
+Cross-package validation
+- Against the Apocalypse 0.1.0-rc.1 registers successfully through the real Chase Forge Extension API
+- 1 pack / 36 cards / 10 generator templates / 6 Library Blueprints registered

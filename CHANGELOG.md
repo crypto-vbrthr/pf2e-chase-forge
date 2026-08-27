@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.1.0-rc.1 – Post-1.0 UX & Consequence Integration Release Candidate
+
+- Consolidates the validated 1.0.8–1.0.12 Builder and consequence work into the 1.1 release candidate.
+- Registered-card workflows now scale to larger content ecosystems with source/pack and category filters, visible card counts, and insertion before or after the selected route card.
+- Builder scroll state is preserved across route-card movement and embedded Effect Forge consequence editing.
+- External add-on Chase Library groups start collapsed by default while preserving the GM's expand/collapse choices during the open Builder session.
+- Effect Forge consequences support five world-configurable presentation modes: participant-local GM Runner action, confirmation dialog, blind GM Chat card, public actionable Chat card, or automatic application.
+- Editable Chase cards can create, edit, and remove embedded Effect Forge definitions without creating standalone world Items.
+- Token/TokenDocument participants are normalized to their Actor before Effect Forge application, and pending GM Runner consequences reconstruct through the correct shared helper.
+- Public API remains v18, Extension Contract remains v1, persisted schema versions are unchanged, and no migration is required.
+- Final RC regression pass covers Builder card-library UX, add-on Library behavior, Effect Forge presentation/application, persistence, PF2e rules, branching, Player View, Campaign Forge, Journal, Weather Forge, and generator integration.
+
 ## 1.0.12 - Consequence Runner & Builder Scroll Hotfix
 
 - Fixed GM Runner consequence actions throwing `reconstructOccurrence is not defined`; pending Effect Forge consequences now reconstruct through the shared consequence presentation helper before execution.
