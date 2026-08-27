@@ -1,13 +1,9 @@
-PF2E Chase Forge 1.0.11 - Test Results
+PF2E Chase Forge 1.0.12 - Test Results
 
-PASS: Core automated suite 418/418
-PASS: Embedded Effect Editor bridge prefers api.ui.effectEditor.create and returns edited definitions to the Chase host
-PASS: Legacy standalone Effect Forge editor remains a compatibility fallback
-PASS: External add-on Chase libraries default to collapsed on first discovery and retain manual state during the open Builder session
-PASS: JavaScript syntax checks
+Command: npm test
+Result: 420/420 tests passed
+Failures: 0
 
-Public API: 18
-Extension Contract: 1
-Persisted schemas: unchanged
-Foundry VTT: minimum/verified 14
-PF2e: minimum 8.1.2
+Regression coverage added in 1.0.12:
+- GM Runner pending-consequence actions use reconstructConsequenceOccurrence and no longer reference undefined reconstructOccurrence.
+- Embedded Effect Forge add/edit saves capture Builder scroll state before the forced re-render.

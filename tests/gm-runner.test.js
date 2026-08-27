@@ -190,3 +190,9 @@ test("GM Runner shows each participant's PF2e approach modifier beside the skill
   assert.match(template, /participant\.approaches/);
   assert.match(template, /chase-skill-modifier/);
 });
+
+test("GM Runner consequence actions use the exported occurrence reconstruction helper", async () => {
+  const source = await readFile(new URL("../scripts/app/chase-runner-app.js", import.meta.url), "utf8");
+  assert.match(source, /reconstructConsequenceOccurrence\(this\.chaseApi, session, record\)/);
+  assert.doesNotMatch(source, /\breconstructOccurrence\(/);
+});

@@ -2198,6 +2198,7 @@ function getAppClass() {
       };
       const onSave = value => {
         if (!commit(value)) return;
+        this._captureScrollPosition();
         void this.render({ force: true });
       };
       const result = await bridge.openEditor(
@@ -2205,7 +2206,10 @@ function getAppClass() {
         { onSave }
       );
       const candidate = this._effectEditorDefinitionCandidate(result);
-      if (!saved && candidate && commit(candidate)) await this.render({ force: true });
+      if (!saved && candidate && commit(candidate)) {
+        this._captureScrollPosition();
+        await this.render({ force: true });
+      }
       return saved || result != null;
     }
 

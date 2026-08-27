@@ -546,3 +546,9 @@ test("external Chase libraries default to collapsed only on first discovery", as
   assert.match(source, /if \(group\.moduleId && group\.moduleId !== MODULE_ID\) this\._collapsedLibraryGroups\.add\(group\.id\)/);
   assert.match(source, /this\._initializedLibraryGroupDefaults\.add\(group\.id\)/);
 });
+
+test("embedded Effect Forge saves preserve Chase Builder scroll position before rerender", async () => {
+  const source = await readFile(new URL("../scripts/app/chase-builder-app.js", import.meta.url), "utf8");
+  assert.match(source, /const onSave = value => \{[\s\S]*?this\._captureScrollPosition\(\);[\s\S]*?this\.render\(\{ force: true \}\)/);
+  assert.match(source, /if \(!saved && candidate && commit\(candidate\)\) \{[\s\S]*?this\._captureScrollPosition\(\);[\s\S]*?await this\.render\(\{ force: true \}\)/);
+});

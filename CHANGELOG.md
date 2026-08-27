@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.0.12 - Consequence Runner & Builder Scroll Hotfix
+
+- Fixed GM Runner consequence actions throwing `reconstructOccurrence is not defined`; pending Effect Forge consequences now reconstruct through the shared consequence presentation helper before execution.
+- Preserved Builder main/sidebar scroll positions when an embedded Effect Forge consequence is added or edited and the Chase Builder re-renders after saving.
+
 ## 1.0.11 – Embedded Effect Editor Host & Library Defaults
 
 - Fixed new Effect Forge consequences opening an Item-oriented workflow that could not return the edited definition to the Chase card.

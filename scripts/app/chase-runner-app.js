@@ -1043,7 +1043,7 @@ function getAppClass() {
       try {
         const session = await this.chaseApi.sessionManager.getSession(this.sessionId);
         const record = session.consequenceState.records.find(item => item.occurrenceId === target.dataset.occurrenceId);
-        const occurrence = record ? reconstructOccurrence(this.chaseApi, session, record) : null;
+        const occurrence = record ? reconstructConsequenceOccurrence(this.chaseApi, session, record) : null;
         if (!occurrence) throw new Error("Die Konsequenzdefinition konnte nicht wiederhergestellt werden.");
         const result = await this.chaseApi.consequences.execute(session, occurrence, { confirmedOccurrenceIds: [occurrence.occurrenceId], retryFallback: true, retryFailed: true, retryBlocked: true });
         await this._saveOrFinish(result.session);
@@ -1055,7 +1055,7 @@ function getAppClass() {
       try {
         const session = await this.chaseApi.sessionManager.getSession(this.sessionId);
         const record = session.consequenceState.records.find(item => item.occurrenceId === target.dataset.occurrenceId);
-        const occurrence = record ? reconstructOccurrence(this.chaseApi, session, record) : null;
+        const occurrence = record ? reconstructConsequenceOccurrence(this.chaseApi, session, record) : null;
         if (!occurrence) throw new Error("Die Konsequenzdefinition konnte nicht wiederhergestellt werden.");
         const result = await this.chaseApi.consequences.execute(session, occurrence, {
           confirmedOccurrenceIds: [occurrence.occurrenceId],

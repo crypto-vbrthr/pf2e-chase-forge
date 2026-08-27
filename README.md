@@ -1,13 +1,19 @@
 # PF2E Chase Forge
 
-**Version:** 1.0.11  
+**Version:** 1.0.12  
 **Foundry VTT:** 14  
 **System:** Pathfinder 2e
 
-PF2E Chase Forge is a modular Pathfinder 2e chase framework for Foundry VTT. `1.0.11` fixes embedded Effect Forge card editing: the Builder now hosts the public pure `api.ui.effectEditor` surface itself, so saving an effect attaches its definition directly to the Chase card instead of opening the standalone Item workflow. External add-on libraries also start collapsed by default while keeping their user-selected expand/collapse state for the open Builder window. The 1.0.10 consequence presentation modes and card-consequence inspector remain intact. Public API v18 and persisted schemas are unchanged.
+PF2E Chase Forge is a modular Pathfinder 2e chase framework for Foundry VTT. `1.0.12` fixes two consequence-workflow regressions: GM Runner effect buttons now reconstruct pending consequences through the shared helper instead of calling an undefined function, and the Builder preserves its scroll position after saving an embedded Effect Forge consequence. The embedded editor workflow and collapsed external libraries from 1.0.11 remain intact. Public API v18 and persisted schemas are unchanged.
 
 The underlying architecture remains intact: DAG route graphs, synchronized GM/Player runtime views, add-on registries, template-based generation, the 72-card Core Library, the shared Visual System, PF2e chase rules, consequence orchestration, optional Critical Forge / Effect Forge integration, Weather Forge prefill, and protected restart-safe Blueprint/Session persistence.
 
+
+
+## 1.0.12 Consequence Runner & Builder Scroll Hotfix
+
+- Fixes the GM Runner `reconstructOccurrence is not defined` error when applying a pending consequence.
+- Keeps the Chase Builder at its current scroll position after adding or editing an embedded Effect Forge consequence.
 
 ## 1.0.11 Embedded Effect Editor Host & Library Defaults
 
