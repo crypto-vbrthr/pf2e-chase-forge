@@ -180,5 +180,4 @@ export function registerEffectConsequenceChatActions() {
     button.addEventListener("click", event => { event.preventDefault(); void applyFromChat(message, button); });
   };
   globalThis.Hooks?.on?.("renderChatMessageHTML", wire);
-  globalThis.Hooks?.on?.("renderChatMessage", wire);
 }

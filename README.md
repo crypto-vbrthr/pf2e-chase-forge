@@ -1,14 +1,16 @@
 # PF2E Chase Forge
 
-**Version:** 1.1.0-rc.1  
+**Version:** 1.1.0-rc.2  
 **Foundry VTT:** 14  
 **System:** Pathfinder 2e
 
-PF2E Chase Forge is a modular Pathfinder 2e chase framework for Foundry VTT. `1.1.0-rc.1` is the release-candidate consolidation of the post-1.0 Builder, add-on Library, registered-card, and Effect Forge consequence improvements. It keeps Public API v18 and all persisted schema versions unchanged, so existing world chases and extension packs require no migration.
+PF2E Chase Forge is a modular Pathfinder 2e chase framework for Foundry VTT. `1.1.0-rc.2` is the release-candidate maintenance update of the post-1.0 Builder, add-on Library, registered-card, and Effect Forge consequence improvements. It keeps Public API v18 and all persisted schema versions unchanged, so existing world chases and extension packs require no migration.
 
 The underlying architecture remains intact: DAG route graphs, synchronized GM/Player runtime views, add-on registries, template-based generation, the 72-card Core Library, the shared Visual System, PF2e chase rules, consequence orchestration, optional Critical Forge / Effect Forge integration, Weather Forge prefill, and protected restart-safe Blueprint/Session persistence.
 
-## 1.1.0-rc.1 Release Candidate
+## 1.1.0-rc.2 Release Candidate
+
+This maintenance RC removes the deprecated Foundry VTT `renderChatMessage` hook from Effect Forge consequence Chat wiring. Chase Forge now registers only `renderChatMessageHTML` for those controls. No public API or persisted schema changes are included.
 
 This RC freezes the feature set for the next stable Chase Forge release. The focus is final integration rather than new mechanics: large registered-card libraries can be filtered and inserted contextually, external scenario libraries open collapsed, and Effect Forge consequences are visible during preparation and actionable at the affected participant, through a confirmation dialog, through GM/public Chat, or automatically. Embedded effect editing stores the definition on the Chase card instead of creating a world Item.
 

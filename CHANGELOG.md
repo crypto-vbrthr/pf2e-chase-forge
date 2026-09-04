@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.1.0-rc.2 – Foundry V14 Chat Hook Maintenance
+
+- Removes the deprecated `renderChatMessage` hook from Effect Forge consequence Chat controls.
+- Uses only Foundry V14 `renderChatMessageHTML`; existing consequence Chat buttons keep the same behavior.
+- Public API v18, Extension Contract v1, and persisted schema versions are unchanged.
+- Adds regression coverage preventing the legacy hook from being registered again.
+
 ## 1.1.0-rc.1 – Post-1.0 UX & Consequence Integration Release Candidate
 
 - Consolidates the validated 1.0.8–1.0.12 Builder and consequence work into the 1.1 release candidate.

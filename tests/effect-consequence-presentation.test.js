@@ -67,3 +67,11 @@ test("effect consequence presentation setting exposes all five supported world m
     globalThis.game = previousGame;
   }
 });
+
+
+test("Effect consequence Chat wiring uses only Foundry V14 renderChatMessageHTML", async () => {
+  const fs = await import("node:fs/promises");
+  const source = await fs.readFile(new URL("../scripts/consequences/effect-consequence-presentation.js", import.meta.url), "utf8");
+  assert.match(source, /Hooks\?\.on\?\.\("renderChatMessageHTML", wire\)/);
+  assert.doesNotMatch(source, /Hooks\?\.on\?\.\("renderChatMessage", wire\)/);
+});
