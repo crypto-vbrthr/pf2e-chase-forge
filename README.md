@@ -1,20 +1,43 @@
 # PF2E Chase Forge
 
-**Version:** 1.1.0-rc.2  
+**Version:** 1.1.0  
 **Foundry VTT:** 14  
 **System:** Pathfinder 2e
 
-PF2E Chase Forge is a modular Pathfinder 2e chase framework for Foundry VTT. `1.1.0-rc.2` is the release-candidate maintenance update of the post-1.0 Builder, add-on Library, registered-card, and Effect Forge consequence improvements. It keeps Public API v18 and all persisted schema versions unchanged, so existing world chases and extension packs require no migration.
+PF2E Chase Forge is a modular Pathfinder 2e chase framework for Foundry VTT. `1.1.0` is the stable post-1.0 UX and consequence-integration release. It consolidates the validated Builder, add-on Library, registered-card, and Effect Forge improvements from the 1.1 release-candidate cycle while keeping Public API v18 and all persisted schema versions unchanged, so existing world chases and extension packs require no migration.
 
 The underlying architecture remains intact: DAG route graphs, synchronized GM/Player runtime views, add-on registries, template-based generation, the 72-card Core Library, the shared Visual System, PF2e chase rules, consequence orchestration, optional Critical Forge / Effect Forge integration, Weather Forge prefill, and protected restart-safe Blueprint/Session persistence.
 
-## 1.1.0-rc.2 Release Candidate
 
-This maintenance RC removes the deprecated Foundry VTT `renderChatMessage` hook from Effect Forge consequence Chat wiring. Chase Forge now registers only `renderChatMessageHTML` for those controls. No public API or persisted schema changes are included.
+## Part of the Forge Suite
 
-This RC freezes the feature set for the next stable Chase Forge release. The focus is final integration rather than new mechanics: large registered-card libraries can be filtered and inserted contextually, external scenario libraries open collapsed, and Effect Forge consequences are visible during preparation and actionable at the affected participant, through a confirmation dialog, through GM/public Chat, or automatically. Embedded effect editing stores the definition on the Chase card instead of creating a world Item.
+**Chase Forge** is part of the **Forge Suite**, a growing collection of Foundry VTT modules and add-ons built for the busy Game Master. The suite is designed to reduce preparation and bookkeeping, make common GM tasks easier, and add useful tools that help make running and playing campaigns smoother and more enjoyable.
 
-The RC also includes the 1.0.12 hotfixes for Runner consequence application and Builder scroll preservation. Public API v18, Extension Contract v1, and persisted schemas remain unchanged.
+An overview of the Forge Suite, its modules, add-ons, and shared documentation is available here:
+
+**Forge Suite:** https://github.com/crypto-vbrthr/pf2e-forge-suite
+
+
+## Feedback, Bug Reports & Feature Requests
+
+Found a bug, have an idea for an improvement, or would like to suggest a new feature?
+
+Feedback is always welcome. Please feel free to open a new **GitHub Issue** at any time, whether you want to report a problem, suggest a quality-of-life improvement, propose a new feature, or share an idea for how the module could be made more useful.
+
+When reporting a bug, please include as much relevant information as possible, such as the Foundry VTT version, PF2e system version, module version, steps to reproduce the issue, and any console errors or screenshots that may help identify the problem.
+
+Suggestions and feature requests are equally welcome. Even small ideas can lead to useful improvements.
+
+**Open an issue here:** https://github.com/crypto-vbrthr/pf2e-chase-forge/issues
+
+
+## 1.1.0 Stable Release
+
+This stable release consolidates the validated 1.1 release-candidate work. Large registered-card libraries can be filtered and inserted contextually, external scenario libraries open collapsed, and Builder scroll position is preserved during route-card movement and embedded effect editing.
+
+Effect Forge consequences are visible during preparation and can be handled directly beside the affected participant, through a confirmation dialog, through blind GM/public Chat cards, or automatically. Embedded effect editing stores definitions directly on Chase cards instead of creating standalone world Items. Token participants are normalized to their Actors before effect application.
+
+The Foundry V14 Chat integration uses `renderChatMessageHTML` only; the deprecated `renderChatMessage` hook has been removed. Public API v18, Extension Contract v1, and persisted schemas remain unchanged, so no migration is required.
 
 ## 1.0.12 Consequence Runner & Builder Scroll Hotfix
 

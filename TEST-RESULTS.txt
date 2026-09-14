@@ -1,8 +1,10 @@
-PF2E Chase Forge 1.1.0-rc.2 - Maintenance Test Results
+PF2E Chase Forge 1.1.0 - Stable Release Test Results
 
 - Node test suite: 422 passed, 0 failed
 - Foundry V14 chat hook regression: passed
-- Legacy renderChatMessage registration removed from runtime source
+- Legacy renderChatMessage registration absent from runtime source
 - JavaScript syntax: checked
 - JSON files: checked
 - Public API v18 and persisted schema versions: unchanged
+- Extension Contract v1: unchanged
+- Embedded visual media files: none

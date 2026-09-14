@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.1.0 – Stable Release
+
+- Promotes the validated 1.1 release-candidate line to stable without changing Public API v18, Extension Contract v1, or persisted schema versions.
+- Registered-card workflows support source/pack and category filters, visible card counts, and contextual insertion before or after a selected route card.
+- Builder scroll state is preserved across route-card movement and embedded Effect Forge consequence editing.
+- External add-on Chase Library groups start collapsed by default while preserving the GM's expand/collapse choices during the open Builder session.
+- Effect Forge consequences support participant-local GM Runner actions, confirmation dialogs, blind GM Chat cards, public actionable Chat cards, or automatic application.
+- Editable Chase cards can create, edit, and remove embedded Effect Forge definitions without creating standalone world Items.
+- Token/TokenDocument participants are normalized to their Actor before Effect Forge application.
+- Foundry V14 consequence Chat controls use `renderChatMessageHTML`; deprecated `renderChatMessage` registration is absent.
+- No migration is required from 1.0.x or the 1.1 release candidates.
+
 ## 1.1.0-rc.2 – Foundry V14 Chat Hook Maintenance
 
 - Removes the deprecated `renderChatMessage` hook from Effect Forge consequence Chat controls.
