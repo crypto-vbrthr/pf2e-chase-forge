@@ -1,10 +1,10 @@
 # PF2E Chase Forge
 
-**Version:** 1.1.1-dev.2  
+**Version:** 1.1.1-rc.1  
 **Foundry VTT:** 14  
 **System:** Pathfinder 2e
 
-PF2E Chase Forge is a modular Pathfinder 2e chase framework for Foundry VTT. `1.1.0` is the stable post-1.0 UX and consequence-integration release. It consolidates the validated Builder, add-on Library, registered-card, and Effect Forge improvements from the 1.1 release-candidate cycle while keeping Public API v18 and all persisted schema versions unchanged, so existing world chases and extension packs require no migration.
+PF2E Chase Forge is a modular Pathfinder 2e chase framework for Foundry VTT. `1.1.1-rc.1` freezes the JSON Chase transfer, media-path remapping and independent Route/Inspector scrolling improvements for release-candidate verification. It builds on the `1.1.0` stable branch while preserving Public API v18, Extension Contract v1 and all persisted schema versions. Existing Chases and extension packs require no migration.
 
 The underlying architecture remains intact: DAG route graphs, synchronized GM/Player runtime views, add-on registries, template-based generation, the 72-card Core Library, the shared Visual System, PF2e chase rules, consequence orchestration, optional Critical Forge / Effect Forge integration, Weather Forge prefill, and protected restart-safe Blueprint/Session persistence.
 
@@ -31,7 +31,13 @@ Suggestions and feature requests are equally welcome. Even small ideas can lead 
 **Open an issue here:** https://github.com/crypto-vbrthr/pf2e-chase-forge/issues
 
 
-## 1.1.1-dev.2 Independent route and card scrolling
+## 1.1.1-rc.1 Release Candidate (feature freeze)
+
+This release candidate includes JSON import/export (with optional exact-prefix rewriting of Foundry Data-relative media references), separate Route Diagram/Card Inspector scrolling, preserved Builder scroll positions and the session-initialization duplicate-`status` cleanup. No new runtime features were added beyond `dev.3`. The exported JSON references media paths only: it does not bundle or transfer binary assets, and Actor/Token UUIDs may need to be reassigned when moving Chases between worlds.
+
+**Live Foundry V14 regression testing is still required before `1.1.1` Stable**, particularly JSON transfers with branching and media, scrolling with long routes, and optional Effect Forge consequence editing.
+
+## 1.1.1-dev.3 Independent route and card scrolling
 
 In the Builder's Route section, the **flow diagram on the left and the card
 inspector on the right scroll independently**. The diagram's heading remains

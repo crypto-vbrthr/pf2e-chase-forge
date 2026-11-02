@@ -92,6 +92,15 @@ test("multiple sessions created from one blueprint remain independent snapshots"
   assert.equal((await persistence.blueprints.get(blueprint.id)).name, blueprint.name);
 });
 
+test("session creation enforces draft status even when options request active", async () => {
+  const { persistence } = setup();
+  const blueprint = await persistence.blueprints.create(sampleBlueprint());
+  const session = await persistence.sessions.createFromBlueprint(blueprint.id, { status: "active", sessionId: "new-draft-override-test" });
+  assert.equal(session.status, "draft");
+  assert.equal(session.id, "new-draft-override-test");
+  assert.equal((await persistence.sessions.get(session.id)).status, "draft");
+});
+
 test("session lifecycle persists start, pause, resume, and abort transitions", async () => {
   const { persistence } = setup();
   const blueprint = await persistence.blueprints.create(sampleBlueprint());

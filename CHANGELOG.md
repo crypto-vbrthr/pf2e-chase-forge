@@ -1,5 +1,21 @@
 # Changelog
 
+## 1.1.1-rc.1 – JSON Transfer & Builder Scroll Release Candidate
+
+- Feature freeze of the tested `1.1.1-dev.3` branch; no new core gameplay features.
+- Chase JSON import/export includes portable snapshots, validation, separate import identities and explicit Foundry Data-relative media path remapping (file bytes are not embedded).
+- Route Diagram and Card Inspector scroll independently and retain their positions through normal Builder edits.
+- Session creation no longer duplicates the `status` key and still starts in `draft` even when caller options request another status.
+- Public API v18, Extension Contract v1 and persisted schemas remain unchanged; no migration required.
+- Foundry V14 live regression remains a release-candidate acceptance step.
+
+## 1.1.1-dev.3 – Session Creation Cleanup
+
+- Removed a redundant `status` property from the session-initialization options in `scripts/persistence/persistence-service.js`.
+- Retains the final `status: "draft"` override so new sessions cannot skip their draft lifecycle even when callers pass a different status in options.
+- Added a persistence regression test covering `status` override and explicit session ID.
+- No public API, data schema, or persistence format changes.
+
 ## 1.1.1-dev.2 – Independent Route Diagram Scrolling
 
 - The Builder route flow diagram now has a dedicated vertical scrollbar, independent of the card/branch inspector.

@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
+import { MODULE_VERSION } from "../scripts/core/constants.js";
 
 const read = relative => readFile(new URL(relative, import.meta.url), "utf8");
 
@@ -37,7 +38,7 @@ test("the existing JSON transfer remains part of the updated version", async () 
     read("../module.json"), read("../scripts/app/chase-builder-app.js"),
     read("../lang/de.json"), read("../lang/en.json")
   ]);
-  assert.equal(JSON.parse(manifest).version, "1.1.1-dev.2");
+  assert.equal(JSON.parse(manifest).version, MODULE_VERSION);
   assert.match(source, /exportBlueprintJson:\s*this\._actionExportBlueprintJson/);
   assert.match(source, /importBlueprintJson:\s*this\._actionImportBlueprintJson/);
   const dk = JSON.parse(de), ek = JSON.parse(en);

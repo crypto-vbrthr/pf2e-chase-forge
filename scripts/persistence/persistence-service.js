@@ -205,7 +205,7 @@ export function createChasePersistenceService({ store = createMemoryChaseStore()
   async function createSessionFromBlueprint(idOrBlueprint, options = {}) {
     const blueprint = typeof idOrBlueprint === "string" ? await getBlueprint(idOrBlueprint) : createChaseBlueprint(idOrBlueprint);
     if (!blueprint) throw persistenceError("BLUEPRINT_NOT_FOUND", `Blueprint '${idOrBlueprint}' does not exist.`);
-    const session = rulesEngine.initializeSession(blueprint, { status: "draft", sessionId: options.sessionId ?? createId("session"), ...options, status: "draft" });
+    const session = rulesEngine.initializeSession(blueprint, { sessionId: options.sessionId ?? createId("session"), ...options, status: "draft" });
     assertValid(session, validateChaseSession, "INVALID_SESSION");
     return transact(state => {
       if (state.sessions.some(item => item.id === session.id)) throw persistenceError("SESSION_EXISTS", `Session '${session.id}' already exists.`);
