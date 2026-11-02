@@ -667,5 +667,22 @@
   "PF2E_CHASE_FORGE.Common.Cancel": "Cancel",
   "PF2E_CHASE_FORGE.Builder.EffectConsequenceEditorTitle": "Effect Forge Consequence",
   "PF2E_CHASE_FORGE.Builder.EffectConsequenceEditorHint": "The effect is stored directly in this chase card and is not created as a standalone Item.",
-  "PF2E_CHASE_FORGE.Builder.AttachEffectToCard": "Add Effect to Card"
+  "PF2E_CHASE_FORGE.Builder.AttachEffectToCard": "Add Effect to Card",
+  "PF2E_CHASE_FORGE.Transfer.Import": "Import JSON",
+  "PF2E_CHASE_FORGE.Transfer.Export": "Export JSON",
+  "PF2E_CHASE_FORGE.Transfer.ImportHint": "Import a Chase JSON file as a new world Chase.",
+  "PF2E_CHASE_FORGE.Transfer.ExportHint": "Download this Chase with card snapshots as JSON. Media is referenced, not bundled.",
+  "PF2E_CHASE_FORGE.Transfer.MediaNotice": "Image, audio and video files are not included in JSON. Relative paths are relative to the Foundry Data directory and must exist in the target installation.",
+  "PF2E_CHASE_FORGE.Transfer.PathMappingHint": "Optional: Only local media paths with the specified source prefix are rewritten to the destination prefix. Leave blank to preserve all paths.",
+  "PF2E_CHASE_FORGE.Transfer.SourcePrefix": "Source prefix (e.g. worlds/old-world/assets)",
+  "PF2E_CHASE_FORGE.Transfer.DestinationPrefix": "Destination prefix (e.g. worlds/new-world/assets)",
+  "PF2E_CHASE_FORGE.Transfer.ReferenceCount": "{count} media references",
+  "PF2E_CHASE_FORGE.Transfer.Exported": "JSON exported. {count} media paths referenced; files are not included.",
+  "PF2E_CHASE_FORGE.Transfer.Imported": "Chase imported: {name}",
+  "PF2E_CHASE_FORGE.Transfer.MissingCards": "{count} cards could not be embedded; the original add-ons may be required.",
+  "PF2E_CHASE_FORGE.Transfer.ImportFailed": "JSON import failed",
+  "PF2E_CHASE_FORGE.Transfer.ExportFailed": "JSON export failed",
+  "PF2E_CHASE_FORGE.Transfer.NotBlueprint": "The file does not contain a valid Chase.",
+  "PF2E_CHASE_FORGE.Transfer.FileTooLarge": "JSON file exceeds 10 MB.",
+  "PF2E_CHASE_FORGE.Transfer.WorldReferencesNotice": "Actor and Token links may be unavailable in another world and may need reassignment. The imported Chase is created as a new world Chase."
 }

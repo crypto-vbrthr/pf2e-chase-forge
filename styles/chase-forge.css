@@ -2284,3 +2284,22 @@ dialog.pf2e-chase-forge-effect-editor-dialog::backdrop {
   border-top: 1px solid var(--chase-border, rgba(255,255,255,.18));
 }
 .chase-effect-editor-actions button { width: auto; }
+
+/* Chase JSON transfer: keep media remapping controls readable in Foundry's DialogV2. */
+.chase-transfer-dialog {
+  display: grid;
+  gap: 9px;
+  min-width: min(420px, 80vw);
+}
+.chase-transfer-dialog p { margin: 0; }
+.chase-transfer-dialog label {
+  display: grid;
+  gap: 4px;
+}
+.chase-transfer-dialog label input { width: 100%; }
+.chase-transfer-media-list {
+  max-height: 145px;
+  overflow-y: auto;
+  margin: 0;
+  overflow-wrap: anywhere;
+}

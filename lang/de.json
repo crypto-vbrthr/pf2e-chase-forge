@@ -667,5 +667,22 @@
   "PF2E_CHASE_FORGE.Common.Cancel": "Abbrechen",
   "PF2E_CHASE_FORGE.Builder.EffectConsequenceEditorTitle": "Effect-Forge-Konsequenz",
   "PF2E_CHASE_FORGE.Builder.EffectConsequenceEditorHint": "Der Effekt wird direkt in dieser Chase-Karte gespeichert und nicht als eigenständiges Item angelegt.",
-  "PF2E_CHASE_FORGE.Builder.AttachEffectToCard": "Effekt zur Karte hinzufügen"
+  "PF2E_CHASE_FORGE.Builder.AttachEffectToCard": "Effekt zur Karte hinzufügen",
+  "PF2E_CHASE_FORGE.Transfer.Import": "JSON importieren",
+  "PF2E_CHASE_FORGE.Transfer.Export": "JSON exportieren",
+  "PF2E_CHASE_FORGE.Transfer.ImportHint": "Chase aus einer JSON-Datei als neue eigene Chase importieren.",
+  "PF2E_CHASE_FORGE.Transfer.ExportHint": "Aktuelle Chase mit Karten-Snapshots als JSON herunterladen. Medien werden nur referenziert.",
+  "PF2E_CHASE_FORGE.Transfer.MediaNotice": "Bild-, Audio- und Videodateien sind nicht im JSON enthalten. Relative Pfade beziehen sich auf den Foundry-Datenordner und müssen am Ziel existieren.",
+  "PF2E_CHASE_FORGE.Transfer.PathMappingHint": "Optional: Nur lokale Medienpfade mit dem angegebenen Quellpräfix werden auf das Zielpräfix geändert. Leer lassen, um alle Pfade unverändert zu übernehmen.",
+  "PF2E_CHASE_FORGE.Transfer.SourcePrefix": "Quellpräfix (z. B. worlds/alte-welt/assets)",
+  "PF2E_CHASE_FORGE.Transfer.DestinationPrefix": "Zielpräfix (z. B. worlds/neue-welt/assets)",
+  "PF2E_CHASE_FORGE.Transfer.ReferenceCount": "{count} Medienreferenzen",
+  "PF2E_CHASE_FORGE.Transfer.Exported": "JSON exportiert. {count} Medienpfade referenziert; Mediendateien nicht enthalten.",
+  "PF2E_CHASE_FORGE.Transfer.Imported": "Chase importiert: {name}",
+  "PF2E_CHASE_FORGE.Transfer.MissingCards": "{count} Karten konnten nicht eingebettet werden; möglicherweise werden die ursprünglichen Add-ons benötigt.",
+  "PF2E_CHASE_FORGE.Transfer.ImportFailed": "JSON-Import fehlgeschlagen",
+  "PF2E_CHASE_FORGE.Transfer.ExportFailed": "JSON-Export fehlgeschlagen",
+  "PF2E_CHASE_FORGE.Transfer.NotBlueprint": "Die Datei enthält keine gültige Chase.",
+  "PF2E_CHASE_FORGE.Transfer.FileTooLarge": "JSON-Datei ist größer als 10 MB.",
+  "PF2E_CHASE_FORGE.Transfer.WorldReferencesNotice": "Akteur-/Token-Verknüpfungen können in einer anderen Spielwelt ungültig sein und müssen dann neu zugewiesen werden. Die importierte Chase wird als neue eigene Chase angelegt."
 }

@@ -89,6 +89,46 @@ const json = await forge.persistence.blueprints.exportJson(id);
 const imported = await forge.persistence.blueprints.importJson(json);
 ```
 
+### Builder JSON import/export (1.1.1-dev.1)
+
+The GM's Chase Builder toolbar offers **Export JSON** and **Import JSON**. Export uses the
+current editor draft (including unsaved form edits) and downloads a JSON file without
+silently overwriting the world Chase. It attempts to embed every referenced Chase Card
+as a content snapshot so that imported Chases remain usable if a content add-on is
+missing. Unresolvable cards are explicitly reported and retain their references.
+
+Import accepts a Chase Blueprint envelope (or a raw Blueprint), validates it, then
+creates a **new** world Chase with a fresh ID. Existing Chases are never overwritten
+by the UI. It supports simple and branching route graphs, groups, snapshots and
+embedded Effect Forge definitions. Actor/Token UUIDs still refer to the original
+world and may need reassignment.
+
+**Important: JSON contains media *paths*, not actual media files.** On export a
+`media` manifest lists referenced image/audio/video files and whether their paths are
+Foundry Data-relative, absolute or external. Foundry Data-relative paths (for example
+`worlds/my-world/assets/chase.webp` or `modules/my-addon/images/card.webp`) are
+preserved byte-for-byte by default and resolved relative to the destination Foundry
+Data folder, *not* relative to where the JSON download is located.
+
+When importing into a world with different asset directories the GM can optionally
+enter a source and destination path prefix. Only media paths that match the complete
+source prefix (at a directory boundary) are rewritten. Absolute paths and external
+URLs are never rewritten. The file assets must be copied/installed separately.
+
+The public API also supports:
+
+```js
+const json = await forge.persistence.blueprints.exportJson(id, { snapshotCards: true });
+await forge.persistence.blueprints.importJson(json, {
+  idPolicy: "new",
+  mediaPaths: { fromPrefix: "worlds/old/assets", toPrefix: "worlds/new/assets" }
+});
+```
+
+The transfer envelope remains **v1**, and Public API v18 and Blueprint schema v2
+remain unchanged. Existing callers of `exportJson()` retain the previous default
+without automatic card snapshots (`snapshotCards: false`).
+
 Import id policies:
 
 - `new` - default; generate a fresh Blueprint id;

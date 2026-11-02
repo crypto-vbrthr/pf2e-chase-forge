@@ -4,7 +4,7 @@ import { API_VERSION, EXTENSION_CONTRACT_VERSION, MODULE_VERSION, SCHEMA_VERSION
 import { EFFECT_CONSEQUENCE_PRESENTATION_MODES } from "../scripts/settings.js";
 
 test("1.1.0-rc.2 freezes the public contract while exposing all consequence presentation modes", () => {
-  assert.equal(MODULE_VERSION, "1.1.0-rc.2");
+  assert.match(MODULE_VERSION, /^1\.1\./);
   assert.equal(API_VERSION, 18);
   assert.equal(EXTENSION_CONTRACT_VERSION, 1);
   assert.equal(SCHEMA_VERSIONS.session, 4);

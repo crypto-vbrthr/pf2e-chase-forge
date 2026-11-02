@@ -8,6 +8,7 @@ import { inspectBlueprintReferences } from "./diagnostics.js";
 import { snapshotBlueprintContent, useLiveBlueprintContent } from "./snapshots.js";
 import { createMemoryChaseStore } from "./memory-store.js";
 import { normalizePersistenceState, validatePersistenceState } from "./state.js";
+import { listBlueprintMedia, makePortableBlueprint, remapBlueprintMedia } from "./blueprint-transfer.js";
 
 function persistenceError(code, message, details = null) {
   return new ChasePersistenceError(message, { code, details });
@@ -24,9 +25,13 @@ function parseEnvelope(input) {
     try { value = JSON.parse(value); }
     catch (error) { throw persistenceError("IMPORT_JSON_INVALID", "Blueprint import is not valid JSON.", { message: error.message }); }
   }
+  if (value?.format && value.format !== BLUEPRINT_TRANSFER.FORMAT) throw persistenceError("IMPORT_FORMAT_UNKNOWN", "Unknown JSON transfer format.");
   if (value?.format === BLUEPRINT_TRANSFER.FORMAT) {
     if (Number(value.version) !== BLUEPRINT_TRANSFER.VERSION) throw persistenceError("IMPORT_FORMAT_VERSION", "Unsupported Chase Blueprint transfer version.", { version: value.version });
-    return value.blueprint;
+    value = value.blueprint;
+  }
+  if (!value || typeof value !== "object" || Array.isArray(value) || !value.graph || !Array.isArray(value.graph.nodes) || !Array.isArray(value.graph.edges)) {
+    throw persistenceError("IMPORT_BLUEPRINT_MISSING", "JSON does not contain a Chase Blueprint.");
   }
   return value;
 }
@@ -149,18 +154,31 @@ export function createChasePersistenceService({ store = createMemoryChaseStore()
     if (!blueprint) throw persistenceError("BLUEPRINT_NOT_FOUND", `Blueprint '${idOrBlueprint}' does not exist.`);
     return inspectBlueprintReferences(blueprint, { registries, ...options });
   }
-  async function exportBlueprint(idOrBlueprint, { pretty = true } = {}) {
-    const blueprint = typeof idOrBlueprint === "string" ? await getBlueprint(idOrBlueprint) : createChaseBlueprint(idOrBlueprint);
-    if (!blueprint) throw persistenceError("BLUEPRINT_NOT_FOUND", `Blueprint '${idOrBlueprint}' does not exist.`);
-    const envelope = { format: BLUEPRINT_TRANSFER.FORMAT, version: BLUEPRINT_TRANSFER.VERSION, moduleVersion: MODULE_VERSION, exportedAt: nowIso(), blueprint: cloneData(blueprint) };
+  async function exportBlueprint(idOrBlueprint, { pretty = true, snapshotCards = false } = {}) {
+    const original = typeof idOrBlueprint === "string" ? await getBlueprint(idOrBlueprint) : createChaseBlueprint(idOrBlueprint);
+    if (!original) throw persistenceError("BLUEPRINT_NOT_FOUND", `Blueprint '${idOrBlueprint}' does not exist.`);
+    const { blueprint, missingCardRefs } = snapshotCards
+      ? makePortableBlueprint(original, { registries })
+      : { blueprint: original, missingCardRefs: [] };
+    const validation = validateChaseBlueprint(blueprint);
+    if (!validation.valid) throw persistenceError("INVALID_BLUEPRINT", "Cannot export an invalid Chase Blueprint.", validation.errors);
+    const envelope = {
+      format: BLUEPRINT_TRANSFER.FORMAT,
+      version: BLUEPRINT_TRANSFER.VERSION,
+      moduleVersion: MODULE_VERSION,
+      exportedAt: nowIso(),
+      blueprint: cloneData(blueprint),
+      media: { base: "Foundry Data", bundled: false, references: listBlueprintMedia(blueprint) },
+      ...(snapshotCards ? { missingCardRefs } : {})
+    };
     return JSON.stringify(envelope, null, pretty ? 2 : 0);
   }
-  async function importBlueprint(input, { idPolicy = "new" } = {}) {
+  async function importBlueprint(input, { idPolicy = "new", mediaPaths = null } = {}) {
     const rawBlueprint = parseEnvelope(input);
     if (Number(rawBlueprint?.schemaVersion ?? 0) > SCHEMA_VERSIONS.blueprint) {
       throw persistenceError("IMPORT_BLUEPRINT_SCHEMA_FUTURE", "Blueprint was created with a newer unsupported schema.", { schemaVersion: rawBlueprint.schemaVersion, supported: SCHEMA_VERSIONS.blueprint });
     }
-    let blueprint = createChaseBlueprint(rawBlueprint);
+    let blueprint = createChaseBlueprint(mediaPaths ? remapBlueprintMedia(rawBlueprint, mediaPaths).blueprint : rawBlueprint);
     assertValid(blueprint, validateChaseBlueprint, "INVALID_BLUEPRINT");
     const existing = await getBlueprint(blueprint.id);
     if (idPolicy === "replace") return saveBlueprint(blueprint, { createIfMissing: true });

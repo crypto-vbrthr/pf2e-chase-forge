@@ -1,6 +1,6 @@
 # PF2E Chase Forge
 
-**Version:** 1.1.0  
+**Version:** 1.1.1-dev.1  
 **Foundry VTT:** 14  
 **System:** Pathfinder 2e
 
@@ -30,6 +30,15 @@ Suggestions and feature requests are equally welcome. Even small ideas can lead 
 
 **Open an issue here:** https://github.com/crypto-vbrthr/pf2e-chase-forge/issues
 
+
+## 1.1.1-dev.1 JSON Chase transfer
+
+The Chase Builder now has **Import JSON** and **Export JSON** controls. Export can
+embed cards as portable snapshots, preserving branching routes, groups, and embedded
+Effect Forge consequences. Import creates a separate world Chase without replacing
+existing content. JSON embeds no media binaries: relative Foundry Data paths are
+retained, and the import dialog supports optional source-to-destination prefix mapping
+for world-specific asset directories. See [JSON transfer](docs/PERSISTENCE.md).
 
 ## 1.1.0 Stable Release
 

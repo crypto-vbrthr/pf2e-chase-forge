@@ -1,10 +1,13 @@
-PF2E Chase Forge 1.1.0 - Stable Release Test Results
+PF2E Chase Forge 1.1.1-dev.1 - Chase JSON Transfer
 
-- Node test suite: 422 passed, 0 failed
-- Foundry V14 chat hook regression: passed
-- Legacy renderChatMessage registration absent from runtime source
-- JavaScript syntax: checked
-- JSON files: checked
+- Node.js test suite: 434 passed, 0 failed
+- Real persistence JSON export/import tested in memory store
+- Card snapshot portability and missing-card notices: passed
+- Media path inventory, exact prefix remapping, remote/absolute protection: passed
+- Builder UI export/download and import file-picker action: exercised with Foundry ApplicationV2 mocks
+- Malformed and future-version JSON error paths: checked
+- Full pre-existing rules/integration test suite: passed
 - Public API v18 and persisted schema versions: unchanged
 - Extension Contract v1: unchanged
 - Embedded visual media files: none
+- Live Foundry V14 UI verification: pending

@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.1.1-dev.1 – Chase JSON Import/Export
+
+- Added Chase Builder JSON Import and Export toolbar actions, including JSON file download and picker.
+- Export includes the current draft without overwriting saved Chases, optionally snapshots registered cards for portable transfers, and reports missing add-on cards.
+- Imported Chases always receive a fresh ID in the Builder; saved Chases remain untouched.
+- Transfer JSON includes a media path inventory. Assets are referenced only, never embedded or silently copied.
+- Relative Foundry Data media paths remain unchanged unless the GM chooses exact source/destination path-prefix relocation during import. URLs and absolute paths are not rewritten.
+- Preserved route graph, branching, participants, images and embedded Effect Forge consequences.
+- Public API v18, Extension Contract v1 and persistent schema versions remain unchanged. No migration required.
+
+
 ## 1.1.0 – Stable Release
 
 - Promotes the validated 1.1 release-candidate line to stable without changing Public API v18, Extension Contract v1, or persisted schema versions.

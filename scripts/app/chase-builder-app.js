@@ -38,6 +38,7 @@ import {
   validateBranchingBuilderBlueprint
 } from "../builder/branching-builder-model.js";
 import { cloneData, createId, nowIso } from "../data/utils.js";
+import { listBlueprintMedia, safeChaseFilename } from "../persistence/blueprint-transfer.js";
 import { buildGraphIndex, topologicalSort } from "../data/graph.js";
 import { localizeApproachLabel, localizeChaseCard, localizeSkillLabel } from "../content/content-localization.js";
 import { openFoundryImagePicker } from "../images/foundry-image-picker.js";
@@ -775,6 +776,8 @@ function getAppClass() {
         toggleLibraryGroup: this._actionToggleLibraryGroup,
         copyLibraryBlueprint: this._actionCopyLibraryBlueprint,
         saveBlueprint: this._actionSaveBlueprint,
+        exportBlueprintJson: this._actionExportBlueprintJson,
+        importBlueprintJson: this._actionImportBlueprintJson,
         copyJournalLink: this._actionCopyJournalLink,
         createJournalEntry: this._actionCreateJournalEntry,
         duplicateBlueprint: this._actionDuplicateBlueprint,
@@ -1898,6 +1901,101 @@ function getAppClass() {
 
     static async _actionSaveBlueprint() { return this._save(); }
 
+    /** Export the actual editor draft, including unsaved form edits, without mutating the world record. */
+    static async _actionExportBlueprintJson() {
+      try {
+        if (!this._libraryBlueprintId) this._syncDraftFromForm();
+        const json = await this.chaseApi.persistence.blueprints.exportJson(this._draft, { snapshotCards: true });
+        const envelope = JSON.parse(json);
+        downloadChaseJson(json, safeChaseFilename(this._draft.name));
+        if (envelope.missingCardRefs?.length) {
+          notify("warn", format("PF2E_CHASE_FORGE.Transfer.MissingCards", { count: envelope.missingCardRefs.length }, `${envelope.missingCardRefs.length} Karten konnten nicht eingebettet werden. Das Ziel benötigt möglicherweise die ursprünglichen Add-ons.`));
+        }
+        notify("info", format("PF2E_CHASE_FORGE.Transfer.Exported", { count: envelope.media?.references?.length ?? 0 }, `JSON exportiert. ${envelope.media?.references?.length ?? 0} Medienpfade referenziert; Mediendateien werden nicht mitgeliefert.`));
+        return envelope;
+      } catch (error) {
+        console.error(`${MODULE_ID} | JSON export failed.`, error);
+        notify("error", `${i18n("PF2E_CHASE_FORGE.Transfer.ExportFailed", "JSON-Export fehlgeschlagen")}: ${error.message}`);
+        return null;
+      }
+    }
+
+    async _chooseImportMediaPaths(filename, references) {
+      if (!DialogV2?.wait) {
+        const ok = await DialogV2?.confirm?.({
+          window: { title: i18n("PF2E_CHASE_FORGE.Transfer.Import", "JSON importieren") },
+          content: `<p>${escapeHtml(i18n("PF2E_CHASE_FORGE.Transfer.MediaNotice", "Bild-, Audio- und Videodateien sind nicht im JSON enthalten. Relative Pfade beziehen sich auf den Foundry-Datenordner."))}</p>`,
+          modal: true
+        });
+        return ok ? {} : null;
+      }
+      const examples = references.slice(0, 6).map(entry => `<li><code>${escapeHtml(entry.path)}</code></li>`).join("");
+      const countLabel = format("PF2E_CHASE_FORGE.Transfer.ReferenceCount", { count: references.length }, `${references.length} Medienreferenzen`);
+      const content = `<div class="chase-transfer-dialog">
+        <p><strong>${escapeHtml(filename)}</strong> · ${escapeHtml(countLabel)}</p>
+        <p>${escapeHtml(i18n("PF2E_CHASE_FORGE.Transfer.MediaNotice", "Bild-, Audio- und Videodateien sind nicht im JSON enthalten. Relative Pfade beziehen sich auf den Foundry-Datenordner."))}</p>
+        ${examples ? `<ul class="chase-transfer-media-list">${examples}</ul>` : ""}
+        <p>${escapeHtml(i18n("PF2E_CHASE_FORGE.Transfer.PathMappingHint", "Optional: Nur lokale Medienpfade mit genau diesem Quellpräfix werden auf das Zielpräfix geändert. Leer lassen, um alle Pfade unverändert zu übernehmen."))}</p>
+        <p>${escapeHtml(i18n("PF2E_CHASE_FORGE.Transfer.WorldReferencesNotice", "Akteur-/Token-Verknüpfungen können in einer anderen Spielwelt ungültig sein und müssen dann neu zugewiesen werden. Die importierte Chase wird als neue eigene Chase angelegt."))}</p>
+        <label>${escapeHtml(i18n("PF2E_CHASE_FORGE.Transfer.SourcePrefix", "Quellpfad (z. B. worlds/alt/assets)"))}
+          <input type="text" name="chaseTransferFrom" autocomplete="off" placeholder="worlds/old-world/assets" />
+        </label>
+        <label>${escapeHtml(i18n("PF2E_CHASE_FORGE.Transfer.DestinationPrefix", "Zielpfad (z. B. worlds/neu/assets)"))}
+          <input type="text" name="chaseTransferTo" autocomplete="off" placeholder="worlds/new-world/assets" />
+        </label>
+      </div>`;
+      const choice = await DialogV2.wait({
+        window: { title: i18n("PF2E_CHASE_FORGE.Transfer.Import", "JSON importieren") }, content, modal: true,
+        buttons: [
+          { action: "import", label: i18n("PF2E_CHASE_FORGE.Transfer.Import", "JSON importieren"), default: true,
+            callback: (_event, button, dialog) => {
+              const root = dialog?.element ?? button?.closest?.(".window-content") ?? null;
+              return { fromPrefix: root?.querySelector?.('[name="chaseTransferFrom"]')?.value ?? "",
+                toPrefix: root?.querySelector?.('[name="chaseTransferTo"]')?.value ?? "" };
+            } },
+          { action: "cancel", label: i18n("PF2E_CHASE_FORGE.Common.Cancel", "Abbrechen") }
+        ]
+      }).catch(() => null);
+      if (!choice || choice === "cancel") return null;
+      return typeof choice === "object" ? choice : {};
+    }
+
+    static async _actionImportBlueprintJson() {
+      if (!isGm() || !globalThis.document?.createElement) return null;
+      // Native picker is compatible with Foundry's browser environment and never uploads the JSON elsewhere.
+      const input = globalThis.document.createElement("input");
+      input.type = "file";
+      input.accept = ".json,application/json";
+      input.style.display = "none";
+      const onChange = async () => {
+        const file = input.files?.[0];
+        input.remove();
+        if (!file) return;
+        try {
+          if (file.size > 10 * 1024 * 1024) throw new Error(i18n("PF2E_CHASE_FORGE.Transfer.FileTooLarge", "JSON-Datei ist größer als 10 MB."));
+          const json = await file.text();
+          // Validate the envelope before opening the mapping dialogue; persistence validates again before storage.
+          const parsed = JSON.parse(json);
+          const raw = parsed?.format ? parsed.blueprint : parsed;
+          if (!raw || !raw.graph || !Array.isArray(raw.graph.nodes)) throw new Error(i18n("PF2E_CHASE_FORGE.Transfer.NotBlueprint", "Die Datei enthält keine Chase."));
+          const mediaPaths = await this._chooseImportMediaPaths(file.name, listBlueprintMedia(raw));
+          if (mediaPaths === null) return;
+          const imported = await this.chaseApi.persistence.blueprints.importJson(json, { idPolicy: "new", mediaPaths });
+          await this.loadBlueprint(imported.id);
+          notify("info", format("PF2E_CHASE_FORGE.Transfer.Imported", { name: imported.name }, `Chase importiert: ${imported.name}`));
+          return imported;
+        } catch (error) {
+          console.error(`${MODULE_ID} | JSON import failed.`, error);
+          notify("error", `${i18n("PF2E_CHASE_FORGE.Transfer.ImportFailed", "JSON-Import fehlgeschlagen")}: ${error.message}`);
+          return null;
+        }
+      };
+      input.addEventListener("change", onChange, { once: true });
+      globalThis.document.body?.appendChild(input);
+      input.click();
+      return input;
+    }
+
     static async _actionCopyJournalLink() {
       const target = await this._journalTarget();
       if (!target) return null;
@@ -2634,6 +2732,25 @@ function getAppClass() {
   };
 
   return builderAppClass;
+}
+
+/** Foundry's download helper is preferred; the Blob fallback supports browser builds without it. */
+export function downloadChaseJson(json, filename) {
+  if (typeof globalThis.saveDataToFile === "function") {
+    return globalThis.saveDataToFile(json, "application/json", filename);
+  }
+  const blob = new Blob([json], { type: "application/json;charset=utf-8" });
+  const url = globalThis.URL.createObjectURL(blob);
+  const anchor = globalThis.document.createElement("a");
+  anchor.href = url;
+  anchor.download = filename;
+  anchor.style.display = "none";
+  globalThis.document.body.appendChild(anchor);
+  try { anchor.click(); }
+  finally {
+    anchor.remove();
+    globalThis.setTimeout?.(() => globalThis.URL.revokeObjectURL(url), 1000);
+  }
 }
 
 export function createChaseBuilderUiService({ getApi = () => globalThis.game?.modules?.get?.(MODULE_ID)?.api ?? null } = {}) {
