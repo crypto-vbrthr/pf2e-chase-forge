@@ -706,6 +706,7 @@ function applyBuilderRuntimeLayout(app, reason = "runtime") {
   const toolbar = root.querySelector?.(".chase-builder-toolbar") ?? null;
   const editor = root.querySelector?.(".chase-builder-editor-scroll") ?? null;
   const sidebar = root.querySelector?.(".chase-builder-sidebar") ?? null;
+  const routeWorkspace = root.querySelector?.(".chase-route-workspace") ?? null;
 
   // .window-content is the bounded outer viewport. Keep it fixed and give the
   // sidebar and editor pane independent scroll positions.
@@ -743,6 +744,15 @@ function applyBuilderRuntimeLayout(app, reason = "runtime") {
   setImportantStyle(sidebar, "overflow-y", "auto");
   setImportantStyle(sidebar, "overflow-x", "hidden");
   sidebar?.style?.setProperty?.("scrollbar-gutter", "stable");
+
+  // Use the actual Foundry Builder height, not only the browser viewport: a
+  // resized window must still leave room for both independently scrolled panes.
+  const mainHeight = Number(main?.clientHeight ?? 0);
+  if (routeWorkspace && mainHeight > 0) {
+    const toolbarHeight = Number(toolbar?.offsetHeight ?? 0);
+    const paneHeight = Math.max(180, Math.min(680, Math.floor(mainHeight - toolbarHeight - 38)));
+    routeWorkspace.style?.setProperty?.("--chase-route-pane-max-height", `${paneHeight}px`);
+  }
 
   root.dataset.chaseRuntimeLayout = reason;
   return { root, windowContent, shell, main, toolbar, editor, sidebar };
@@ -822,7 +832,7 @@ function getAppClass() {
     static PARTS = {
       main: {
         template: `modules/${MODULE_ID}/templates/chase-builder.hbs`,
-        scrollable: [".chase-builder-sidebar", ".chase-builder-editor-scroll"]
+        scrollable: [".chase-builder-sidebar", ".chase-builder-main", ".chase-route-diagram", ".chase-route-inspector"]
       }
     };
 
@@ -838,6 +848,7 @@ function getAppClass() {
       this._lastValidation = null;
       this._selectedInspector = null;
       this._pendingScrollTop = null;
+      this._routeLayoutResizeObserver = null;
       this._dropBoundElement = null;
       this._participantDropHandlers = null;
       this._generatorTemplateId = null;
@@ -1371,12 +1382,16 @@ function getAppClass() {
       };
     }
 
-    _captureScrollPosition() {
+    _captureScrollPosition({ resetInspector = false } = {}) {
       const main = this.element?.querySelector?.(".chase-builder-main") ?? null;
       const sidebar = this.element?.querySelector?.(".chase-builder-sidebar") ?? null;
+      const diagram = this.element?.querySelector?.(".chase-route-diagram") ?? null;
+      const inspector = this.element?.querySelector?.(".chase-route-inspector") ?? null;
       this._pendingScrollPosition = {
         main: main ? Number(main.scrollTop ?? 0) : null,
-        sidebar: sidebar ? Number(sidebar.scrollTop ?? 0) : null
+        sidebar: sidebar ? Number(sidebar.scrollTop ?? 0) : null,
+        diagram: diagram ? Number(diagram.scrollTop ?? 0) : null,
+        inspector: resetInspector ? 0 : (inspector ? Number(inspector.scrollTop ?? 0) : null)
       };
       return this._pendingScrollPosition;
     }
@@ -1388,8 +1403,12 @@ function getAppClass() {
       const restore = () => {
         const main = this.element?.querySelector?.(".chase-builder-main") ?? null;
         const sidebar = this.element?.querySelector?.(".chase-builder-sidebar") ?? null;
+        const diagram = this.element?.querySelector?.(".chase-route-diagram") ?? null;
+        const inspector = this.element?.querySelector?.(".chase-route-inspector") ?? null;
         if (main && Number.isFinite(pending.main)) main.scrollTop = pending.main;
         if (sidebar && Number.isFinite(pending.sidebar)) sidebar.scrollTop = pending.sidebar;
+        if (diagram && Number.isFinite(pending.diagram)) diagram.scrollTop = pending.diagram;
+        if (inspector && Number.isFinite(pending.inspector)) inspector.scrollTop = pending.inspector;
       };
       restore();
       globalThis.requestAnimationFrame?.(restore);
@@ -1403,6 +1422,7 @@ function getAppClass() {
       // Apply the structural fix immediately, then re-apply after Foundry has had
       // a chance to perform any post-render ApplicationV2 layout work.
       applyBuilderRuntimeLayout(this, "render-immediate");
+      this._bindRouteLayoutResize(root);
       this._restoreCapturedScrollPosition();
       globalThis.requestAnimationFrame?.(() => {
         applyBuilderRuntimeLayout(this, "render-raf");
@@ -1421,6 +1441,17 @@ function getAppClass() {
       this._bindPointScalingControls(root);
       this._bindRegisteredCardFilters(root);
       this._bindParticipantDropZones(root);
+    }
+
+    _bindRouteLayoutResize(root = this.element) {
+      this._routeLayoutResizeObserver?.disconnect?.();
+      this._routeLayoutResizeObserver = null;
+      const main = root?.querySelector?.(".chase-builder-main") ?? null;
+      if (!main || typeof globalThis.ResizeObserver !== "function") return;
+      this._routeLayoutResizeObserver = new globalThis.ResizeObserver(() => {
+        applyBuilderRuntimeLayout(this, "route-pane-resize");
+      });
+      this._routeLayoutResizeObserver.observe(main);
     }
 
     _bindRegisteredCardFilters(root = this.element) {
@@ -1583,6 +1614,8 @@ function getAppClass() {
     }
 
     async close(options = {}) {
+      this._routeLayoutResizeObserver?.disconnect?.();
+      this._routeLayoutResizeObserver = null;
       const result = await super.close(options);
       if (openBuilderApp === this) openBuilderApp = null;
       return result;
@@ -2673,7 +2706,7 @@ function getAppClass() {
       const cardRef = target.dataset.cardRef;
       if (!cardRef) return;
       this._selectedInspector = { type: "card", id: cardRef };
-      this._captureScrollPosition();
+      this._captureScrollPosition({ resetInspector: true });
       return this.render({ force: true });
     }
 
@@ -2682,7 +2715,7 @@ function getAppClass() {
       const branchGroupId = target.dataset.branchGroupId;
       if (!branchGroupId) return;
       this._selectedInspector = { type: "branch", id: branchGroupId };
-      this._captureScrollPosition();
+      this._captureScrollPosition({ resetInspector: true });
       return this.render({ force: true });
     }
 

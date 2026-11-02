@@ -270,7 +270,7 @@
   "PF2E_CHASE_FORGE.Builder.LibraryCopied": "Bibliotheksjagd als eigene Verfolgungsjagd übernommen.",
   "PF2E_CHASE_FORGE.Builder.LibraryChasesShort": "Verfolgungsjagden",
   "PF2E_CHASE_FORGE.Builder.RouteDiagram": "Ablaufdiagramm",
-  "PF2E_CHASE_FORGE.Builder.RouteDiagramHint": "Karten zeigen nur Name und Bildvorschau. Details werden rechts im Inspector geöffnet.",
+  "PF2E_CHASE_FORGE.Builder.RouteDiagramHint": "Karten und Details lassen sich getrennt scrollen. Klicke auf eine Karte für ihre Details rechts.",
   "PF2E_CHASE_FORGE.Builder.BranchesShort": "Gabelungen",
   "PF2E_CHASE_FORGE.Builder.PointsShort": "VP",
   "PF2E_CHASE_FORGE.Builder.OpenCard": "Karte öffnen",

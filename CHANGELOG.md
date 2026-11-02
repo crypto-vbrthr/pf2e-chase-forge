@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.1.1-dev.2 – Independent Route Diagram Scrolling
+
+- The Builder route flow diagram now has a dedicated vertical scrollbar, independent of the card/branch inspector.
+- Diagram heading remains visible while scrolling through long routes, with a matching scrollable card details pane.
+- The pane height follows the actual Foundry Builder window height (including window resizing) and stacks cleanly at narrower widths.
+- Builder re-renders preserve diagram and inspector scroll positions; choosing another card resets only the inspector to its beginning.
+- Both panes are keyboard-focusable and retain accessible labels; nested wheel scrolling does not accidentally move the outer editor.
+- JSON import/export from dev.1 remains available; no public API, data schema or add-on changes.
+
+
 ## 1.1.1-dev.1 – Chase JSON Import/Export
 
 - Added Chase Builder JSON Import and Export toolbar actions, including JSON file download and picker.

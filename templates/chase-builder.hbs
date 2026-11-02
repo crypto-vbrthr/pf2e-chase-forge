@@ -493,7 +493,7 @@
                 <span class="chase-route-diagram-count">{{cardCount}} {{localize "PF2E_CHASE_FORGE.Builder.CardsShort"}}{{#if hasBranchGroups}} · {{branchGroups.length}} {{localize "PF2E_CHASE_FORGE.Builder.BranchesShort"}}{{/if}}</span>
               </div>
 
-              <div class="chase-route-diagram" aria-label="{{localize 'PF2E_CHASE_FORGE.Builder.RouteDiagram'}}">
+              <div class="chase-route-diagram" role="region" tabindex="0" aria-label="{{localize 'PF2E_CHASE_FORGE.Builder.RouteDiagram'}}">
                 <div class="chase-route-terminal start"><i class="fa-solid fa-flag"></i> {{localize "PF2E_CHASE_FORGE.Builder.RouteStart"}}</div>
                 {{#unless routeDiagram.empty}}<div class="chase-route-flow-line"><i class="fa-solid fa-arrow-down"></i></div>{{/unless}}
 
@@ -580,7 +580,7 @@
               </div>
             </div>
 
-            <aside class="chase-route-inspector">
+            <aside class="chase-route-inspector" role="region" tabindex="0" aria-label="{{localize 'PF2E_CHASE_FORGE.Builder.CardInspector'}}">
               {{#if selectedCard}}
                 <article class="chase-route-inspector-card chase-builder-card" data-builder-card data-card-index="{{selectedCard.index}}" data-card-ref="{{selectedCard.ref}}" data-node-id="{{selectedCard.node.id}}">
                   <div class="chase-route-inspector-title">

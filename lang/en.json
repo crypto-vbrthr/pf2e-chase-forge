@@ -270,7 +270,7 @@
   "PF2E_CHASE_FORGE.Builder.LibraryCopied": "Library chase copied to your own chases.",
   "PF2E_CHASE_FORGE.Builder.LibraryChasesShort": "chases",
   "PF2E_CHASE_FORGE.Builder.RouteDiagram": "Flow Diagram",
-  "PF2E_CHASE_FORGE.Builder.RouteDiagramHint": "Cards show only their name and image preview. Full details open in the inspector on the right.",
+  "PF2E_CHASE_FORGE.Builder.RouteDiagramHint": "Scroll cards and details independently. Click a card to open its details on the right.",
   "PF2E_CHASE_FORGE.Builder.BranchesShort": "splits",
   "PF2E_CHASE_FORGE.Builder.PointsShort": "CP",
   "PF2E_CHASE_FORGE.Builder.OpenCard": "Open card",

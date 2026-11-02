@@ -1,6 +1,6 @@
 # PF2E Chase Forge
 
-**Version:** 1.1.1-dev.1  
+**Version:** 1.1.1-dev.2  
 **Foundry VTT:** 14  
 **System:** Pathfinder 2e
 
@@ -30,6 +30,16 @@ Suggestions and feature requests are equally welcome. Even small ideas can lead 
 
 **Open an issue here:** https://github.com/crypto-vbrthr/pf2e-chase-forge/issues
 
+
+## 1.1.1-dev.2 Independent route and card scrolling
+
+In the Builder's Route section, the **flow diagram on the left and the card
+inspector on the right scroll independently**. The diagram's heading remains
+visible; selecting a card keeps the diagram's position while showing the newly
+selected card details from the top. Both scroll panes support keyboard navigation.
+Their maximum height adapts to Foundry window resizing, and the panels stack
+on narrower windows. Scroll positions are kept when saving, reordering, or
+editing cards. No Chase data migration is needed.
 
 ## 1.1.1-dev.1 JSON Chase transfer
 

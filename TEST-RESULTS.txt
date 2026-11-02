@@ -1,13 +1,12 @@
-PF2E Chase Forge 1.1.1-dev.1 - Chase JSON Transfer
+PF2E Chase Forge 1.1.1-dev.2 – Independent Flow Diagram Scrolling
 
-- Node.js test suite: 434 passed, 0 failed
-- Real persistence JSON export/import tested in memory store
-- Card snapshot portability and missing-card notices: passed
-- Media path inventory, exact prefix remapping, remote/absolute protection: passed
-- Builder UI export/download and import file-picker action: exercised with Foundry ApplicationV2 mocks
-- Malformed and future-version JSON error paths: checked
-- Full pre-existing rules/integration test suite: passed
-- Public API v18 and persisted schema versions: unchanged
-- Extension Contract v1: unchanged
-- Embedded visual media files: none
-- Live Foundry V14 UI verification: pending
+- Node.js automated suite: 437 passed, 0 failed (includes three new route-pane regression tests)
+- Builder flow diagram: own vertical scrollbar and keyboard-focusable scroll region
+- Card/branch inspector: separate, independently scrollable region
+- Diagram scroll position preserved across Builder rerenders; newly selected card resets only inspector position
+- ResizeObserver updates pane maximum height when Foundry Builder window is resized
+- Narrow-window layout stacks both scrollable panes
+- Chromium headless layout smoke test: 36 diagram nodes and 30 inspector details remain independently scrollable
+- Original 1.1.1-dev.1 JSON import/export preserved
+- Public API v18, Extension Contract v1 and persisted schemas unchanged
+- Full Foundry V14 UI smoke test: pending user verification

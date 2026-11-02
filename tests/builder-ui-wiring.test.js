@@ -241,7 +241,7 @@ test("visual route selection preserves both Builder pane scroll positions while 
   assert.match(source, /_restoreCapturedScrollPosition\(\)/);
   assert.match(source, /main\.scrollTop = pending\.main/);
   assert.match(source, /sidebar\.scrollTop = pending\.sidebar/);
-  assert.match(source, /this\._captureScrollPosition\(\);\n\s*return this\.render\(\{ force: true \}\);/);
+  assert.match(source, /this\._captureScrollPosition\(\{ resetInspector: true \}\);\n\s*return this\.render\(\{ force: true \}\);/);
 });
 
 test("Builder form synchronization keeps branching drafts editable through the visual inspector", async () => {
