@@ -1,14 +1,14 @@
-PF2E Chase Forge 1.1.1-rc.3 – Player View PF2e DC Hotfix
+PF2E Chase Forge 1.1.1 Stable – Release Verification
 
-Source: PF2E Chase Forge 1.1.1-rc.2.
-- 449/449 automated Node.js tests pass (447 RC.2 baseline + 2 DC regression tests).
-- JavaScript syntax and module.json/package.json/DE/EN language JSON parsing pass.
-- `rollStatistic()` does not set `options.dc` for omitted, null, undefined, empty, or whitespace-only DC values.
-- Explicit valid DCs (including numeric zero and numeric strings) still pass correctly to PF2e.
-- Invalid, NaN, and infinite DC values are not forwarded.
-- The Player View path that intentionally hides the DC now leaves PF2e roll-card success degree unspecified.
-- Chase Forge's authoritative result and Chase Point rules are unchanged.
-- All RC.2 Chat localization changes retained.
-- Release version, manifest, Node package, core constant and GitHub download URL agree: 1.1.1-rc.3.
-- Public API v18, Extension Contract v1 and persistence schemas unchanged.
-- Actual Foundry V14 GUI roll-card validation remains an acceptance test.
+Source: PF2E Chase Forge 1.1.1-rc.3 (live-tested release candidate).
+- 447/447 automated Node.js tests passed. The difference from RC.3's 449 tests is consolidation of old version-specific release checks, not removal of functional regression coverage.
+- One version-independent tests/release-version.test.js checks module.json, package.json, core MODULE_VERSION, the GitHub download tag, API, schema and key feature contracts.
+- Obsolete release-1.1.0.test.js, rc-1.1.0-release.test.js and release-1.1.1-rc3.test.js are excluded from the release archive. Old test files left by manual ZIP overlay installs should be removed from local checkouts.
+- JavaScript syntax checks: 105/105 files passed.
+- module.json, package.json and both localization JSON files parse successfully.
+- Verified 63/63 runtime/UI/localization assets unchanged from RC.3 (all scripts other than version constant, styles, templates and language files).
+- JSON Chase transfer, media-prefix relocation, independently scrollable route and inspector, DE/EN Chat localization, and Player View PF2e DC fix retained.
+- Public API v18, Extension Contract v1 and persisted schemas unchanged.
+- Module version: 1.1.1; download URL targets GitHub release tag v1.1.1.
+- The packed ZIP was extracted independently and the full test suite rerun: 447/447 passed.
+- The GitHub release/tag has not been published by this build process.

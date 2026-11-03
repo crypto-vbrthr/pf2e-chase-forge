@@ -1,12 +1,12 @@
 # PF2E Chase Forge
 
-> **1.1.1-rc.3:** Fixes an incorrect PF2e check-card degree of success when Player Chase View rolls without a DC. Also includes the RC.2 DE/EN Chat localization fix. No migration or add-on update required.
+> **1.1.1 Stable:** JSON Chase import/export, independent Route Diagram and Card Inspector scrolling, corrected English/German Chat messages, and a PF2e Player View roll-card DC hotfix. No migration or add-on update required.
 
-**Version:** 1.1.1-rc.3  
+**Version:** 1.1.1  
 **Foundry VTT:** 14  
 **System:** Pathfinder 2e
 
-PF2E Chase Forge is a modular Pathfinder 2e chase framework for Foundry VTT. `1.1.1-rc.3` fixes a Player View PF2e roll-card DC issue and preserves the RC.2 Chat-localization fix: the JSON Chase transfer, media-path remapping, and independent Route/Inspector scrolling improvements remain feature-frozen. It builds on the `1.1.0` stable branch while preserving Public API v18, Extension Contract v1 and all persisted schema versions. Existing Chases and extension packs require no migration.
+PF2E Chase Forge is a modular Pathfinder 2e chase framework for Foundry VTT. Version `1.1.1` promotes the tested RC.3 code to Stable with no runtime feature changes. It adds JSON Chase transfers, optional Foundry Data-relative media-path remapping, independent Route/Inspector scrolling, correctly localized Chat messages, and a fix for PF2e check cards receiving an accidental DC of zero on Player View rolls. Public API v18, Extension Contract v1 and all persisted schema versions remain unchanged. Existing Chases and extension packs require no migration.
 
 The underlying architecture remains intact: DAG route graphs, synchronized GM/Player runtime views, add-on registries, template-based generation, the 72-card Core Library, the shared Visual System, PF2e chase rules, consequence orchestration, optional Critical Forge / Effect Forge integration, Weather Forge prefill, and protected restart-safe Blueprint/Session persistence.
 
@@ -33,6 +33,18 @@ Suggestions and feature requests are equally welcome. Even small ideas can lead 
 **Open an issue here:** https://github.com/crypto-vbrthr/pf2e-chase-forge/issues
 
 
+## 1.1.1 Stable Release
+
+The Stable release contains the complete and tested `1.1.1-rc.3` feature set, with no further gameplay or schema changes:
+
+- **JSON Chase import/export:** Transfer branching routes, groups, embedded card snapshots, and consequences. Asset paths are references, not bundled files. Optional source/destination prefix remapping applies to Foundry Data-relative paths only.
+- **Independent Builder scrolling:** Route diagram and card inspector can be scrolled separately while their scroll positions are preserved through edits.
+- **Localized Chat output:** The Chat presenter and Runner outcome labels use the active Foundry language (DE/EN) rather than hardcoded German text.
+- **Player View DC fix:** Absent DCs are no longer converted to zero when PF2e rolls are made from the Player Chase View.
+- **Release test maintenance:** A single `tests/release-version.test.js` now checks version and download-tag consistency without hardcoding each release candidate's version. Old version-specific RC tests are not shipped.
+
+When updating an unpacked development checkout, **remove obsolete `tests/release-*.test.js` files from previous releases** or use a clean extraction, since existing files are not removed automatically by ZIP overlays. Foundry module installations do not need those tests at runtime.
+
 ## 1.1.1-rc.3 Release Candidate (Player View PF2e DC hotfix)
 
 Player Chase View intentionally submits PF2e checks without the GM-only DC, so the PF2e system's own roll card should not display a success degree. Previously, a missing `dc` became `0` due to `Number(null)`, causing false critical successes on PF2e cards. RC.3 only sends `options.dc` to PF2e when the caller explicitly supplies a valid numeric value (including a deliberate zero). Chase Forge's own outcome/Chase Point calculations remain unchanged. The RC.2 translated Chat cards and outcome labels are also included.
@@ -41,7 +53,7 @@ Player Chase View intentionally submits PF2e checks without the GM-only DC, so t
 
 This release candidate includes JSON import/export (with optional exact-prefix rewriting of Foundry Data-relative media references), separate Route Diagram/Card Inspector scrolling, preserved Builder scroll positions and the session-initialization duplicate-`status` cleanup. No new runtime features were added beyond `dev.3`. The exported JSON references media paths only: it does not bundle or transfer binary assets, and Actor/Token UUIDs may need to be reassigned when moving Chases between worlds.
 
-**Live Foundry V14 regression testing is still required before `1.1.1` Stable**, particularly JSON transfers with branching and media, scrolling with long routes, and optional Effect Forge consequence editing.
+The release-candidate functionality was also exercised in Foundry V14 before the Stable packaging. The automated suite covers JSON transfers, scrolling, Chat localization and Player View DC handling.
 
 ## 1.1.1-dev.3 Independent route and card scrolling
 
