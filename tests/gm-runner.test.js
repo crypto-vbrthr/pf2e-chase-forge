@@ -70,9 +70,9 @@ test("public obstacle Chat presentation excludes hidden GM mechanics", () => {
 test("roll result Chat presentation summarizes degree and Chase Point delta", () => {
   const html = rollResultChatHtml({ participantName: "Kikus", approachLabel: "Jump", result: { degree: "criticalSuccess", effectiveTotal: 31, chasePointDelta: 2, obstacleCleared: true } });
   assert.match(html, /Kikus/);
-  assert.match(html, /Kritischer Erfolg/);
+  assert.match(html, /Critical Success/);
   assert.match(html, /\+2/);
-  assert.match(html, /Hindernis überwunden/);
+  assert.match(html, /Obstacle cleared/);
 });
 
 test("Chat presenter writes module-scoped flags", async () => {

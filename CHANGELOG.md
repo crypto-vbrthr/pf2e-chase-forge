@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.1.1-rc.2 – Chat Localization Fix
+
+- Removed hardcoded German UI strings from Chase obstacle and roll-result Chat cards; messages now use Foundry i18n for both German and English.
+- Added missing Runner outcome labels for all result types (including raceLost and custom) in both languages, fixing German outcome text in English-language worlds.
+- Localized the Chase-aborted Chat notification and added fallback translations for obstacle labels, progress, rounds, roll totals, and Chase Points.
+- Added i18n regression coverage for Chat cards and outcome labels. Core rules, API v18, Extension Contract v1, and persistence schemas remain unchanged.
+
 ## 1.1.1-rc.1 – JSON Transfer & Builder Scroll Release Candidate
 
 - Feature freeze of the tested `1.1.1-dev.3` branch; no new core gameplay features.

@@ -1,13 +1,17 @@
-PF2E Chase Forge 1.1.1-rc.1 — Release Candidate Regression Review
+PF2E Chase Forge 1.1.1-rc.2 – Chat Localization Ticket Hotfix
 
-Release candidate created from 1.1.1-dev.3, preserving functionality and contracts.
-- 441/441 automated Node.js tests pass (438 baseline + 3 RC release checks).
-- All JavaScript source/test files pass Node.js syntax validation.
-- module.json, package.json and MODULE_VERSION agree: 1.1.1-rc.1.
-- Public API v18, Extension Contract v1, Blueprint schema v2, persistence schema v1 remain unchanged.
-- JSON transfer, optional Data-relative media path remapping, branching and content snapshots covered by test suite.
-- Independent diagram and inspector scroll behavior and session draft-state fix covered by test suite.
-- Add-on integration: Against the Apocalypse, Grim Pursuits, High Seas, Clockwork Chases, Wild Hunt.
-- Five add-on packs: 180 cards, 34 generators, 30 prepared Chases registered successfully.
-- All 34 add-on generator templates generated successfully without fallback cards in the RC integration harness.
-- No Foundry V14 live session executed here; the release candidate requires live acceptance testing.
+Source: Chase Forge 1.1.1-rc.1; changes limited to localization, translations,
+release metadata, and regression tests.
+- 447/447 automated Node.js tests pass (441 RC baseline + 6 locale regression tests).
+- All 107 JavaScript source/test files pass node --check.
+- lang/de.json and lang/en.json have the same 706 keys; JSON parsing passes.
+- Chat obstacle cards use localized approach heading, group, round, progress and image alt labels.
+- Chat result cards use localized result degrees, roll totals, Chase Points and obstacle-cleared labels.
+- English regression confirms a completed Chase posts "Result: Quarry escaped", not German text.
+- All eight supported terminal outcomes have Runner.Label and Outcome translations in DE/EN.
+- Abort Chat event uses a translated key instead of hardcoded German text.
+- module.json, package.json, MODULE_VERSION and release download link agree: 1.1.1-rc.2.
+- Public API v18, Extension Contract v1 and all persistent schemas unchanged.
+- Existing JSON import/export and independent Route/Inspector scrolling remain intact.
+- RC packaging verified by re-extracting and rerunning tests (see subsequent verification).
+- Foundry V14 GUI live test still required.

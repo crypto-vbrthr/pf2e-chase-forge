@@ -70,17 +70,18 @@ async function confirmAbortSession() {
   return globalThis.confirm?.(message) ?? true;
 }
 
-function optionLabel(value) {
+export function optionLabel(value) {
   const map = {
-    quarry: "Flüchtige", pursuer: "Verfolger", competitor: "Wettläufer", participant: "Beteiligte",
-    active: "Aktiv", paused: "Pausiert", draft: "Entwurf", completed: "Beendet", aborted: "Abgebrochen",
-    criticalSuccess: "Kritischer Erfolg", success: "Erfolg", failure: "Fehlschlag", criticalFailure: "Kritischer Fehlschlag",
-    pendingConfirmation: "Bestätigung ausstehend", pendingSelection: "Auswahl ausstehend", manualFallback: "Manuell anwenden",
-    blocked: "Blockiert", failed: "Fehlgeschlagen", applied: "Angewendet", skipped: "Übersprungen",
-    quarryEscaped: "Flüchtige entkommen", quarryCaught: "Flüchtige eingeholt", goalReached: "Ziel erreicht", timeExpired: "Zeit abgelaufen", raceWon: "Rennen gewonnen"
+    quarry: "Quarry", pursuer: "Pursuers", competitor: "Competitors", participant: "Participants",
+    active: "Active", paused: "Paused", draft: "Draft", completed: "Completed", aborted: "Aborted",
+    criticalSuccess: "Critical Success", success: "Success", failure: "Failure", criticalFailure: "Critical Failure",
+    pendingConfirmation: "Awaiting confirmation", pendingSelection: "Awaiting selection", manualFallback: "Apply manually",
+    blocked: "Blocked", failed: "Failed", applied: "Applied", skipped: "Skipped",
+    quarryEscaped: "Quarry escaped", quarryCaught: "Quarry caught", goalReached: "Goal reached",
+    timeExpired: "Time expired", raceWon: "Race won", raceLost: "Race lost", custom: "Special outcome"
   };
-  const fallback = map[value] ?? value ?? "";
-  return i18n(`PF2E_CHASE_FORGE.Runner.Label.${value}`, fallback);
+  if (!value) return "";
+  return i18n(`PF2E_CHASE_FORGE.Runner.Label.${value}`, map[value] ?? String(value));
 }
 
 function resolveBlueprintGroup(session, runtimeGroup) {
@@ -823,7 +824,7 @@ function getAppClass() {
       if (!ok) return;
       this._session = await this.chaseApi.sessionManager.abortSession(this.sessionId);
       await this.chaseApi.sync?.publishSession?.(this._session, { open: true });
-      await this.chat.postEvent({ title: "Verfolgungsjagd abgebrochen" }, { flags: { sessionId: this.sessionId } }).catch(() => null);
+      await this.chat.postEvent({ title: i18n("PF2E_CHASE_FORGE.Runner.ChaseAborted", "Chase aborted") }, { flags: { sessionId: this.sessionId } }).catch(() => null);
       await refreshOpenBuilder(this.chaseApi);
       return this.render({ force: true });
     }
