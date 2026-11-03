@@ -1,17 +1,14 @@
-PF2E Chase Forge 1.1.1-rc.2 – Chat Localization Ticket Hotfix
+PF2E Chase Forge 1.1.1-rc.3 – Player View PF2e DC Hotfix
 
-Source: Chase Forge 1.1.1-rc.1; changes limited to localization, translations,
-release metadata, and regression tests.
-- 447/447 automated Node.js tests pass (441 RC baseline + 6 locale regression tests).
-- All 107 JavaScript source/test files pass node --check.
-- lang/de.json and lang/en.json have the same 706 keys; JSON parsing passes.
-- Chat obstacle cards use localized approach heading, group, round, progress and image alt labels.
-- Chat result cards use localized result degrees, roll totals, Chase Points and obstacle-cleared labels.
-- English regression confirms a completed Chase posts "Result: Quarry escaped", not German text.
-- All eight supported terminal outcomes have Runner.Label and Outcome translations in DE/EN.
-- Abort Chat event uses a translated key instead of hardcoded German text.
-- module.json, package.json, MODULE_VERSION and release download link agree: 1.1.1-rc.2.
-- Public API v18, Extension Contract v1 and all persistent schemas unchanged.
-- Existing JSON import/export and independent Route/Inspector scrolling remain intact.
-- RC packaging verified by re-extracting and rerunning tests (see subsequent verification).
-- Foundry V14 GUI live test still required.
+Source: PF2E Chase Forge 1.1.1-rc.2.
+- 449/449 automated Node.js tests pass (447 RC.2 baseline + 2 DC regression tests).
+- JavaScript syntax and module.json/package.json/DE/EN language JSON parsing pass.
+- `rollStatistic()` does not set `options.dc` for omitted, null, undefined, empty, or whitespace-only DC values.
+- Explicit valid DCs (including numeric zero and numeric strings) still pass correctly to PF2e.
+- Invalid, NaN, and infinite DC values are not forwarded.
+- The Player View path that intentionally hides the DC now leaves PF2e roll-card success degree unspecified.
+- Chase Forge's authoritative result and Chase Point rules are unchanged.
+- All RC.2 Chat localization changes retained.
+- Release version, manifest, Node package, core constant and GitHub download URL agree: 1.1.1-rc.3.
+- Public API v18, Extension Contract v1 and persistence schemas unchanged.
+- Actual Foundry V14 GUI roll-card validation remains an acceptance test.

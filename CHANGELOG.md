@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.1.1-rc.3 – Player View PF2e DC Hotfix
+
+- Fixed `rollStatistic()` accidentally passing `dc: { value: 0 }` to PF2e when Player Chase View omits the GM-only DC (`Number(null) === 0`). The PF2e roll card no longer reports a false critical success for DC-less checks.
+- Only explicitly supplied, finite numeric DCs are forwarded; null, undefined, empty, whitespace, NaN and invalid values remain absent. Explicit numeric zero is supported.
+- Added regression tests for missing, blank, numeric and invalid DCs. Chase Forge outcomes and Chase Point calculations, public API v18, extension contracts, persistence formats, and RC.2 localization are unchanged.
+
+
 ## 1.1.1-rc.2 – Chat Localization Fix
 
 - Removed hardcoded German UI strings from Chase obstacle and roll-result Chat cards; messages now use Foundry i18n for both German and English.
@@ -355,6 +362,13 @@
 
 # Changelog
 
+## 1.1.1-rc.3 – Player View PF2e DC Hotfix
+
+- Fixed `rollStatistic()` accidentally passing `dc: { value: 0 }` to PF2e when Player Chase View omits the GM-only DC (`Number(null) === 0`). The PF2e roll card no longer reports a false critical success for DC-less checks.
+- Only explicitly supplied, finite numeric DCs are forwarded; null, undefined, empty, whitespace, NaN and invalid values remain absent. Explicit numeric zero is supported.
+- Added regression tests for missing, blank, numeric and invalid DCs. Chase Forge outcomes and Chase Point calculations, public API v18, extension contracts, persistence formats, and RC.2 localization are unchanged.
+
+
 ## 0.1.0-dev.14.3 – GM Runner Layout & German Heading Hotfix
 
 - Separates the GM Runner toolbar from the actual scrolling viewport so restored scroll positions cannot place chase content underneath the toolbar or visually into the Foundry window title bar.
@@ -636,6 +650,13 @@
 - No chase rules or persisted data schemas are changed.
 
 # Changelog
+
+## 1.1.1-rc.3 – Player View PF2e DC Hotfix
+
+- Fixed `rollStatistic()` accidentally passing `dc: { value: 0 }` to PF2e when Player Chase View omits the GM-only DC (`Number(null) === 0`). The PF2e roll card no longer reports a false critical success for DC-less checks.
+- Only explicitly supplied, finite numeric DCs are forwarded; null, undefined, empty, whitespace, NaN and invalid values remain absent. Explicit numeric zero is supported.
+- Added regression tests for missing, blank, numeric and invalid DCs. Chase Forge outcomes and Chase Point calculations, public API v18, extension contracts, persistence formats, and RC.2 localization are unchanged.
+
 
 ## 0.1.0-dev.7.3 - Builder Scroll Layout Fix
 

@@ -6,16 +6,16 @@ import { EFFECT_CONSEQUENCE_PRESENTATION_MODES } from "../scripts/settings.js";
 
 const read = path => readFile(new URL(path, import.meta.url), "utf8");
 
-test("1.1.1-rc.1 manifest, constants, and download tag agree", async () => {
+test("1.1.1-rc.3 manifest, constants, and download tag agree", async () => {
   const [manifest, pkg] = await Promise.all([read("../module.json"), read("../package.json")]);
   const module = JSON.parse(manifest), packageData = JSON.parse(pkg);
-  assert.equal(MODULE_VERSION, "1.1.1-rc.1");
+  assert.equal(MODULE_VERSION, "1.1.1-rc.3");
   assert.equal(module.version, MODULE_VERSION);
   assert.equal(packageData.version, MODULE_VERSION);
-  assert.match(module.download, /\/v1\.1\.1-rc\.1\/pf2e-chase-forge\.zip$/);
+  assert.match(module.download, /\/v1\.1\.1-rc\.3\/pf2e-chase-forge\.zip$/);
 });
 
-test("1.1.1-rc.1 does not change the extension or persisted data contracts", () => {
+test("1.1.1-rc.3 does not change the extension or persisted data contracts", () => {
   assert.equal(API_VERSION, 18);
   assert.equal(EXTENSION_CONTRACT_VERSION, 1);
   assert.deepEqual(SCHEMA_VERSIONS, {
@@ -26,7 +26,7 @@ test("1.1.1-rc.1 does not change the extension or persisted data contracts", () 
   assert.deepEqual(EFFECT_CONSEQUENCE_PRESENTATION_MODES, ["runner", "dialog", "chatGm", "chatPublic", "automatic"]);
 });
 
-test("1.1.1-rc.1 retains JSON transfer, route pane scrolling, and draft-only session initialization", async () => {
+test("1.1.1-rc.3 retains JSON transfer, route pane scrolling, and draft-only session initialization", async () => {
   const [builder, template, css, persistence] = await Promise.all([
     read("../scripts/app/chase-builder-app.js"), read("../templates/chase-builder.hbs"),
     read("../styles/chase-forge.css"), read("../scripts/persistence/persistence-service.js")

@@ -83,3 +83,37 @@ test("PF2e adapter supports saves and a strike-backed attack statistic", async (
   assert.equal(roll.total, 24);
   assert.equal(attackCalled, true);
 });
+
+
+test("PF2e adapter does not send a fabricated DC to Player View rolls", async () => {
+  const received = [];
+  const actor = { getStatistic: () => ({ check: { async roll(options) {
+    received.push(options);
+    return { total: 15 };
+  } } }) };
+  const adapter = createPf2eChaseAdapter();
+
+  // Player Chase View does not supply the (possibly secret) DC at all.
+  await adapter.rollStatistic({ actor, statistic: "athletics", label: "Chase" });
+  for (const dc of [null, undefined, "", "   "]) {
+    await adapter.rollStatistic({ actor, statistic: "athletics", dc });
+  }
+  assert.equal(received.length, 5);
+  for (const options of received) {
+    assert.equal(Object.hasOwn(options, "dc"), false, "missing or blank DC must not reach PF2e");
+  }
+});
+
+test("PF2e adapter forwards only explicitly valid numerical DCs", async () => {
+  const received = [];
+  const actor = { getStatistic: () => ({ check: { async roll(options) {
+    received.push(options);
+    return { total: 15 };
+  } } }) };
+  const adapter = createPf2eChaseAdapter();
+  for (const dc of [20, "20", 0, "0", 12.5, NaN, Infinity, "not a DC"]) {
+    await adapter.rollStatistic({ actor, statistic: "athletics", dc });
+  }
+  assert.deepEqual(received.map(options => options.dc?.value), [20, 20, 0, 0, 12.5, undefined, undefined, undefined]);
+  for (const options of received.slice(5)) assert.equal(Object.hasOwn(options, "dc"), false);
+});

@@ -1,12 +1,12 @@
 # PF2E Chase Forge
 
-> **1.1.1-rc.2:** Chat obstacle/result cards and Runner outcome labels are now localized in the active Foundry language (DE/EN). No migration or add-on update required.
+> **1.1.1-rc.3:** Fixes an incorrect PF2e check-card degree of success when Player Chase View rolls without a DC. Also includes the RC.2 DE/EN Chat localization fix. No migration or add-on update required.
 
-**Version:** 1.1.1-rc.2  
+**Version:** 1.1.1-rc.3  
 **Foundry VTT:** 14  
 **System:** Pathfinder 2e
 
-PF2E Chase Forge is a modular Pathfinder 2e chase framework for Foundry VTT. `1.1.1-rc.2` adds a localization-only fix to the RC line: the JSON Chase transfer, media-path remapping, and independent Route/Inspector scrolling improvements remain feature-frozen. It builds on the `1.1.0` stable branch while preserving Public API v18, Extension Contract v1 and all persisted schema versions. Existing Chases and extension packs require no migration.
+PF2E Chase Forge is a modular Pathfinder 2e chase framework for Foundry VTT. `1.1.1-rc.3` fixes a Player View PF2e roll-card DC issue and preserves the RC.2 Chat-localization fix: the JSON Chase transfer, media-path remapping, and independent Route/Inspector scrolling improvements remain feature-frozen. It builds on the `1.1.0` stable branch while preserving Public API v18, Extension Contract v1 and all persisted schema versions. Existing Chases and extension packs require no migration.
 
 The underlying architecture remains intact: DAG route graphs, synchronized GM/Player runtime views, add-on registries, template-based generation, the 72-card Core Library, the shared Visual System, PF2e chase rules, consequence orchestration, optional Critical Forge / Effect Forge integration, Weather Forge prefill, and protected restart-safe Blueprint/Session persistence.
 
@@ -32,6 +32,10 @@ Suggestions and feature requests are equally welcome. Even small ideas can lead 
 
 **Open an issue here:** https://github.com/crypto-vbrthr/pf2e-chase-forge/issues
 
+
+## 1.1.1-rc.3 Release Candidate (Player View PF2e DC hotfix)
+
+Player Chase View intentionally submits PF2e checks without the GM-only DC, so the PF2e system's own roll card should not display a success degree. Previously, a missing `dc` became `0` due to `Number(null)`, causing false critical successes on PF2e cards. RC.3 only sends `options.dc` to PF2e when the caller explicitly supplies a valid numeric value (including a deliberate zero). Chase Forge's own outcome/Chase Point calculations remain unchanged. The RC.2 translated Chat cards and outcome labels are also included.
 
 ## 1.1.1-rc.2 Release Candidate (localization hotfix)
 

@@ -158,7 +158,10 @@ export class Pf2eChaseAdapter {
       event
     };
     if (Array.isArray(modifiers) && modifiers.length > 0) options.modifiers = [...modifiers];
-    if (Number.isFinite(Number(dc))) options.dc = { value: Number(dc) };
+    // Player Chase View intentionally omits the secret DC. Do not convert missing/blank values to 0.
+    if (dc !== null && dc !== undefined && (typeof dc !== "string" || dc.trim() !== "") && Number.isFinite(Number(dc))) {
+      options.dc = { value: Number(dc) };
+    }
     if (label) options.label = String(label);
 
     return roll.call(resolvedStatistic.check ?? resolvedStatistic, options);
